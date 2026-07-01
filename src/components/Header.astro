@@ -1,11 +1,26 @@
 ---
 import { categories } from "../data/categories";
+import { nav, ui, categoryNames, type Locale } from "../i18n/ui";
+import LanguageSwitcher from "./LanguageSwitcher.astro";
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang = "it" } = Astro.props;
+
+const shopUrl =
+  lang === "it"
+    ? "https://www.rigonivittorinoshop.it/it/"
+    : "https://www.rigonivittorinoshop.it/en/";
 
 const navLinks = [
-  { href: "/azienda", label: "Azienda" },
-  { href: "/cantina", label: "Cantina" },
-  { href: "/vini", label: "I nostri vini" },
-  { href: "/contatti", label: "Contatti" },
+  { href: "/azienda", label: nav.azienda[lang] },
+  { href: "/cantina", label: nav.cantina[lang] },
+  { href: "/vini", label: nav.vini[lang] },
+  { href: shopUrl, label: nav.shop[lang], external: true },
+  { href: "/contatti", label: nav.contatti[lang] },
+  { href: "/news", label: nav.news[lang] },
 ];
 ---
 
@@ -21,30 +36,42 @@ const navLinks = [
       aria-controls="primary-nav"
       id="nav-toggle"
     >
-      <span class="visually-hidden">Apri il menu</span>
+      <span class="visually-hidden">{ui.openMenu[lang]}</span>
       <span class="nav-toggle-bar" aria-hidden="true"></span>
       <span class="nav-toggle-bar" aria-hidden="true"></span>
       <span class="nav-toggle-bar" aria-hidden="true"></span>
     </button>
 
-    <nav id="primary-nav" class="primary-nav" aria-label="Navigazione principale">
-      <ul>
-        {navLinks.map((link) => (
-          <li class:list={{ "has-submenu": link.href === "/vini" }}>
-            <a href={link.href}>{link.label}</a>
-            {link.href === "/vini" && (
-              <ul class="submenu">
-                {categories.map((cat) => (
-                  <li>
-                    <a href={`/vini/${cat.slug}`}>{cat.name}</a>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-    </nav>
+    <div class="nav-wrapper">
+      <nav id="primary-nav" class="primary-nav" aria-label={ui.mainNav[lang]}>
+        <ul>
+          {navLinks.map((link) => (
+            <li class:list={{ "has-submenu": link.href === "/vini" }}>
+              <a
+                href={link.href}
+                target={link.external ? "_blank" : undefined}
+                rel={link.external ? "noopener noreferrer" : undefined}
+              >
+                {link.label}
+              </a>
+              {link.href === "/vini" && (
+                <ul class="submenu">
+                  {categories.map((cat) => (
+                    <li>
+                      <a href={`/vini/${cat.slug}`}>
+                        {categoryNames[cat.slug]?.[lang] ?? cat.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <LanguageSwitcher lang={lang} />
+    </div>
   </div>
 </header>
 
@@ -77,6 +104,12 @@ const navLinks = [
   .logo img {
     height: 48px;
     width: auto;
+  }
+
+  .nav-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
   }
 
   .nav-toggle {

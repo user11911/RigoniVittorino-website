@@ -1,20 +1,24 @@
 ---
 import type { Category } from "../data/categories";
+import { ui, type Locale } from "../i18n/ui";
 
 interface Props {
   category: Category;
   image: string;
+  lang?: Locale;
 }
 
-const { category, image } = Astro.props;
+const { category, image, lang = "it" } = Astro.props;
 ---
 
 <a href={`/vini/${category.slug}`} class="category-card">
-  <img src={image} alt="" width="400" height="300" loading="lazy" />
+  <div class="category-card-image">
+    <img src={image} alt="" width="637" height="1000" loading="lazy" />
+  </div>
   <div class="category-card-body">
     <h3>{category.name}</h3>
     <p>{category.description}</p>
-    <span class="category-cta">Scopri</span>
+    <span class="category-cta">{ui.discover[lang]}</span>
   </div>
 </a>
 
@@ -36,10 +40,18 @@ const { category, image } = Astro.props;
     text-decoration: none;
   }
 
-  .category-card img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
+  .category-card-image {
+    background: var(--color-bg-alt);
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .category-card-image img {
+    height: 90%;
+    width: auto;
+    object-fit: contain;
   }
 
   .category-card-body {

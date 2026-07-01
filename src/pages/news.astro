@@ -1,0 +1,65 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const posts = [
+  {
+    title: "Sempre più vicini ai nostri clienti!",
+    excerpt:
+      "La cantina Rigoni Vittorino si rinnova con un sito web sempre più aggiornato e l'apertura dell'e-commerce. Non perdere le nostre proposte.",
+    href: "https://www.rigonivittorinoshop.it/it/",
+  },
+  {
+    title: "Launch Prosecco Rosé",
+    excerpt:
+      "Per le Feste brindiamo in Rosa! Elegante e raffinato con sentori floreali e fresche note di frutta. Perfetto per gli aperitivi e per accompagnare piatti di pesce e crostacei.",
+    href: "/vini/spumanti",
+  },
+];
+---
+
+<BaseLayout
+  title="News"
+  description="Le ultime novità dalla cantina Rigoni Vittorino."
+>
+  <section class="section">
+    <div class="container prose">
+      <p class="eyebrow">News</p>
+      <h1>Le ultime novità</h1>
+      <ul class="post-list">
+        {posts.map((post) => (
+          <li class="post">
+            <h2>{post.title}</h2>
+            <p>{post.excerpt}</p>
+            <a href={post.href} class="btn btn-outline">Scopri</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .prose {
+    max-width: 42rem;
+    margin: 0 auto;
+  }
+
+  .post-list {
+    list-style: none;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+  }
+
+  .post {
+    padding: var(--space-3) 0;
+    border-top: 1px solid var(--color-bg-alt);
+  }
+
+  .post:first-child {
+    border-top: none;
+  }
+
+  .post h2 {
+    font-size: 1.3rem;
+  }
+</style>

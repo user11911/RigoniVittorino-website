@@ -1,0 +1,154 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+import CategoryCard from "../components/CategoryCard.astro";
+import ProductCard from "../components/ProductCard.astro";
+import { categories } from "../data/categories";
+import { products } from "../data/products";
+import { home, categoryNames, categoryDescriptions, type Locale } from "../i18n/ui";
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang = "it" } = Astro.props;
+
+const featured = categories.map(
+  (cat) => products.find((p) => p.category === cat.slug)!
+);
+
+const categoryImages: Record<string, string> = Object.fromEntries(
+  categories.map((cat) => {
+    const inCategory = products.filter((p) => p.category === cat.slug);
+    const tileProduct = inCategory[1] ?? inCategory[0];
+    return [cat.slug, tileProduct.image];
+  })
+);
+
+const localizedCategories = categories.map((cat) => ({
+  ...cat,
+  name: categoryNames[cat.slug]?.[lang] ?? cat.name,
+  description: categoryDescriptions[cat.slug]?.[lang] ?? cat.description,
+}));
+
+const translationNotice = lang !== "it" ? home.translationNotice[lang] : null;
+---
+
+<BaseLayout
+  title="Rigoni Vittorino"
+  description={home.metaDescription[lang]}
+  lang={lang}
+>
+  <Hero
+    image="/images/hero/rigoni-s3-vigneti.jpg"
+    eyebrow={home.heroEyebrow[lang]}
+    title={home.heroTitle[lang]}
+    subtitle={home.heroSubtitle[lang]}
+    ctaHref="/vini"
+    ctaLabel={home.heroCta[lang]}
+  />
+
+  {translationNotice && (
+    <p class="translation-notice container">{translationNotice}</p>
+  )}
+
+  <section class="section philosophy">
+    <div class="container philosophy-inner">
+      <p class="eyebrow">{home.philosophyEyebrow[lang]}</p>
+      <h2>{home.philosophyHeading[lang]}</h2>
+      <p>{home.philosophyBody[lang]}</p>
+      <a href="/azienda" class="btn btn-outline">{home.philosophyCta[lang]}</a>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <p class="eyebrow">{home.selectionEyebrow[lang]}</p>
+      <h2>{home.selectionHeading[lang]}</h2>
+      <div class="grid grid-products">
+        {featured.map((product) => (
+          <ProductCard product={product} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">{home.categoriesEyebrow[lang]}</p>
+      <h2>{home.categoriesHeading[lang]}</h2>
+      <div class="grid grid-categories">
+        {localizedCategories.map((cat) => (
+          <CategoryCard category={cat} image={categoryImages[cat.slug]} lang={lang} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt cantina-teaser">
+    <div class="container cantina-teaser-inner">
+      <div>
+        <p class="eyebrow">{home.cantinaEyebrow[lang]}</p>
+        <h2>{home.cantinaHeading[lang]}</h2>
+        <p>{home.cantinaBody[lang]}</p>
+        <a href="/cantina" class="btn">{home.cantinaCta[lang]}</a>
+      </div>
+      <img
+        src="/images/hero/rigoni-s5-cantina.jpg"
+        alt="Interno della cantina Rigoni Vittorino"
+        width="1300"
+        height="545"
+      />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .translation-notice {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    padding-top: var(--space-2);
+  }
+
+  .philosophy-inner {
+    max-width: 42rem;
+    text-align: center;
+    margin: 0 auto;
+  }
+
+  .grid {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+
+  .grid-products {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  .grid-categories {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+
+  .cantina-teaser-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    align-items: center;
+  }
+
+  .cantina-teaser-inner img {
+    border-radius: 4px;
+    object-fit: cover;
+    width: 100%;
+    aspect-ratio: 1300 / 545;
+    height: auto;
+  }
+
+  @media (max-width: 720px) {
+    .cantina-teaser-inner {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

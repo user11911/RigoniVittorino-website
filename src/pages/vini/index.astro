@@ -3,15 +3,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import Hero from "../../components/Hero.astro";
 import CategoryCard from "../../components/CategoryCard.astro";
 import { categories } from "../../data/categories";
+import { products } from "../../data/products";
 
-const categoryImages: Record<string, string> = {
-  spumanti: "/images/hero/rigoni-s2-bottiglie.jpg",
-  bianchi: "/images/hero/cantina-rigoni-filosofia-h.jpg",
-  rossi: "/images/hero/rigoni-barique-riflessi-c.jpg",
-  affinati: "/images/hero/rigoni-barique-riflessi-c.jpg",
-  "frizzanti-e-rosati": "/images/hero/rigoni-s2-bottiglie.jpg",
-  passiti: "/images/hero/rigoni-s5-cantina.jpg",
-};
+const categoryImages: Record<string, string> = Object.fromEntries(
+  categories.map((cat) => [
+    cat.slug,
+    products.find((p) => p.category === cat.slug)!.image,
+  ])
+);
 ---
 
 <BaseLayout

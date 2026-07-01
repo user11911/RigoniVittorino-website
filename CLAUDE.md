@@ -1,263 +1,115 @@
-# CLAUDE.md
+## Current correction priority
 
-## Project purpose
+The previous implementation is not satisfactory. The next task is to bring the website closer to the original company website.
 
-This repository is for rebuilding and improving the public website of `Rigoni Vittorino`, a wine company.
+Main problems to fix:
 
-The website should include:
+- Images are incorrectly formatted or displayed.
+- The visual design does not sufficiently follow the original website.
+- Some text was invented and may be false.
+- The site does not preserve the original content structure.
+- Pictures and other assets are missing or not exploited adequately.
+- The language switcher / multilingual functionality is missing.
 
-- A presentation / landing page for the company
-- Product presentation pages for wines
-- A polished, professional visual design inspired by the existing company website
-- A simple, maintainable codebase suitable for future public deployment
+## Source-of-truth rules
 
-The existing website is here:
+The existing company website is the source of truth for:
 
-`https://rigonivittorino.com`
-
-Use the existing website as the primary visual and content reference. The goal is to preserve the company’s visual identity while improving structure, performance, responsiveness, accessibility, and maintainability.
-
-## Important legal and ethical constraints
-
-Do not copy proprietary source code from the existing website.
-
-Do not bypass authentication, paywalls, bot protection, or access controls.
-
-Only use content, images, logos, product descriptions, and brand assets if they are publicly available on the current company website or explicitly provided in this repository.
-
-Do not invent legal, shipping, tax, alcohol-sale, or compliance claims.
-
-Because the site concerns wine, build it as if it will eventually be public. Include sensible placeholders where needed for:
-
-- Age confirmation / responsible drinking notice
-- Privacy policy
-- Terms and conditions
-- Shipping and returns information
-- Legal alcohol-sale disclaimers
-
-Do not implement real payment processing, checkout, shipping logic, or customer data collection unless specifically instructed later.
-
-## Preferred technical direction
-
-If the repository already contains a framework or application structure, inspect it first and continue using the existing stack unless there is a strong reason not to.
-
-If the repository is empty or does not have a clear stack, choose a simple, modern, maintainable static-site setup.
-
-Preferred default:
-
-- Astro
-- TypeScript
-- Plain CSS or a minimal CSS approach
-- Static content/data files for products
-- No unnecessary backend
-- No unnecessary database
-- No unnecessary authentication system
-- No unnecessary complex state management
-
-The website should be easy to edit later by a non-specialist developer.
-
-Avoid overengineering.
-
-## Workflow rules
-
-Before writing code, inspect the repository and the existing website.
-
-First produce a short implementation plan that includes:
-
-1. The proposed stack
-2. The site structure
-3. Key pages/components
-4. How the existing website will be visually analyzed
-5. What assets/content are available and what is missing
-6. The implementation sequence
-7. The verification plan
-
-After planning, proceed independently unless there is a blocking uncertainty.
-
-Prefer completing the website in coherent stages rather than making scattered changes.
-
-Avoid wasting context and tokens. Do not repeatedly restate the same plan. Do not create unnecessary files. Do not add generic boilerplate that is not used.
-
-## Existing website analysis
-
-When analyzing the existing website, identify:
-
-- Visual style
-- Typography
-- Color palette
-- Layout patterns
+- Brand identity
+- Layout direction
 - Navigation structure
-- Homepage sections
-- Product presentation structure
-- Imagery style
-- Calls to action
-- Footer content
-- Mobile behavior
-- Performance or accessibility weaknesses
+- Product names
+- Product descriptions
+- Company text
+- Available languages
+- Images and visual hierarchy
 
-Use this analysis to create an improved version, not a careless clone.
+Do not invent factual text.
 
-The rebuilt site should feel recognizably related to the original brand, but the code and implementation should be original and cleaner.
+Do not invent product details, wine descriptions, awards, company history, certifications, shipping claims, prices, or legal claims.
 
-## Design requirements
+If information is not available from the original website or from files provided in this repository, mark it as `TODO: verify` or omit it.
 
-The site should feel premium, elegant, and appropriate for a wine company.
+## Image rules
 
-Prioritize:
-
-- Strong landing-page presentation
-- Clear product hierarchy
-- High-quality spacing and typography
-- Responsive mobile layout
-- Fast loading
-- SEO-friendly structure
-- Accessible navigation and content
-- Simple future editing
-
-Avoid:
-
-- Generic startup-style design
-- Overly flashy animations
-- Heavy JavaScript where static HTML/CSS is enough
-- Complicated component abstractions too early
-- Unused dependencies
-- Placeholder clutter
-
-## Product structure
-
-Represent wine products in a simple maintainable format.
-
-If there is no existing structure, use a data-driven approach such as:
-
-- `src/data/products.ts`
-- `src/content/products/`
-- JSON or Markdown content files
-
-Each wine product should support fields such as:
-
-- Name
-- Category / type
-- Vintage, if available
-- Grape variety, if available
-- Region / appellation, if available
-- Description
-- Tasting notes
-- Pairing suggestions
-- Bottle size
-- Image
-- Availability or call-to-action text
-
-Do not invent factual product details. If details are missing, use clear placeholders or omit the field.
-
-## Code quality rules
-
-Keep the codebase small, clear, and consistent.
-
-Use existing project conventions where they exist.
-
-Use semantic HTML.
-
-Keep components focused and readable.
-
-Do not add dependencies unless they clearly reduce complexity or improve the final result.
-
-Do not introduce a CMS, database, authentication system, shopping cart, payment provider, or server-side backend unless explicitly requested.
-
-Do not store secrets, API keys, credentials, private tokens, or sensitive information in the repository.
-
-Do not hardcode private local paths.
-
-Do not use generated code that is difficult to maintain.
-
-## Performance and SEO
-
-Build the site with public launch in mind.
-
-Include:
-
-- Proper page titles
-- Meta descriptions
-- Semantic headings
-- Open Graph metadata where appropriate
-- Optimized image usage
-- Responsive images if the chosen framework supports them cleanly
-- Clean URLs
-- Sitemap support if simple to add
-- Robots.txt if appropriate
-
-Keep JavaScript minimal.
-
-The site should work well on mobile, tablet, and desktop.
-
-## Accessibility
-
-Use accessible HTML by default.
+Images must be consistently formatted.
 
 Requirements:
 
-- Meaningful heading hierarchy
-- Alt text for meaningful images
-- Keyboard-accessible navigation
-- Sufficient color contrast
-- Clear focus states
-- Avoid text embedded in images where possible
-- Do not rely on color alone to communicate meaning
+- Use correct aspect ratios.
+- Avoid stretching or distortion.
+- Use responsive image sizing.
+- Use object-fit/object-position where appropriate.
+- Product images should have a consistent presentation.
+- Landing-page images should match the original website’s visual hierarchy.
+- All meaningful images need alt text.
 
-## Git and repository behavior
+## Multilingual rules
 
-This repository is currently private and not shared with a team, but treat the work as if it will eventually be.
+The website must support the same languages as the original website.
 
-Before major changes, check the current git status.
+Implement language switching in a simple maintainable way.
 
-Keep changes focused.
+Do not translate freely unless explicitly asked. Prefer using original website text in each language where available.
 
-Do not delete existing files unless they are clearly obsolete or the reason is explained.
+If a translation is missing, mark it clearly as `TODO: verify translation`.
 
-Do not rewrite git history.
+## Other missing features
 
-Do not commit or push unless explicitly asked.
+Check for all the missing features of the current implementation that are present in the actual website and include them in the latest issue.
 
-At the end of each task, summarize:
+## Finish rules
 
-1. What was changed
-2. Which files were added or modified
-3. Which commands were run
-4. Whether tests/build/lint passed
-5. Any remaining issues or missing inputs
+Claude must not claim the task is finished until all relevant checks have been completed.
 
-## Verification
+Before finishing, Claude must:
 
-Before claiming completion, run the relevant available commands.
+1. Run the appropriate local verification commands.
+2. Confirm that the site builds successfully.
+3. Check that the main pages render correctly.
+4. Check that images are not distorted, stretched, or broken.
+5. Check that the layout works on desktop and mobile sizes.
+6. Check that navigation links work.
+7. Check that the language switcher works for all supported languages.
+8. Check that no invented or unverifiable factual text remains, on any language supported.
+9. Check that all visible product/company text comes from the original website or is clearly marked as `TODO: verify`.
+10. Check that no secrets, API keys, private tokens, or local machine paths were added.
 
-If using Astro, expected commands are likely:
+If using Astro, run at minimum:
 
-- `npm install` or the selected package manager equivalent
-- `npm run dev`
 - `npm run build`
-- `npm run preview`
+- `npm run preview` if manual preview is needed
 
-If a different stack is chosen, identify the correct commands and document them.
+If using another stack, identify and run the equivalent build command.
 
-If no automated tests exist, at minimum verify:
+## Completion report
 
-- The site builds successfully
-- Key pages render
-- Product pages or product sections work
-- Navigation works
-- Mobile layout is reasonable
-- No obvious console errors
-- No broken internal links
+At the end of every task, Claude must provide a concise completion report with:
 
-## Definition of done
+1. Summary of what changed
+2. Files added or modified
+3. Design issues fixed
+4. Image/layout issues fixed
+5. Content removed or corrected
+6. Language support changes
+7. Commands run and their results
+8. Remaining issues, missing assets, or content requiring human verification
 
-The project is done when:
+Claude must clearly distinguish between:
 
-- The website can be run locally from the repository
-- The landing page is complete
-- Product presentation is complete enough to demonstrate the intended structure
-- The visual style is clearly inspired by the current company website
-- The implementation is original, maintainable, and not overcomplicated
-- The site is responsive
-- The site builds successfully
-- Future product/content updates are straightforward
-- Missing content or legal/commercial details are clearly documented
+- Completed work
+- Work that could not be verified
+- Assumptions made
+- TODOs requiring human input
+
+Claude must not say the website is complete if:
+
+- The build fails
+- Images are broken or badly formatted
+- The language switcher is missing or non-functional
+- Text has been invented
+- The design still clearly diverges from the original website without explanation
+- Important pages are placeholders
+- Required verification commands were not run
+
+If a verification step cannot be completed, Claude must explain exactly why and what the user should check manually.

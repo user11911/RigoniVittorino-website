@@ -1,15 +1,29 @@
+---
+import { nav, ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang = "it" } = Astro.props;
+
+const shopUrl =
+  lang === "it"
+    ? "https://www.rigonivittorinoshop.it/it/"
+    : "https://www.rigonivittorinoshop.it/en/";
+---
+
 <footer class="site-footer">
   <div class="container footer-grid">
     <div>
       <img src="/images/logo.png" alt="Rigoni Vittorino" width="120" height="56" />
       <p class="responsible">
-        L'abuso di alcol è dannoso per la salute. Vendita riservata ai maggiori
-        di 18 anni.
+        {ui.responsibleDrinking[lang]}
       </p>
     </div>
 
     <div>
-      <h2 class="footer-heading">Contatti</h2>
+      <h2 class="footer-heading">{nav.contatti[lang]}</h2>
       <address>
         Via Malintrada 17<br />
         31040 Gorgo al Monticano (TV), Italia<br />
@@ -19,28 +33,34 @@
     </div>
 
     <div>
-      <h2 class="footer-heading">Azienda</h2>
+      <h2 class="footer-heading">{nav.azienda[lang]}</h2>
       <ul class="footer-links">
-        <li><a href="/azienda">Chi siamo</a></li>
-        <li><a href="/cantina">Cantina</a></li>
-        <li><a href="/vini">I nostri vini</a></li>
-        <li><a href="/contatti">Contatti</a></li>
+        <li><a href="/azienda">{nav.azienda[lang]}</a></li>
+        <li><a href="/cantina">{nav.cantina[lang]}</a></li>
+        <li><a href="/vini">{nav.vini[lang]}</a></li>
+        <li>
+          <a href={shopUrl} target="_blank" rel="noopener noreferrer">
+            {nav.shop[lang]}
+          </a>
+        </li>
+        <li><a href="/contatti">{nav.contatti[lang]}</a></li>
+        <li><a href="/news">{nav.news[lang]}</a></li>
       </ul>
     </div>
 
     <div>
-      <h2 class="footer-heading">Informazioni legali</h2>
+      <h2 class="footer-heading">{ui.legalInfo[lang]}</h2>
       <ul class="footer-links">
-        <li><a href="/privacy">Privacy Policy</a></li>
-        <li><a href="/termini">Termini e condizioni</a></li>
-        <li><a href="/spedizioni">Spedizioni e resi</a></li>
+        <li><a href="/privacy">{ui.privacyPolicy[lang]}</a></li>
+        <li><a href="/termini">{ui.terms[lang]}</a></li>
+        <li><a href="/spedizioni">{ui.shipping[lang]}</a></li>
       </ul>
       <p class="vat">P.IVA 03225340268</p>
     </div>
   </div>
 
   <div class="container footer-bottom">
-    <p>&copy; {new Date().getFullYear().toString()} Rigoni Vittorino. Tutti i diritti riservati.</p>
+    <p>&copy; {new Date().getFullYear().toString()} Rigoni Vittorino. {ui.rightsReserved[lang]}</p>
     <div class="social-links">
       <a href="https://www.facebook.com/vinirigonivittorino" aria-label="Facebook">Facebook</a>
       <a href="https://www.instagram.com/rigonivittorino" aria-label="Instagram">Instagram</a>
