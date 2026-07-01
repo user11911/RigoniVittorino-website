@@ -1,0 +1,59 @@
+---
+interface Props {
+  image: string;
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  ctaHref?: string;
+  ctaLabel?: string;
+}
+
+const { image, eyebrow, title, subtitle, ctaHref, ctaLabel } = Astro.props;
+---
+
+<section class="hero" style={`--hero-image: url(${image})`}>
+  <div class="container hero-inner">
+    {eyebrow && <p class="eyebrow hero-eyebrow">{eyebrow}</p>}
+    <h1>{title}</h1>
+    {subtitle && <p class="hero-subtitle">{subtitle}</p>}
+    {ctaHref && ctaLabel && (
+      <a href={ctaHref} class="btn">{ctaLabel}</a>
+    )}
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    background-image: linear-gradient(
+        to bottom,
+        rgba(57, 0, 17, 0.55),
+        rgba(57, 0, 17, 0.35)
+      ),
+      var(--hero-image);
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+    padding-block: var(--space-5);
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+  }
+
+  .hero-inner {
+    max-width: 40rem;
+  }
+
+  .hero h1 {
+    color: #fff;
+  }
+
+  .hero-eyebrow {
+    color: var(--color-gold);
+  }
+
+  .hero-subtitle {
+    font-size: 1.15rem;
+    color: #f2e8e8;
+  }
+</style>

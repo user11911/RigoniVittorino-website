@@ -1,0 +1,78 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+---
+
+<BaseLayout
+  title="Cantina"
+  description="La cantina Rigoni Vittorino: oltre 3.500 mq dedicati alla vinificazione, tra tradizione artigianale e tecnologia enologica."
+>
+  <Hero
+    image="/images/hero/rigoni-s5-cantina.jpg"
+    eyebrow="Vinificazione"
+    title="Una cantina pensata per la qualità"
+  />
+
+  <section class="section">
+    <div class="container prose">
+      <p>
+        La cantina si estende su oltre 3.500 metri quadrati e riunisce sotto
+        lo stesso tetto le fasi di vinificazione, affinamento e imbottigliamento,
+        garantendo il massimo controllo su ogni passaggio.
+      </p>
+      <p>
+        Le uve vengono lavorate in vasche di acciaio a temperatura
+        controllata, con tempi di macerazione e fermentazione calibrati sulla
+        tipologia di vino. I rossi destinati all'affinamento riposano in botte,
+        acquisendo maggiore struttura e complessità aromatica.
+      </p>
+      <p>
+        Tecnologia moderna e gesti artigianali convivono in ogni fase: dalla
+        pigiatura soffice delle uve più delicate, alla presa di spuma degli
+        spumanti con il metodo Charmat, fino all'imbottigliamento finale.
+      </p>
+    </div>
+    <div class="container cellar-gallery">
+      <img
+        src="/images/hero/rigoni-barique-riflessi-c.jpg"
+        alt="Botti in affinamento nella cantina Rigoni Vittorino"
+        width="560"
+        height="380"
+        loading="lazy"
+      />
+      <img
+        src="/images/hero/rigoni-s2-bottiglie.jpg"
+        alt="Bottiglie di vino Rigoni Vittorino"
+        width="560"
+        height="380"
+        loading="lazy"
+      />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .prose {
+    max-width: 42rem;
+    margin: 0 auto var(--space-4);
+  }
+
+  .cellar-gallery {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+
+  .cellar-gallery img {
+    border-radius: 4px;
+    object-fit: cover;
+    width: 100%;
+    height: 260px;
+  }
+
+  @media (max-width: 640px) {
+    .cellar-gallery {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

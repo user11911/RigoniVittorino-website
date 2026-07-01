@@ -1,0 +1,44 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Termini e condizioni"
+  description="Termini e condizioni di utilizzo del sito Rigoni Vittorino."
+>
+  <section class="section">
+    <div class="container prose">
+      <h1>Termini e condizioni</h1>
+      <p class="placeholder-notice">
+        Testo segnaposto — da sostituire con termini e condizioni definitivi,
+        redatti con il supporto di un consulente legale, prima della
+        pubblicazione del sito.
+      </p>
+      <p>
+        L'utilizzo di questo sito è soggetto ai termini e condizioni che
+        verranno definiti da Rigoni Vittorino. Il presente sito non gestisce
+        vendite online, pagamenti o raccolta dati dei clienti: per acquisti,
+        fare riferimento ai canali di vendita ufficiali dell'azienda.
+      </p>
+      <p>
+        La vendita di prodotti alcolici è riservata ai maggiori di 18 anni, in
+        conformità alla normativa vigente in materia di vendita di alcolici.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .prose {
+    max-width: 42rem;
+    margin: 0 auto;
+  }
+
+  .placeholder-notice {
+    background: var(--color-bg-alt);
+    border-left: 3px solid var(--color-gold);
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+  }
+</style>

@@ -1,0 +1,115 @@
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div>
+      <img src="/images/logo.png" alt="Rigoni Vittorino" width="120" height="56" />
+      <p class="responsible">
+        L'abuso di alcol è dannoso per la salute. Vendita riservata ai maggiori
+        di 18 anni.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="footer-heading">Contatti</h2>
+      <address>
+        Via Malintrada 17<br />
+        31040 Gorgo al Monticano (TV), Italia<br />
+        <a href="tel:+390422746459">+39 0422.746459</a><br />
+        <a href="mailto:info@rigonivittorino.com">info@rigonivittorino.com</a>
+      </address>
+    </div>
+
+    <div>
+      <h2 class="footer-heading">Azienda</h2>
+      <ul class="footer-links">
+        <li><a href="/azienda">Chi siamo</a></li>
+        <li><a href="/cantina">Cantina</a></li>
+        <li><a href="/vini">I nostri vini</a></li>
+        <li><a href="/contatti">Contatti</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h2 class="footer-heading">Informazioni legali</h2>
+      <ul class="footer-links">
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/termini">Termini e condizioni</a></li>
+        <li><a href="/spedizioni">Spedizioni e resi</a></li>
+      </ul>
+      <p class="vat">P.IVA 03225340268</p>
+    </div>
+  </div>
+
+  <div class="container footer-bottom">
+    <p>&copy; {new Date().getFullYear().toString()} Rigoni Vittorino. Tutti i diritti riservati.</p>
+    <div class="social-links">
+      <a href="https://www.facebook.com/vinirigonivittorino" aria-label="Facebook">Facebook</a>
+      <a href="https://www.instagram.com/rigonivittorino" aria-label="Instagram">Instagram</a>
+      <a href="https://linkedin.com/company/rigoni-vittorino-vini-cantina" aria-label="LinkedIn">LinkedIn</a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--color-wine-dark);
+    color: #f2e8e8;
+    padding-top: var(--space-5);
+  }
+
+  .site-footer a {
+    color: #f2e8e8;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
+
+  .footer-heading {
+    color: var(--color-gold);
+    font-size: 1.1rem;
+    margin-bottom: var(--space-2);
+  }
+
+  .footer-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .footer-links li {
+    margin-bottom: 0.5rem;
+  }
+
+  .responsible {
+    font-size: 0.85rem;
+    color: #d8c3c3;
+    margin-top: var(--space-2);
+  }
+
+  .vat {
+    font-size: 0.8rem;
+    color: #d8c3c3;
+  }
+
+  address {
+    font-style: normal;
+  }
+
+  .footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding-block: var(--space-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    justify-content: space-between;
+    font-size: 0.85rem;
+  }
+
+  .social-links {
+    display: flex;
+    gap: var(--space-3);
+  }
+</style>

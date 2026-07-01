@@ -1,0 +1,42 @@
+---
+import type { Product } from "../data/products";
+
+interface Props {
+  product: Product;
+}
+
+const { product } = Astro.props;
+---
+
+<a href={`/vini/${product.category}/${product.slug}`} class="product-card">
+  <img src={product.image} alt={product.name} width="191" height="300" loading="lazy" />
+  <h3>{product.name}</h3>
+</a>
+
+<style>
+  .product-card {
+    display: block;
+    text-align: center;
+    color: var(--color-wine-dark);
+    padding: var(--space-2);
+    border: 1px solid var(--color-bg-alt);
+    border-radius: 4px;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .product-card:hover,
+  .product-card:focus-visible {
+    box-shadow: 0 10px 24px rgba(57, 0, 17, 0.12);
+    transform: translateY(-3px);
+    text-decoration: none;
+  }
+
+  .product-card img {
+    margin: 0 auto var(--space-2);
+  }
+
+  .product-card h3 {
+    font-size: 1.05rem;
+    margin: 0;
+  }
+</style>

@@ -1,0 +1,39 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Privacy Policy"
+  description="Informativa sulla privacy di Rigoni Vittorino."
+>
+  <section class="section">
+    <div class="container prose">
+      <h1>Privacy Policy</h1>
+      <p class="placeholder-notice">
+        Testo segnaposto — da sostituire con un'informativa privacy conforme
+        al GDPR, redatta con il supporto di un consulente legale, prima della
+        pubblicazione del sito.
+      </p>
+      <p>
+        Questa pagina descriverà come Rigoni Vittorino raccoglie, utilizza e
+        protegge i dati personali dei visitatori del sito, in conformità al
+        Regolamento (UE) 2016/679 (GDPR) e alla normativa italiana applicabile.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .prose {
+    max-width: 42rem;
+    margin: 0 auto;
+  }
+
+  .placeholder-notice {
+    background: var(--color-bg-alt);
+    border-left: 3px solid var(--color-gold);
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+  }
+</style>
