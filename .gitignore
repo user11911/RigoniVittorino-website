@@ -10,3 +10,11 @@ scripts/.cache/
 
 # editor/OS
 .DS_Store
+
+# Cloudflare/wrangler local state and generated/secret files
+.wrangler/
+.dev.vars
+worker-configuration.d.ts
+
+# local build-time env (see .env.example) — never commit real values
+.env

@@ -25,7 +25,11 @@ async function main() {
     const url = `${LOCAL_BASE}${route.path}`;
     const record = { path: route.path, kind: route.kind, url, consoleErrors: [] };
     results.push(record);
-    const response = await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
+    // domcontentloaded, not networkidle: /it/contatti/ embeds the Cloudflare
+    // Turnstile widget, whose background network activity can keep the
+    // connection "busy" indefinitely and make networkidle never resolve.
+    const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.waitForTimeout(500);
     record.status = response?.status();
     if (route.kind === "blank") {
       record.bodyEmpty = await page.evaluate(() => document.body.innerHTML.trim() === "");

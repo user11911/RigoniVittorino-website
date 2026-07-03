@@ -1,0 +1,16 @@
+name = "rigonivittorino-website"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# @astrojs/cloudflare generates its own main/assets wiring at build time
+# (dist/server/wrangler.json) — this file only needs to supply the
+# app-specific bindings the adapter doesn't know about.
+#
+# Provisioned once by the site owner with:
+#   npx wrangler d1 create rigonivittorino-contacts
+# then paste the printed database_id below (see IMPLEMENTATION_NOTES.md "Setup steps").
+[[d1_databases]]
+binding = "DB"
+database_name = "rigonivittorino-contacts"
+database_id = "REPLACE_WITH_REAL_D1_DATABASE_ID"
+migrations_dir = "migrations"

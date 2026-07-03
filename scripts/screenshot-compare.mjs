@@ -37,7 +37,10 @@ async function main() {
     });
     for (const p of PAGES) {
       const url = `${LOCAL_BASE}${p.path}`;
-      await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
+      // domcontentloaded, not networkidle: /it/contatti/ embeds the Cloudflare
+      // Turnstile widget, whose background network activity can keep the
+      // connection "busy" indefinitely and make networkidle never resolve.
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
       await page.waitForTimeout(1000);
       // force lazy-loaded images to load before capturing full-page screenshots
       await page.evaluate(async () => {

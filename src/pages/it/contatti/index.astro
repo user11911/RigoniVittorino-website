@@ -1,14 +1,108 @@
 ---
+export const prerender = true;
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 
-const contentHtml = await readFile(
+const rawContentHtml = await readFile(
   path.join(process.cwd(), "src/content/main/contatti.html"),
   "utf8",
 );
+// PUBLIC_ vars are inlined at build time by Vite regardless of prerender status —
+// safe to substitute here even though this page is statically prerendered.
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "1x00000000000000000000AA";
+const contentHtml = rawContentHtml.replace("__TURNSTILE_SITE_KEY__", turnstileSiteKey);
 ---
 
 <BaseLayout title="Contatti - Rigoni Vittorino" ogTitle="Contatti" extraStyleFile="contatti-extra-style.css">
   <Fragment set:html={contentHtml} />
 </BaseLayout>
+
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+<script>
+  // Progressively enhances the transplanted Contact Form 7 markup into a real,
+  // working submission flow against /api/contact (see IMPLEMENTATION_NOTES.md
+  // "Task 2"). Reuses the site's existing wpcf7/wpcf7-response-output/
+  // wpcf7-not-valid-tip CSS classes (already self-hosted from Task 1) for every
+  // visual state — no new styling needed for success/error/validation display.
+  const form = document.querySelector<HTMLFormElement>("#contact-form");
+  const wpcf7Wrapper = form?.closest(".wpcf7");
+  const responseOutput = form?.querySelector<HTMLElement>(".wpcf7-response-output");
+
+  const FIELD_SELECTORS: Record<string, string> = {
+    name: '[name="your-name"]',
+    email: '[name="your-email"]',
+    acceptance: '[name="acceptance-698"]',
+  };
+
+  function clearFieldErrors() {
+    form?.querySelectorAll(".wpcf7-not-valid-tip").forEach((el) => el.remove());
+    form?.querySelectorAll(".wpcf7-form-control").forEach((el) => el.classList.remove("wpcf7-not-valid"));
+  }
+
+  function showFieldErrors(errors: Record<string, string>) {
+    for (const [field, message] of Object.entries(errors)) {
+      const selector = FIELD_SELECTORS[field];
+      const input = selector ? form?.querySelector<HTMLElement>(selector) : null;
+      if (!input) continue;
+      input.classList.add("wpcf7-not-valid");
+      input.setAttribute("aria-invalid", "true");
+      const tip = document.createElement("span");
+      tip.className = "wpcf7-not-valid-tip";
+      tip.setAttribute("role", "alert");
+      tip.textContent = message;
+      input.insertAdjacentElement("afterend", tip);
+    }
+  }
+
+  function setStatus(status: "init" | "submitting" | "sent" | "invalid" | "failed" | "aborted") {
+    if (!form || !wpcf7Wrapper) return;
+    form.dataset.status = status;
+    form.classList.remove("init", "submitting", "sent", "invalid", "failed", "aborted");
+    form.classList.add(status);
+    wpcf7Wrapper.classList.toggle("no-js", false);
+  }
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!form) return;
+
+    clearFieldErrors();
+    setStatus("submitting");
+    const submitButton = form.querySelector<HTMLButtonElement | HTMLInputElement>('[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
+
+    try {
+      const formData = new FormData(form);
+      const res = await fetch(form.action, { method: "POST", body: formData });
+      const data = (await res.json()) as {
+        success: boolean;
+        error?: string;
+        errors?: Record<string, string>;
+      };
+
+      if (data.success) {
+        setStatus("sent");
+        if (responseOutput) responseOutput.textContent = "Grazie, il tuo messaggio è stato inviato con successo.";
+        form.reset();
+        // @ts-expect-error -- global injected by the Turnstile script tag above
+        window.turnstile?.reset();
+      } else if (data.errors) {
+        setStatus("invalid");
+        showFieldErrors(data.errors);
+        if (responseOutput) responseOutput.textContent = "Uno o più campi non sono stati compilati correttamente.";
+      } else {
+        setStatus(res.status === 400 ? "aborted" : "failed");
+        if (responseOutput) responseOutput.textContent = data.error ?? "Si è verificato un errore. Riprova più tardi.";
+        // @ts-expect-error -- global injected by the Turnstile script tag above
+        window.turnstile?.reset();
+      }
+    } catch {
+      setStatus("failed");
+      if (responseOutput) responseOutput.textContent = "Impossibile inviare il messaggio. Controlla la connessione e riprova.";
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
+  });
+</script>

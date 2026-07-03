@@ -214,3 +214,242 @@ click-through of both the menu open/close and submenu expand/collapse.
 - ✅ No English or German pages were rewritten.
 - ✅ Both blank legal/company routes are accessible (not 404, not redirected) and
   render a genuinely empty page.
+
+---
+
+# Task 2 — Make `/it/contatti/` functional (backend, email, captcha, retention)
+
+Per `.claude/TODO.md`: Task 1 above is frozen; this section covers only the contact
+form backend added on top of it. Plan file used during implementation:
+`.claude/plans/parsed-puzzling-stardust.md` (kept for history).
+
+## 1. Backend architecture summary and reasoning
+
+Discussed directly with the site owner: the company is taking over running this site
+themselves (replacing the agency that ran the old WordPress site), so the backend
+needed to require as close to zero ongoing server administration as possible — ruling
+out a self-hosted VPS, which would just reintroduce the "someone has to operate
+infrastructure" burden the move away from the agency is meant to escape.
+
+Chosen stack, and why:
+
+- **Cloudflare Workers with static assets** (via `@astrojs/cloudflare`) — the current
+  unified Cloudflare deployment model (Pages is being folded into this same
+  product/dashboard/account/free tier). No server to patch or monitor; the static
+  site (all 41 other routes) is completely unaffected, only `/api/contact` is
+  server-rendered.
+- **Cloudflare Turnstile** for captcha — TODO.md's own named example, free, privacy-
+  respecting, and Cloudflare publishes official dummy test key pairs for automated
+  testing without a real account (used throughout local dev/testing here).
+- **Cloudflare D1** for storage — same platform/account, free tier, no extra service
+  to provision, and its local emulation (`wrangler d1 execute --local`) made every
+  required test path (including rate-limiting) directly verifiable in this sandbox.
+- **Resend**, called over plain `fetch` (no SDK, keeping the dependency footprint as
+  lean as it was after Task 1) — sends both required emails. The "from" address sits
+  on `rigonivittorino.com` (needs SPF/DKIM DNS records added — additive, doesn't touch
+  the existing Google Workspace MX records or mailboxes) while the notification lands
+  in an existing Workspace inbox via an env-configurable recipient address.
+- If `RESEND_API_KEY` is unset, `src/lib/email.ts` logs the would-be email instead of
+  sending it — this is the "safe local/test mode" TODO.md asks for, not an error path.
+
+The existing Contact Form 7 markup already contained a working honeypot field
+(`mail-9`, CSS-hidden) — reused as-is rather than inventing a new anti-spam
+mechanism. A basic IP-hash-based rate limit (3 submissions / 15 minutes) was added
+against D1, no extra service needed.
+
+## 2. Files changed
+
+- `astro.config.mjs` — added the Cloudflare adapter; `prerenderEnvironment: "node"`
+  (see §9, workerd's Node shim doesn't implement `fs.readFile`, which the static
+  pages need to load their transplanted HTML content — this only affects the
+  build-time prerender step, not the deployed site's behavior).
+- `wrangler.toml` (new) — D1 binding only; the adapter generates its own
+  main/assets wiring at build time (`dist/server/wrangler.json`).
+- `migrations/0001_contact_submissions.sql` (new) — D1 schema.
+- `src/pages/api/contact.ts` (new) — the one dynamic route.
+- `src/lib/contact-validation.ts`, `turnstile.ts`, `rate-limit.ts`, `email.ts` (new) —
+  pure/testable logic, each with a `*.test.ts` unit test file.
+- `src/env.d.ts` (new) — types the Cloudflare `env` bindings/vars.
+- `src/pages/it/contatti/index.astro` — added the Turnstile script tag, the
+  submit-handling script, and site-key substitution; otherwise unchanged.
+- `src/content/main/contatti.html` — the CF7 form markup: dropped the WordPress-
+  internal `_wpcf7*` hidden fields (meaningless without WordPress, not part of the
+  visible field layout), replaced the Google reCAPTCHA v3 disclaimer with the
+  Turnstile widget div, changed `action` to `/api/contact/`, added `id="contact-form"`.
+  Every visible field/label/button/honeypot is otherwise untouched.
+- `.env.example` (new), `.gitignore` — added Cloudflare/wrangler local-state entries.
+- `package.json` — added `@astrojs/cloudflare`, `wrangler`, `vitest`,
+  `@cloudflare/workers-types`, `@types/node`; new `test:unit`/`wrangler:*` scripts.
+- `vitest.config.ts` (new).
+- The 8 pre-existing page files (4 main + 2 blank + 2 dynamic `getStaticPaths`
+  templates) each got one line, `export const prerender = true;` — see §9, this is
+  the minimal unavoidable change needed to add a backend anywhere on an otherwise
+  fully static site; every one of them still builds to byte-identical static HTML
+  (confirmed in §7).
+
+## 3. Non-obvious folders/files touched, with reasons
+
+- The 8 `prerender = true` additions above touch files outside the contact-form
+  scope, but are required — see §9 for why there's no narrower way to do this.
+- `scripts/route-smoke-test.mjs` and `scripts/screenshot-compare.mjs` (Task 1's test
+  scripts) were adjusted from `waitUntil: "networkidle"` to `"domcontentloaded"` — the
+  Turnstile widget's background network activity can keep a connection open
+  indefinitely, which made `networkidle` never resolve specifically on `/it/contatti/`.
+  This only changes how the test scripts wait, not anything about the site itself.
+
+## 4. Environment variables (see `.env.example` for full details)
+
+| Variable | Where it lives | Purpose |
+|---|---|---|
+| `PUBLIC_TURNSTILE_SITE_KEY` | `.env` (Vite/Astro build-time) | Public Turnstile widget key |
+| `TURNSTILE_SECRET_KEY` | `.dev.vars` locally / `wrangler secret put` in prod | Server-side captcha verification |
+| `RESEND_API_KEY` | same | Email sending; unset = dry-run |
+| `CONTACT_FROM_EMAIL` | same | Sender address (needs domain verified in Resend) |
+| `CONTACT_RECIPIENT_EMAIL` | same | Where notifications land (existing Workspace inbox) |
+| `CONTACT_IP_HASH_SALT` | same | Salts the hashed IP used for rate-limiting |
+
+`.env` and `.dev.vars` are both real, populated locally with Cloudflare's published
+dummy Turnstile test keys and are gitignored — **no secrets are committed**.
+
+## 5. Setup steps for production (for the site owner / whoever deploys this)
+
+1. `npx wrangler login` (one-time Cloudflare account auth).
+2. `npx wrangler d1 create rigonivittorino-contacts`, then paste the printed
+   `database_id` into `wrangler.toml` in place of `REPLACE_WITH_REAL_D1_DATABASE_ID`.
+3. `npx wrangler d1 migrations apply DB --remote` to create the table on the real DB.
+4. Cloudflare dashboard → Turnstile → add a widget for the real domain → get a real
+   site key + secret key.
+5. Resend (or another transactional provider) → verify `rigonivittorino.com` as a
+   sending domain (adds the DNS records Resend gives you — additive to existing
+   Workspace MX records, does not affect existing mailboxes).
+6. Confirm the real `CONTACT_RECIPIENT_EMAIL` with the site owner (placeholder used
+   here is `info@rigonivittorino.com`, matching the address already public on the
+   live site's contact page — **not independently confirmed as the intended
+   destination for form notifications specifically**).
+7. Set `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`,
+   `CONTACT_RECIPIENT_EMAIL`, `CONTACT_IP_HASH_SALT` (generate with
+   `openssl rand -hex 32`) via `wrangler secret put <NAME>` or the dashboard; set
+   `PUBLIC_TURNSTILE_SITE_KEY` as a build-time variable in whatever CI builds the site.
+8. `npm run build && npx wrangler deploy`.
+
+## 6. Confirmations
+
+- ✅ No secrets committed (`.env`, `.dev.vars` both gitignored; `.env.example` has
+  placeholders/public test keys only).
+- ✅ Sender confirmation email implemented (`buildConfirmationEmail` in `email.ts`,
+  sent to the submitter's address on every successful, non-rate-limited submission).
+- ✅ Notification recipient is environment-configured (`CONTACT_RECIPIENT_EMAIL`);
+  real value to be confirmed by the site owner before launch (see §5.6).
+- ✅ Submissions are retained (D1 `contact_submissions` table; verified rows persist
+  locally — see §7).
+- ✅ `/it/privacy-policy/` and `/it/dati-societari/` remain blank — unchanged, and
+  reconfirmed by the route smoke test in §7.
+- ✅ News remains excluded from routing; shop links remain external — unchanged from
+  Task 1, reconfirmed in §7.
+
+## 7. Commands run and results
+
+| Command | Result |
+|---|---|
+| `npm install @astrojs/cloudflare wrangler vitest @cloudflare/workers-types` | Installed cleanly |
+| `npx astro check` | 0 errors, 0 warnings, 8 hints (pre-existing, unrelated) |
+| `npx vitest run` | 28/28 unit tests passed (`contact-validation`, `rate-limit`, `turnstile`, `email`) |
+| `npx astro build` | 42/42 static pages prerendered + 1 server function built, 0 errors |
+| `npx wrangler d1 migrations apply DB --local` | Applied `0001_contact_submissions.sql` |
+| `npx wrangler dev` + manual `curl`/Playwright exercise (see below) | All required paths verified |
+| `node scripts/route-smoke-test.mjs` against `wrangler dev` | 42/42 routes: HTTP 200, 0 console errors |
+| `node scripts/screenshot-compare.mjs` against `wrangler dev` | Screenshots captured at all 4 breakpoints, 0 console errors |
+
+**Contact-form test evidence** (via `wrangler dev` + local D1, using Cloudflare's
+published test key pairs):
+
+- Required-field validation: empty name/email → `400` with per-field Italian error
+  messages; confirmed a real unchecked checkbox (field omitted from `FormData`,
+  matching actual browser behavior) is correctly rejected.
+- Invalid email format → `400` with `"Inserisci un indirizzo email valido."`.
+- Honeypot: filled hidden field → `200` (silent no-op, confirmed **not** written to
+  D1, confirmed **no** emails logged).
+- Captcha failure: missing/empty Turnstile token → `400`,
+  `"Verifica captcha non riuscita. Riprova."`.
+- Successful submission (dummy token against Cloudflare's "always passes" test
+  secret) → `200`; confirmed the row appears in local D1 (name/email/message/status/
+  `ip_hash` — hash, not raw IP); confirmed both the notification email (to
+  `CONTACT_RECIPIENT_EMAIL`, `reply_to` set to the submitter) and the confirmation
+  email (to the submitter) were logged via the dry-run path (no `RESEND_API_KEY` set
+  in this sandbox).
+- Rate limiting: 4th submission within the window from the same IP → `429`,
+  `"Troppe richieste. Riprova più tardi."`; confirmed only 3 rows were stored, not 4.
+- Full browser exercise (Playwright against `wrangler dev`): filled the real form,
+  submitted with a dummy Turnstile token → visible green "sent" success box with
+  `"Grazie, il tuo messaggio è stato inviato con successo."`, form fields reset, 0
+  console errors. A second run with invalid fields showed the CF7-style inline
+  per-field error tips and the amber "invalid" response box — all using the site's
+  already-self-hosted CF7 CSS classes, no new styling needed except the small pill/
+  color rules already added for Task 1's static share buttons.
+
+**Visual parity evidence**: screenshots at 375/768/1024/1440px for `home`,
+`chi-siamo`, `cantina`, `contatti`, `spumanti` category, and the `creativo-prosecco`
+product page are in `docs/parity/rebuilt/`, compared against the Task 1 baseline in
+`docs/parity/baseline/`. `home`, `chi-siamo`, `cantina`, and the category/product
+pages are byte-for-byte visually identical to Task 1 (expected — nothing about their
+markup, styling, or the adapter/prerender change affects rendered output). `contatti`
+is unchanged except the Google reCAPTCHA v3 disclaimer text is now the Turnstile
+widget in the same position — confirmed present and functional via the interactive
+Playwright test above (visible green checkmark + Cloudflare's own "test mode" notice,
+which will disappear once real production keys are set). Note: Playwright's
+`fullPage`-mode automated screenshots didn't reliably capture the Turnstile widget's
+visual paint (its wrapper has a correct non-zero bounding box at every check, but the
+widget's internal rendering appears to race the full-page resize-and-stitch
+Playwright does for `fullPage` screenshots) — this is a headless-screenshot-tooling
+timing quirk, not a functional defect; the widget was confirmed rendering and working
+correctly via non-full-page interactive screenshots and the bounding-box check.
+
+**Evidence unrelated pages weren't regressed**: `route-smoke-test.mjs` passed 42/42
+after the adapter change; the `home`/`chi-siamo`/`cantina`/category/product
+screenshots above are pixel-identical to the Task 1 baseline.
+
+## 8. Known limitations / remaining configuration before production launch
+
+- `CONTACT_RECIPIENT_EMAIL` uses the live site's public `info@` address as a
+  placeholder — needs explicit confirmation from the site owner (TODO.md
+  anticipated this: "Do not block implementation because final recipient values are
+  unknown").
+- `RESEND_API_KEY` and the Turnstile production keys are unset in this repo (by
+  design) — must be provisioned per §5 before this goes live; until then the form
+  works end-to-end in dry-run/test-key mode only.
+- The Contact Form 7 default Italian validation copy this reuses (see Task 1's
+  discovery notes on `/it/contatti/`) is a documented assumption, not something
+  independently reconfirmed against the live site for this task.
+- Rate limiting is a simple fixed-window count against D1 (3 / 15 min per hashed
+  IP) — adequate for a small business contact form's expected volume; would need a
+  more sophisticated approach (e.g. Durable Objects) only if abuse patterns emerge.
+
+## 9. Notable implementation obstacles (kept for future maintainers)
+
+- `@astrojs/cloudflare`'s internal static-asset binding is hardcoded to the name
+  `ASSETS`, which is a *reserved* binding name specifically under Cloudflare
+  **Pages** projects (`pages_build_output_dir` in `wrangler.toml`) — colliding with
+  the adapter's own binding and failing the build. Fixed by targeting Cloudflare's
+  current "Workers with static assets" model instead (no `pages_build_output_dir`;
+  the adapter generates its own `main`/`assets` wiring at build time) — same
+  platform/account/free tier, just the deployment primitive the adapter actually
+  expects.
+- Prerendering under the adapter's default `workerd` runtime failed with
+  `[unenv] fs.readFile is not implemented yet!` — the static pages read their
+  transplanted HTML content off disk at render time (Task 1's architecture), which
+  workerd's Node compat shim doesn't support. Fixed with
+  `prerenderEnvironment: "node"` (build-time only; irrelevant to the one real
+  request-time route, `/api/contact`, which never touches the filesystem).
+- Accessing D1/other bindings from `/api/contact` uses
+  `import { env } from "cloudflare:workers"` (confirmed from the adapter's own
+  compiled output, `dist/server/entry.mjs`) rather than `Astro.locals.runtime.env` —
+  the latter pattern is documented for older adapter versions; this adapter version
+  (`14.1.1`)'s `Runtime` type only carries `cfContext`. Typed via `npx wrangler
+  types` (generates `worker-configuration.d.ts`, gitignored, rerun after changing
+  `wrangler.toml` bindings) plus a small `declare global { namespace Cloudflare {
+  interface Env {...} } }` merge in `src/env.d.ts` for the plain secrets/vars
+  `wrangler types` doesn't know about.
+- Astro's built-in CSRF protection rejects same-site POSTs that don't carry a
+  matching `Origin` header — transparent for real browser submissions (which always
+  send one), but worth knowing when testing the endpoint directly with `curl`
+  (needs an explicit `-H "Origin: ..."` matching the request host).
