@@ -41,12 +41,21 @@ function extractUrls(html) {
   return urls;
 }
 
+// Only images/icons/PDFs are meant to be swept up wholesale like this — JS is
+// handled deliberately per-file elsewhere (self-hosted verbatim, reimplemented in
+// site.js, or intentionally dropped; see IMPLEMENTATION_NOTES.md §5). Without this,
+// the generic src="" scan below also matches <script src> tags and pulls in
+// unrelated plugin JS we explicitly decided not to use.
+const ASSET_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp", ".pdf"];
+
 function toLocalPath(url) {
-  let u = url;
+  let u = url.split("?")[0].split("#")[0]; // strip cache-busting query strings etc.
   if (u.startsWith(DOMAIN)) u = u.slice(DOMAIN.length);
   if (!u.startsWith("/")) return null;
   const inScope = IN_SCOPE_PREFIXES.some((p) => u.startsWith(p));
   if (!inScope) return null;
+  const hasAssetExtension = ASSET_EXTENSIONS.some((ext) => u.toLowerCase().endsWith(ext));
+  if (!hasAssetExtension) return null;
   return u; // becomes public/<u>, i.e. served at the same absolute path
 }
 

@@ -1234,59 +1234,5 @@
     "localPath": "public/wp-content/uploads/2026/02/striscia-4-loghi-e1704447021140-1210x297-1.png",
     "bytes": 117871,
     "status": "ok"
-  },
-  {
-    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/contact-form-7.min.js?ver=6.0",
-    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/contact-form-7.min.js?ver=6.0",
-    "bytes": 13311,
-    "status": "ok"
-  },
-  {
-    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/geppa-js.min.js?ver=1.0",
-    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/geppa-js.min.js?ver=1.0",
-    "bytes": 238,
-    "status": "ok"
-  },
-  {
-    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/getwid-blocks-frontend-js.min.js?ver=2.0.12",
-    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/getwid-blocks-frontend-js.min.js?ver=2.0.12",
-    "bytes": 33424,
-    "status": "ok"
-  },
-  {
-    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/gtm4wp-form-move-tracker.min.js?ver=1.20.2",
-    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/gtm4wp-form-move-tracker.min.js?ver=1.20.2",
-    "bytes": 1137,
-    "status": "ok"
-  },
-  {
-    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/image_zoooom-init.min.js?ver=1.57",
-    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/image_zoooom-init.min.js?ver=1.57",
-    "bytes": 10050,
-    "status": "ok"
-  },
-  {
-    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/social_share_button_front_js.min.js?ver=7.0",
-    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/social_share_button_front_js.min.js?ver=7.0",
-    "bytes": 753,
-    "status": "ok"
-  },
-  {
-    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/swv.min.js?ver=6.0",
-    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/swv.min.js?ver=6.0",
-    "bytes": 12373,
-    "status": "ok"
-  },
-  {
-    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/twentytwenty-js.min.js?ver=1.0",
-    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/twentytwenty-js.min.js?ver=1.0",
-    "bytes": 10552,
-    "status": "ok"
-  },
-  {
-    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/wpcf7-recaptcha.min.js?ver=6.0",
-    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/wpcf7-recaptcha.min.js?ver=6.0",
-    "bytes": 919,
-    "status": "ok"
   }
 ]
