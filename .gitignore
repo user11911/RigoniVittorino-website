@@ -1,0 +1,12 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# raw scrape cache (regenerate with the scripts/*.mjs pipeline; not meant to be committed)
+scripts/.cache/
+
+# editor/OS
+.DS_Store

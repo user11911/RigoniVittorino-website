@@ -1,0 +1,14 @@
+---
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+
+const contentHtml = await readFile(
+  path.join(process.cwd(), "src/content/main/chi-siamo.html"),
+  "utf8",
+);
+---
+
+<BaseLayout title="Azienda - Rigoni Vittorino" ogTitle="Azienda">
+  <Fragment set:html={contentHtml} />
+</BaseLayout>

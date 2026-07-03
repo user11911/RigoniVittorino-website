@@ -81,4 +81,4 @@ For each scoped page type, compare the rewritten site against the current live s
 * Transitions
 * Responsive behavior
 
-The final delivery must include a page-by-page parity checklist with before/after screenshots.
+The final delivery must include a page-by-page parity checklist with before/after screenshots. These should be used to confirm work quality before submitting

@@ -1,0 +1,66 @@
+---
+// Reproduces the visible behavior of the homepage's original RevSlider hero: 4
+// full-width photo slides, crossfade transition, autoplay, dot pagination. Built
+// from scratch with vanilla JS/CSS instead of re-hosting the proprietary RevSlider
+// engine (see IMPLEMENTATION_NOTES.md for the reasoning). Slide images, order, and
+// captions were confirmed against the live site's actual rendered (not just static
+// HTML) output; one layer present in the original markup ("Amarone della
+// Valpolicella", linking to a different winery) was measured to be permanently
+// clipped outside the slider's visible bounds on the live site and is intentionally
+// NOT reproduced here since it is never actually seen by visitors.
+const slides = [
+  { image: "/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg", caption: "Questo è il segno di Vittorino" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s3-vigneti.jpg", caption: "Amore per la terra e per la famiglia" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s4-famiglia.jpg", caption: "Una passione che abbraccia tre generazioni" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s5-cantina.jpg", caption: "Le migliori tecnologie che sposano la tradizione" },
+];
+---
+
+<div class="hero-slider" data-hero-slider>
+  {
+    slides.map((slide, i) => (
+      <div
+        class={`hero-slider__slide${i === 0 ? " is-active" : ""}`}
+        style={`background-image:url(${slide.image})`}
+        data-index={i}
+      >
+        <img class="hero-slider__v-logo" src="/wp-content/uploads/2021/01/v-rigoni-b-g.png" alt="" />
+        <div class="hero-slider__caption">{slide.caption}</div>
+      </div>
+    ))
+  }
+  <div class="hero-slider__dots">
+    {slides.map((_, i) => <button class={`hero-slider__dot${i === 0 ? " is-active" : ""}`} data-goto={i} aria-label={`Vai alla slide ${i + 1}`} />)}
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-hero-slider]").forEach((root) => {
+    const slides = Array.from(root.querySelectorAll<HTMLElement>(".hero-slider__slide"));
+    const dots = Array.from(root.querySelectorAll<HTMLElement>(".hero-slider__dot"));
+    let current = 0;
+    let timer: ReturnType<typeof setInterval>;
+
+    function show(index: number) {
+      slides[current].classList.remove("is-active");
+      dots[current].classList.remove("is-active");
+      current = (index + slides.length) % slides.length;
+      slides[current].classList.add("is-active");
+      dots[current].classList.add("is-active");
+    }
+
+    function restartAutoplay() {
+      clearInterval(timer);
+      timer = setInterval(() => show(current + 1), 8000);
+    }
+
+    dots.forEach((dot, i) => {
+      dot.addEventListener("click", () => {
+        show(i);
+        restartAutoplay();
+      });
+    });
+
+    restartAutoplay();
+  });
+</script>

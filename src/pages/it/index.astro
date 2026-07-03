@@ -1,0 +1,16 @@
+---
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Hero from "../../components/Hero.astro";
+
+const contentHtml = await readFile(
+  path.join(process.cwd(), "src/content/main/home.html"),
+  "utf8",
+);
+---
+
+<BaseLayout title="Rigoni Vittorino" ogTitle="Home" extraStyleFile="home-extra-style.css" bodyClass="home">
+  <Hero />
+  <Fragment set:html={contentHtml} />
+</BaseLayout>

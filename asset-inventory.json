@@ -1,0 +1,1292 @@
+[
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-abbinamento.png",
+    "localPath": "public/wp-content/themes/geppa/img/ico-abbinamento.png",
+    "bytes": 1649,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-affinamento.png",
+    "localPath": "public/wp-content/themes/geppa/img/ico-affinamento.png",
+    "bytes": 1555,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-carne.svg",
+    "localPath": "public/wp-content/themes/geppa/img/ico-carne.svg",
+    "bytes": 3300,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-download.png",
+    "localPath": "public/wp-content/themes/geppa/img/ico-download.png",
+    "bytes": 266,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-formaggio.svg",
+    "localPath": "public/wp-content/themes/geppa/img/ico-formaggio.svg",
+    "bytes": 1846,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-glass-1.svg",
+    "localPath": "public/wp-content/themes/geppa/img/ico-glass-1.svg",
+    "bytes": 1474,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-glass-2.svg",
+    "localPath": "public/wp-content/themes/geppa/img/ico-glass-2.svg",
+    "bytes": 1737,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-glass-3.svg",
+    "localPath": "public/wp-content/themes/geppa/img/ico-glass-3.svg",
+    "bytes": 2888,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-glass-4.svg",
+    "localPath": "public/wp-content/themes/geppa/img/ico-glass-4.svg",
+    "bytes": 1596,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-olivi.png",
+    "localPath": "public/wp-content/themes/geppa/img/ico-olivi.png",
+    "bytes": 1783,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-pesce.svg",
+    "localPath": "public/wp-content/themes/geppa/img/ico-pesce.svg",
+    "bytes": 1420,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-pollo.svg",
+    "localPath": "public/wp-content/themes/geppa/img/ico-pollo.svg",
+    "bytes": 3802,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-sensoriale-olive.png",
+    "localPath": "public/wp-content/themes/geppa/img/ico-sensoriale-olive.png",
+    "bytes": 1758,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-sensoriale.png",
+    "localPath": "public/wp-content/themes/geppa/img/ico-sensoriale.png",
+    "bytes": 1572,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-vigneti.png",
+    "localPath": "public/wp-content/themes/geppa/img/ico-vigneti.png",
+    "bytes": 1825,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/ico-vinificazione.png",
+    "localPath": "public/wp-content/themes/geppa/img/ico-vinificazione.png",
+    "bytes": 1693,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/vitorino-bianchi.svg",
+    "localPath": "public/wp-content/themes/geppa/img/vitorino-bianchi.svg",
+    "bytes": 681,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/vitorino-frizzanti.svg",
+    "localPath": "public/wp-content/themes/geppa/img/vitorino-frizzanti.svg",
+    "bytes": 617,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/vitorino-passiti.svg",
+    "localPath": "public/wp-content/themes/geppa/img/vitorino-passiti.svg",
+    "bytes": 681,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/vitorino-riserve.svg",
+    "localPath": "public/wp-content/themes/geppa/img/vitorino-riserve.svg",
+    "bytes": 617,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/vitorino-rossi.svg",
+    "localPath": "public/wp-content/themes/geppa/img/vitorino-rossi.svg",
+    "bytes": 617,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/themes/geppa/img/vitorino-spumanti.svg",
+    "localPath": "public/wp-content/themes/geppa/img/vitorino-spumanti.svg",
+    "bytes": 682,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/cantina-rigoni-vigneti-300x225.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/cantina-rigoni-vigneti-300x225.jpg",
+    "bytes": 23248,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/cantina-rigoni-vigneti-768x576.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/cantina-rigoni-vigneti-768x576.jpg",
+    "bytes": 129273,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/cantina-rigoni-vigneti.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/cantina-rigoni-vigneti.jpg",
+    "bytes": 263926,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/contatti-annamaria.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/contatti-annamaria.jpg",
+    "bytes": 21115,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/contatti-michele.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/contatti-michele.jpg",
+    "bytes": 17766,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/contatti-stefano.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/contatti-stefano.jpg",
+    "bytes": 15061,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/cropped-rigoni-favicon-180x180.png",
+    "localPath": "public/wp-content/uploads/2020/12/cropped-rigoni-favicon-180x180.png",
+    "bytes": 7370,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/cropped-rigoni-favicon-192x192.png",
+    "localPath": "public/wp-content/uploads/2020/12/cropped-rigoni-favicon-192x192.png",
+    "bytes": 7948,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/cropped-rigoni-favicon-32x32.png",
+    "localPath": "public/wp-content/uploads/2020/12/cropped-rigoni-favicon-32x32.png",
+    "bytes": 922,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/Everything-coming-up-rose-rigoni-277x300.png",
+    "localPath": "public/wp-content/uploads/2020/12/Everything-coming-up-rose-rigoni-277x300.png",
+    "bytes": 31038,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/Everything-coming-up-rose-rigoni.png",
+    "localPath": "public/wp-content/uploads/2020/12/Everything-coming-up-rose-rigoni.png",
+    "bytes": 162953,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-2-300x191.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-2-300x191.jpg",
+    "bytes": 17330,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-2-768x490.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-2-768x490.jpg",
+    "bytes": 66211,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-2.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-2.jpg",
+    "bytes": 127121,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-3-300x191.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-3-300x191.jpg",
+    "bytes": 13571,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-3-768x490.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-3-768x490.jpg",
+    "bytes": 47551,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-3.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-3.jpg",
+    "bytes": 86057,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-4-300x191.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-4-300x191.jpg",
+    "bytes": 17485,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-4-768x490.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-4-768x490.jpg",
+    "bytes": 70600,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-4.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-4.jpg",
+    "bytes": 129843,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-5-300x191.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-5-300x191.jpg",
+    "bytes": 14365,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-5-768x490.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-5-768x490.jpg",
+    "bytes": 53911,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-5.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-5.jpg",
+    "bytes": 99389,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-6-300x191.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-6-300x191.jpg",
+    "bytes": 20799,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-6-768x490.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-6-768x490.jpg",
+    "bytes": 93077,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-6.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-6.jpg",
+    "bytes": 170895,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-g-1024x655.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-g-1024x655.jpg",
+    "bytes": 65423,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-g-1200x768.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-g-1200x768.jpg",
+    "bytes": 84007,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-g-1536x983.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-g-1536x983.jpg",
+    "bytes": 129331,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-g-300x192.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-g-300x192.jpg",
+    "bytes": 11255,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-g-768x492.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-g-768x492.jpg",
+    "bytes": 42394,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/gallery-azienda-g.jpg",
+    "localPath": "public/wp-content/uploads/2020/12/gallery-azienda-g.jpg",
+    "bytes": 318552,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/Incrocio-Manzoni-rigoni-277x300.png",
+    "localPath": "public/wp-content/uploads/2020/12/Incrocio-Manzoni-rigoni-277x300.png",
+    "bytes": 29433,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/Incrocio-Manzoni-rigoni.png",
+    "localPath": "public/wp-content/uploads/2020/12/Incrocio-Manzoni-rigoni.png",
+    "bytes": 149306,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/Pinot-Nero-rigoni-277x300.png",
+    "localPath": "public/wp-content/uploads/2020/12/Pinot-Nero-rigoni-277x300.png",
+    "bytes": 28798,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/Pinot-Nero-rigoni.png",
+    "localPath": "public/wp-content/uploads/2020/12/Pinot-Nero-rigoni.png",
+    "bytes": 153239,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/Prosecco-Rose-rigoni-277x300.png",
+    "localPath": "public/wp-content/uploads/2020/12/Prosecco-Rose-rigoni-277x300.png",
+    "bytes": 32702,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/Prosecco-Rose-rigoni.png",
+    "localPath": "public/wp-content/uploads/2020/12/Prosecco-Rose-rigoni.png",
+    "bytes": 171496,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/Raboso-Passito-rigoni-277x300.png",
+    "localPath": "public/wp-content/uploads/2020/12/Raboso-Passito-rigoni-277x300.png",
+    "bytes": 23870,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/Raboso-Passito-rigoni.png",
+    "localPath": "public/wp-content/uploads/2020/12/Raboso-Passito-rigoni.png",
+    "bytes": 125721,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/rigoni-email.png",
+    "localPath": "public/wp-content/uploads/2020/12/rigoni-email.png",
+    "bytes": 757,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/rigoni-indirizzo.png",
+    "localPath": "public/wp-content/uploads/2020/12/rigoni-indirizzo.png",
+    "bytes": 516,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/rigoni-prosecco-creativo-277x300.png",
+    "localPath": "public/wp-content/uploads/2020/12/rigoni-prosecco-creativo-277x300.png",
+    "bytes": 32622,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/rigoni-prosecco-creativo.png",
+    "localPath": "public/wp-content/uploads/2020/12/rigoni-prosecco-creativo.png",
+    "bytes": 168997,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/rigoni-telefono.png",
+    "localPath": "public/wp-content/uploads/2020/12/rigoni-telefono.png",
+    "bytes": 773,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/rigoni-vittorino.png",
+    "localPath": "public/wp-content/uploads/2020/12/rigoni-vittorino.png",
+    "bytes": 6451,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/V-rigoni-bianco-300x269.png",
+    "localPath": "public/wp-content/uploads/2020/12/V-rigoni-bianco-300x269.png",
+    "bytes": 6709,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/V-rigoni-bianco.png",
+    "localPath": "public/wp-content/uploads/2020/12/V-rigoni-bianco.png",
+    "bytes": 5264,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2020/12/V-rigoni-grigio.png",
+    "localPath": "public/wp-content/uploads/2020/12/V-rigoni-grigio.png",
+    "bytes": 4168,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/anema-v-rigoni-e1611076324144-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/anema-v-rigoni-e1611076324144-191x300.jpg",
+    "bytes": 8400,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/anema-v-rigoni-e1611076324144.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/anema-v-rigoni-e1611076324144.jpg",
+    "bytes": 46474,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cabernet-franc-profondo-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/cabernet-franc-profondo-rigoni-vittorino-IT.pdf",
+    "bytes": 142170,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cabernet-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/cabernet-rigoni-vittorino-IT.pdf",
+    "bytes": 194435,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cabernet-sauvignon-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/cabernet-sauvignon-rigoni-vittorino-IT.pdf",
+    "bytes": 168694,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cabernet-sauvignon-v-rigoni-e1611076114185-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cabernet-sauvignon-v-rigoni-e1611076114185-191x300.jpg",
+    "bytes": 6241,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cabernet-sauvignon-v-rigoni-e1611076114185.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cabernet-sauvignon-v-rigoni-e1611076114185.jpg",
+    "bytes": 39249,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cabernet-v-rigoni-e1611075925213-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cabernet-v-rigoni-e1611075925213-191x300.jpg",
+    "bytes": 6511,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cabernet-v-rigoni-e1611075925213.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cabernet-v-rigoni-e1611075925213.jpg",
+    "bytes": 38884,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cantina-rigoni-filosofia-h-300x200.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cantina-rigoni-filosofia-h-300x200.jpg",
+    "bytes": 15351,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cantina-rigoni-filosofia-h.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cantina-rigoni-filosofia-h.jpg",
+    "bytes": 99717,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cantina-rigoni-outside-1024x420.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cantina-rigoni-outside-1024x420.jpg",
+    "bytes": 116566,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cantina-rigoni-outside-300x123.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cantina-rigoni-outside-300x123.jpg",
+    "bytes": 14395,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cantina-rigoni-outside-768x315.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cantina-rigoni-outside-768x315.jpg",
+    "bytes": 71257,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cantina-rigoni-outside.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cantina-rigoni-outside.jpg",
+    "bytes": 161158,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione-1024x682.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione-1024x682.jpg",
+    "bytes": 43403,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione-1200x800.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione-1200x800.jpg",
+    "bytes": 55318,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione-1536x1023.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione-1536x1023.jpg",
+    "bytes": 85224,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione-300x200.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione-300x200.jpg",
+    "bytes": 8034,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione-768x512.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione-768x512.jpg",
+    "bytes": 28156,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione.jpg",
+    "bytes": 344855,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/chardonnay-frizzante-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/chardonnay-frizzante-rigoni-vittorino-IT.pdf",
+    "bytes": 136419,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/chardonnay-frizzante-v-rigoni-e1611076202254-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/chardonnay-frizzante-v-rigoni-e1611076202254-191x300.jpg",
+    "bytes": 7014,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/chardonnay-frizzante-v-rigoni-e1611076202254.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/chardonnay-frizzante-v-rigoni-e1611076202254.jpg",
+    "bytes": 38890,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/chardonnay-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/chardonnay-rigoni-vittorino-IT.pdf",
+    "bytes": 169729,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/chardonnay-v-rigoni-e1611075846638-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/chardonnay-v-rigoni-e1611075846638-191x300.jpg",
+    "bytes": 7012,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/chardonnay-v-rigoni-e1611075846638.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/chardonnay-v-rigoni-e1611075846638.jpg",
+    "bytes": 38804,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/creativo-magnum-v-rigoni-e1611075125873-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/creativo-magnum-v-rigoni-e1611075125873-191x300.jpg",
+    "bytes": 6386,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/creativo-magnum-v-rigoni-e1611075125873.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/creativo-magnum-v-rigoni-e1611075125873.jpg",
+    "bytes": 36744,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/creativo-v-rigoni-1-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/creativo-v-rigoni-1-191x300.jpg",
+    "bytes": 7033,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/creativo-v-rigoni-1-654x1024.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/creativo-v-rigoni-1-654x1024.jpg",
+    "bytes": 43502,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/creativo-v-rigoni-1-768x1203.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/creativo-v-rigoni-1-768x1203.jpg",
+    "bytes": 55763,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/creativo-v-rigoni-1-980x1536.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/creativo-v-rigoni-1-980x1536.jpg",
+    "bytes": 80905,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/creativo-v-rigoni-1.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/creativo-v-rigoni-1.jpg",
+    "bytes": 110736,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-1-1-1024x683.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-1-1-1024x683.jpg",
+    "bytes": 150208,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-1-1-300x200.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-1-1-300x200.jpg",
+    "bytes": 19967,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-1-1-768x512.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-1-1-768x512.jpg",
+    "bytes": 95226,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-1-1.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-1-1.jpg",
+    "bytes": 187092,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-2-300x200.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-2-300x200.jpg",
+    "bytes": 16723,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-2-768x512.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-2-768x512.jpg",
+    "bytes": 65822,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-2.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-2.jpg",
+    "bytes": 73271,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-3-300x200.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-3-300x200.jpg",
+    "bytes": 18491,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-3-768x512.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-3-768x512.jpg",
+    "bytes": 102306,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-3.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-3.jpg",
+    "bytes": 131697,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-4-1-1024x683.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-4-1-1024x683.jpg",
+    "bytes": 93083,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-4-1-300x200.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-4-1-300x200.jpg",
+    "bytes": 15434,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-4-1-768x512.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-4-1-768x512.jpg",
+    "bytes": 58679,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-4-1.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-4-1.jpg",
+    "bytes": 129200,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-5-300x200.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-5-300x200.jpg",
+    "bytes": 21802,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-5-768x512.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-5-768x512.jpg",
+    "bytes": 112008,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-5.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-5.jpg",
+    "bytes": 136850,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-6-300x200.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-6-300x200.jpg",
+    "bytes": 19037,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-6-768x512.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-6-768x512.jpg",
+    "bytes": 77384,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/gallery-cantina-rigoni-6.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/gallery-cantina-rigoni-6.jpg",
+    "bytes": 87478,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/glera-spumante-v-rigoni-e1611076346431-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/glera-spumante-v-rigoni-e1611076346431-191x300.jpg",
+    "bytes": 7031,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/glera-spumante-v-rigoni-e1611076346431.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/glera-spumante-v-rigoni-e1611076346431.jpg",
+    "bytes": 41212,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/incrocio-manzoni-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/incrocio-manzoni-rigoni-vittorino-IT.pdf",
+    "bytes": 170500,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/incrocio-manzoni-v-rigoni-e1611075770341-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/incrocio-manzoni-v-rigoni-e1611075770341-191x300.jpg",
+    "bytes": 6972,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/incrocio-manzoni-v-rigoni-e1611075770341.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/incrocio-manzoni-v-rigoni-e1611075770341.jpg",
+    "bytes": 39888,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/maiuscolo-v-rigoni-e1611076065366-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/maiuscolo-v-rigoni-e1611076065366-191x300.jpg",
+    "bytes": 6563,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/maiuscolo-v-rigoni-e1611076065366.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/maiuscolo-v-rigoni-e1611076065366.jpg",
+    "bytes": 31805,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/malbech-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/malbech-rigoni-vittorino-IT.pdf",
+    "bytes": 194616,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/malbech-v-rigoni-e1611075898964-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/malbech-v-rigoni-e1611075898964-191x300.jpg",
+    "bytes": 6533,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/malbech-v-rigoni-e1611075898964.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/malbech-v-rigoni-e1611075898964.jpg",
+    "bytes": 38906,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/merlot-affinato-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/merlot-affinato-rigoni-vittorino-IT.pdf",
+    "bytes": 168094,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/merlot-affinato-v-rigoni-e1611076087352-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/merlot-affinato-v-rigoni-e1611076087352-191x300.jpg",
+    "bytes": 6335,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/merlot-affinato-v-rigoni-e1611076087352.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/merlot-affinato-v-rigoni-e1611076087352.jpg",
+    "bytes": 37902,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/merlot-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/merlot-rigoni-vittorino-IT.pdf",
+    "bytes": 194891,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/merlot-v-rigoni-e1611076009206-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/merlot-v-rigoni-e1611076009206-191x300.jpg",
+    "bytes": 6529,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/merlot-v-rigoni-e1611076009206.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/merlot-v-rigoni-e1611076009206.jpg",
+    "bytes": 37816,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/passito-ciacola-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/passito-ciacola-rigoni-vittorino-IT.pdf",
+    "bytes": 146708,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/passito-ciacola-v-rigoni-e1611076283543-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/passito-ciacola-v-rigoni-e1611076283543-191x300.jpg",
+    "bytes": 11644,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/passito-ciacola-v-rigoni-e1611076283543.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/passito-ciacola-v-rigoni-e1611076283543.jpg",
+    "bytes": 72044,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/passito-complice-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/passito-complice-rigoni-vittorino-IT.pdf",
+    "bytes": 138265,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/passito-complice-v-rigoni-e1611076250162-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/passito-complice-v-rigoni-e1611076250162-191x300.jpg",
+    "bytes": 5937,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/passito-complice-v-rigoni-e1611076250162.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/passito-complice-v-rigoni-e1611076250162.jpg",
+    "bytes": 30009,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/passito-raboso-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/passito-raboso-rigoni-vittorino-IT.pdf",
+    "bytes": 170823,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/passito-raboso-v-rigoni-e1611076302469-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/passito-raboso-v-rigoni-e1611076302469-191x300.jpg",
+    "bytes": 5544,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/passito-raboso-v-rigoni-e1611076302469.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/passito-raboso-v-rigoni-e1611076302469.jpg",
+    "bytes": 33643,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/pinot-grigio-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/pinot-grigio-rigoni-vittorino-IT.pdf",
+    "bytes": 170023,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/pinot-grigio-v-rigoni-e1611075872608-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/pinot-grigio-v-rigoni-e1611075872608-191x300.jpg",
+    "bytes": 6962,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/pinot-grigio-v-rigoni-e1611075872608.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/pinot-grigio-v-rigoni-e1611075872608.jpg",
+    "bytes": 39704,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/pinot-nero-magnum-v-rigoni-e1611075622852-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/pinot-nero-magnum-v-rigoni-e1611075622852-191x300.jpg",
+    "bytes": 6668,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/pinot-nero-magnum-v-rigoni-e1611075622852.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/pinot-nero-magnum-v-rigoni-e1611075622852.jpg",
+    "bytes": 38753,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/pinot-nero-maiuscolo-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/pinot-nero-maiuscolo-rigoni-vittorino-IT.pdf",
+    "bytes": 141887,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/pinot-nero-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/pinot-nero-rigoni-vittorino-IT.pdf",
+    "bytes": 193976,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/pinot-nero-rosso-v-rigoni-e1611075978472-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/pinot-nero-rosso-v-rigoni-e1611075978472-191x300.jpg",
+    "bytes": 6570,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/pinot-nero-rosso-v-rigoni-e1611075978472.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/pinot-nero-rosso-v-rigoni-e1611075978472.jpg",
+    "bytes": 39003,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/pinot-nero-spumante-brut-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/pinot-nero-spumante-brut-rigoni-vittorino-IT.pdf",
+    "bytes": 170453,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/pinot-nero-v-rigoni-e1611075653123-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/pinot-nero-v-rigoni-e1611075653123-191x300.jpg",
+    "bytes": 7346,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/pinot-nero-v-rigoni-e1611075653123.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/pinot-nero-v-rigoni-e1611075653123.jpg",
+    "bytes": 44663,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/profondo-v-rigoni-e1611076037669-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/profondo-v-rigoni-e1611076037669-191x300.jpg",
+    "bytes": 6400,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/profondo-v-rigoni-e1611076037669.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/profondo-v-rigoni-e1611076037669.jpg",
+    "bytes": 30159,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/prosecco-950-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/prosecco-950-rigoni-vittorino-IT.pdf",
+    "bytes": 198872,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/prosecco-950-v-rigoni-e1611075679831-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/prosecco-950-v-rigoni-e1611075679831-191x300.jpg",
+    "bytes": 7469,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/prosecco-950-v-rigoni-e1611075679831.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/prosecco-950-v-rigoni-e1611075679831.jpg",
+    "bytes": 45754,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/prosecco-creativo-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/prosecco-creativo-rigoni-vittorino-IT.pdf",
+    "bytes": 174304,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/prosecco-rose-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/prosecco-rose-rigoni-vittorino-IT.pdf",
+    "bytes": 177159,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/prosecco-rose-v-rigoni-e1611075702216-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/prosecco-rose-v-rigoni-e1611075702216-191x300.jpg",
+    "bytes": 7491,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/prosecco-rose-v-rigoni-e1611075702216.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/prosecco-rose-v-rigoni-e1611075702216.jpg",
+    "bytes": 49553,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/raboso-frizzante-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/raboso-frizzante-rigoni-vittorino-IT.pdf",
+    "bytes": 217444,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/raboso-frizzante-v-rigoni-e1611076180822-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/raboso-frizzante-v-rigoni-e1611076180822-191x300.jpg",
+    "bytes": 6559,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/raboso-frizzante-v-rigoni-e1611076180822.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/raboso-frizzante-v-rigoni-e1611076180822.jpg",
+    "bytes": 42382,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/raboso-spumante-anema-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/raboso-spumante-anema-rigoni-vittorino-IT.pdf",
+    "bytes": 150253,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/refosco-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/refosco-rigoni-vittorino-IT.pdf",
+    "bytes": 194855,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/refosco-v-rigoni-e1611075952594-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/refosco-v-rigoni-e1611075952594-191x300.jpg",
+    "bytes": 6508,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/refosco-v-rigoni-e1611075952594.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/refosco-v-rigoni-e1611075952594.jpg",
+    "bytes": 37777,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/rigoni-vittorino-azienda-1024x420.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/rigoni-vittorino-azienda-1024x420.jpg",
+    "bytes": 65156,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/rigoni-vittorino-azienda-1200x492.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/rigoni-vittorino-azienda-1200x492.jpg",
+    "bytes": 82258,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/rigoni-vittorino-azienda-1536x630.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/rigoni-vittorino-azienda-1536x630.jpg",
+    "bytes": 119268,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/rigoni-vittorino-azienda-300x123.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/rigoni-vittorino-azienda-300x123.jpg",
+    "bytes": 10735,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/rigoni-vittorino-azienda-768x315.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/rigoni-vittorino-azienda-768x315.jpg",
+    "bytes": 42782,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/rigoni-vittorino-azienda.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/rigoni-vittorino-azienda.jpg",
+    "bytes": 134042,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/rigoni-vittorino.png",
+    "localPath": "public/wp-content/uploads/2021/01/rigoni-vittorino.png",
+    "bytes": 6451,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/rosato-di-raboso-rose-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/rosato-di-raboso-rose-rigoni-vittorino-IT.pdf",
+    "bytes": 371497,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/rosato-raboso-frizzante-v-rigoni-e1611076226369-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/rosato-raboso-frizzante-v-rigoni-e1611076226369-191x300.jpg",
+    "bytes": 8413,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/rosato-raboso-frizzante-v-rigoni-e1611076226369.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/rosato-raboso-frizzante-v-rigoni-e1611076226369.jpg",
+    "bytes": 51942,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/sauvignon-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/sauvignon-rigoni-vittorino-IT.pdf",
+    "bytes": 169482,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/sauvignon-v-rigoni-e1611075819791-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/sauvignon-v-rigoni-e1611075819791-191x300.jpg",
+    "bytes": 6934,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/sauvignon-v-rigoni-e1611075819791.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/sauvignon-v-rigoni-e1611075819791.jpg",
+    "bytes": 39028,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/spumante-glera-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/spumante-glera-rigoni-vittorino-IT.pdf",
+    "bytes": 203024,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/suadente-glera-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/suadente-glera-rigoni-vittorino-IT.pdf",
+    "bytes": 170291,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/suadente-v-rigoni-e1611075795631-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/suadente-v-rigoni-e1611075795631-191x300.jpg",
+    "bytes": 7094,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/suadente-v-rigoni-e1611075795631.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/suadente-v-rigoni-e1611075795631.jpg",
+    "bytes": 39516,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/traminer-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/traminer-rigoni-vittorino-IT.pdf",
+    "bytes": 169479,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/traminer-v-rigoni-e1611075740113-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/traminer-v-rigoni-e1611075740113-191x300.jpg",
+    "bytes": 6921,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/traminer-v-rigoni-e1611075740113.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/traminer-v-rigoni-e1611075740113.jpg",
+    "bytes": 38832,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/verduzzo-frizzante-rigoni-vittorino-IT.pdf",
+    "localPath": "public/wp-content/uploads/2021/01/verduzzo-frizzante-rigoni-vittorino-IT.pdf",
+    "bytes": 172135,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/verduzzo-frizzante-v-rigoni-e1611076155954-191x300.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/verduzzo-frizzante-v-rigoni-e1611076155954-191x300.jpg",
+    "bytes": 7570,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2021/01/verduzzo-frizzante-v-rigoni-e1611076155954.jpg",
+    "localPath": "public/wp-content/uploads/2021/01/verduzzo-frizzante-v-rigoni-e1611076155954.jpg",
+    "bytes": 47528,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2026/02/striscia-4-loghi-e1704447021140-1210x297-1-1024x251.png",
+    "localPath": "public/wp-content/uploads/2026/02/striscia-4-loghi-e1704447021140-1210x297-1-1024x251.png",
+    "bytes": 101690,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2026/02/striscia-4-loghi-e1704447021140-1210x297-1-1200x295.png",
+    "localPath": "public/wp-content/uploads/2026/02/striscia-4-loghi-e1704447021140-1210x297-1-1200x295.png",
+    "bytes": 129831,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2026/02/striscia-4-loghi-e1704447021140-1210x297-1-300x74.png",
+    "localPath": "public/wp-content/uploads/2026/02/striscia-4-loghi-e1704447021140-1210x297-1-300x74.png",
+    "bytes": 14952,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2026/02/striscia-4-loghi-e1704447021140-1210x297-1-768x189.png",
+    "localPath": "public/wp-content/uploads/2026/02/striscia-4-loghi-e1704447021140-1210x297-1-768x189.png",
+    "bytes": 64700,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/2026/02/striscia-4-loghi-e1704447021140-1210x297-1.png",
+    "localPath": "public/wp-content/uploads/2026/02/striscia-4-loghi-e1704447021140-1210x297-1.png",
+    "bytes": 117871,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/contact-form-7.min.js?ver=6.0",
+    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/contact-form-7.min.js?ver=6.0",
+    "bytes": 13311,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/geppa-js.min.js?ver=1.0",
+    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/geppa-js.min.js?ver=1.0",
+    "bytes": 238,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/getwid-blocks-frontend-js.min.js?ver=2.0.12",
+    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/getwid-blocks-frontend-js.min.js?ver=2.0.12",
+    "bytes": 33424,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/gtm4wp-form-move-tracker.min.js?ver=1.20.2",
+    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/gtm4wp-form-move-tracker.min.js?ver=1.20.2",
+    "bytes": 1137,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/image_zoooom-init.min.js?ver=1.57",
+    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/image_zoooom-init.min.js?ver=1.57",
+    "bytes": 10050,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/social_share_button_front_js.min.js?ver=7.0",
+    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/social_share_button_front_js.min.js?ver=7.0",
+    "bytes": 753,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/swv.min.js?ver=6.0",
+    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/swv.min.js?ver=6.0",
+    "bytes": 12373,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/twentytwenty-js.min.js?ver=1.0",
+    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/twentytwenty-js.min.js?ver=1.0",
+    "bytes": 10552,
+    "status": "ok"
+  },
+  {
+    "originalUrl": "https://rigonivittorino.com/wp-content/uploads/siteground-optimizer-assets/wpcf7-recaptcha.min.js?ver=6.0",
+    "localPath": "public/wp-content/uploads/siteground-optimizer-assets/wpcf7-recaptcha.min.js?ver=6.0",
+    "bytes": 919,
+    "status": "ok"
+  }
+]

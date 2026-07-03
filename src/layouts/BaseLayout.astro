@@ -1,0 +1,84 @@
+---
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+export interface Props {
+  title: string;
+  description?: string;
+  ogTitle?: string;
+  extraStyleFile?: string; // e.g. "home-extra-style.css" (page-specific UAGB CSS)
+  bodyClass?: string;
+}
+
+const { title, description, ogTitle, extraStyleFile, bodyClass = "" } = Astro.props;
+
+const headerHtml = await readFile(
+  path.join(process.cwd(), "src/content/chrome/header.html"),
+  "utf8",
+);
+const footerHtml = await readFile(
+  path.join(process.cwd(), "src/content/chrome/footer.html"),
+  "utf8",
+);
+
+let extraStyle = "";
+if (extraStyleFile) {
+  extraStyle = await readFile(
+    path.join(process.cwd(), "src/content/main", extraStyleFile),
+    "utf8",
+  );
+}
+
+const canonical = new URL(Astro.url.pathname, "https://rigonivittorino.com").toString();
+---
+
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={canonical} />
+    <meta property="og:title" content={ogTitle ?? title} />
+    <meta property="og:url" content={canonical} />
+
+    <link rel="icon" href="/wp-content/uploads/2020/12/cropped-rigoni-favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" href="/wp-content/uploads/2020/12/cropped-rigoni-favicon-192x192.png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/wp-content/uploads/2020/12/cropped-rigoni-favicon-180x180.png" />
+
+    <!-- Self-hosted vendor CSS, kept in the exact cascade order the live site loads them in. -->
+    <link rel="stylesheet" href="/wp-content/plugins/getwid/vendors/fontawesome-free/css/all.min.css" />
+    <link rel="stylesheet" href="/wp-content/plugins/getwid/assets/css/getwid-blocks.min.css" />
+    <link rel="stylesheet" href="/wp-content/plugins/contact-form-7/includes/css/contact-form-7.min.css" />
+    <link rel="stylesheet" href="/wp-content/plugins/sitepress-multilingual-cms/dist/css/blocks/wpml-blocks.min.css" />
+    <link rel="stylesheet" href="/wp-content/plugins/social-share-button/assets/front/css/social_share_button_style.min.css" />
+    <link
+      rel="stylesheet"
+      href="/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-list-horizontal/style.min.css"
+    />
+    <link rel="stylesheet" href="/wp-content/uploads/uag-plugin/uagb-block-css.min.css" />
+    <link rel="stylesheet" href="/wp-content/plugins/grids/assets/css/grids-frontend.min.css" />
+    <link rel="stylesheet" href="/wp-content/themes/twentytwenty/parent-style.min.css" />
+    <link rel="stylesheet" href="/wp-content/themes/geppa/style-custom.min.css" />
+    <!-- WordPress/block-editor generated CSS variables + global rules the above depend on. -->
+    <link rel="stylesheet" href="/styles/wp-global.css" />
+    <!-- Third-party CDN fonts/icons, referenced externally exactly as the live site does. -->
+    <link rel="stylesheet" href="https://servizi.promoservice.com/fontawesome/5.14.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Proza+Libre&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@700&display=swap" />
+    <link rel="stylesheet" href="/wp-content/themes/geppa/twentytwenty-style.min.css" />
+    <link rel="stylesheet" href="/wp-content/themes/twentytwenty/assets/css/twentytwenty-fonts.min.css" />
+    {extraStyle && <style set:html={extraStyle} />}
+    <link rel="stylesheet" href="/styles/site.css" />
+  </head>
+  <body class={`custom-background wp-custom-logo wp-theme-twentytwenty wp-child-theme-geppa reduced-spacing ${bodyClass}`}>
+    <Fragment set:html={headerHtml} />
+    <main id="site-content" class="site-content">
+      <slot />
+    </main>
+    <Fragment set:html={footerHtml} />
+    <script is:inline src="/wp-content/themes/twentytwenty/assets/js/twentytwenty.min.js"></script>
+    <script is:inline src="/scripts/site.js"></script>
+  </body>
+</html>

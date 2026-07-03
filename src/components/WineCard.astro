@@ -1,0 +1,40 @@
+---
+// Mirrors the live site's .single-wine-container card markup exactly (see
+// scripts/.cache/html/spumanti.html), styled entirely by the self-hosted
+// style-custom.min.css / twentytwenty CSS with no new rules needed.
+export interface Props {
+  slug: string;
+  title: string;
+  cardImageSrc: string;
+  cardImageSrcset?: string;
+  cardImageWidth?: string;
+  cardImageHeight?: string;
+}
+const { slug, title, cardImageSrc, cardImageSrcset, cardImageWidth, cardImageHeight } = Astro.props;
+const href = `/it/i-nostri-vini/${slug}/`;
+---
+
+<div class="single-wine-container hvr-grow">
+  <div class="wine-image">
+    <a href={href}>
+      <img
+        width={cardImageWidth ?? "191"}
+        height={cardImageHeight ?? "300"}
+        src={cardImageSrc}
+        class="img-responsive wp-post-image"
+        alt={title}
+        srcset={cardImageSrcset}
+        sizes="(max-width: 191px) 100vw, 191px"
+        loading="lazy"
+      />
+    </a>
+  </div>
+  <div class="wine-title text-center">
+    <a href={href}>{title}</a>
+  </div>
+  <div class="wine-link text-center">
+    <a href={href}>
+      <button class="arrowBtn arrow-list"><span class="icon"><i class="fal fa-arrow-right"></i></span></button>
+    </a>
+  </div>
+</div>

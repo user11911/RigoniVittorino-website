@@ -1,0 +1,38 @@
+[
+  {
+    "slug": "spumanti",
+    "title": "Prosecchi e Spumanti",
+    "navLabel": "Prosecchi e Spumanti",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "bianchi",
+    "title": "Bianchi",
+    "navLabel": "Bianchi",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "rossi",
+    "title": "Rossi",
+    "navLabel": "Rossi",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "affinati",
+    "title": "Affinati",
+    "navLabel": "Affinati",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "frizzanti-e-rosati",
+    "title": "Frizzanti e Rosati",
+    "navLabel": "Frizzanti e Rosati",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "passiti",
+    "title": "Passiti",
+    "navLabel": "Passiti",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  }
+]

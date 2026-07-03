@@ -1,0 +1,47 @@
+---
+// Mirrors the live site's social-share-button plugin markup exactly. The share
+// links themselves are plain static share-intent URLs (mailto:, facebook.com/sharer,
+// twitter.com/intent, reddit.com/submit, linkedin.com/shareArticle) that need no
+// plugin runtime — confirmed on the live site these don't depend on any JS to work.
+// Share counts are not live (no backend), so they're shown as static "0" rather than
+// inventing a counting backend.
+export interface Props {
+  postId: string;
+  title: string;
+  url: string;
+}
+const { postId, title, url } = Astro.props;
+const id = `wp-share-button-${postId}`;
+---
+
+<div id={id} class="wp-share-button theme1">
+  <span class="total-share ">
+    <i class="total-count-text">Total Share</i> <i class="total-count">0</i>
+  </span>
+  <a target="_blank" href={`mailto:?subject=${title}&body=${url}`} class={`share-button share-button-${postId} email`} id="email">
+    <span class="button-icon"><i class="far fa-envelope" /></span><span class="button-name">Email</span><span class="button-count">0</span>
+  </a>
+  <a target="_blank" href={`https://www.facebook.com/sharer/sharer.php?u=${url}`} class={`share-button share-button-${postId} facebook`} id="facebook">
+    <span class="button-icon"><i class="fab fa-facebook-f" /></span><span class="button-name">Facebook</span><span class="button-count">0</span>
+  </a>
+  <a target="_blank" href={`https://twitter.com/intent/tweet?url=${url}&text=${title}`} class={`share-button share-button-${postId} twitter`} id="twitter">
+    <span class="button-icon"><i class="fab fa-twitter" /></span><span class="button-name">Twitter</span><span class="button-count">0</span>
+  </a>
+  <a title="More..." href={`#${id}`} class="share-button-more">
+    <span class="button-icon"><i class="fa fa-plus" /></span>
+  </a>
+  <div class={`wp-share-button-popup wp-share-button-popup-${postId}`}>
+    <div class="popup-buttons">
+      <span class="close"><i class="fa fa-times" /></span>
+      <a target="_blank" href={`http://www.reddit.com/submit?title=${title}&url=${url}`} class={`share-button share-button-${postId} reddit`} id="reddit">
+        <span class="button-icon"><i class="fab fa-reddit-alien" /></span><span class="button-name">Reddit</span><span class="button-count">0</span>
+      </a>
+      <a target="_blank" href={`https://www.linkedin.com/shareArticle?url=${url}&title=${title}&summary=&source=`} class={`share-button share-button-${postId} linkedin`} id="linkedin">
+        <span class="button-icon"><i class="fab fa-linkedin-in" /></span><span class="button-name">Linkedin</span><span class="button-count">0</span>
+      </a>
+      <a target="_blank" href={`http://www.stumbleupon.com/submit?url=${url}&title=${title}`} class={`share-button share-button-${postId} stumbleupon`} id="stumbleupon">
+        <span class="button-icon"><i class="fab fa-stumbleupon" /></span><span class="button-name">Stumbleupon</span><span class="button-count">0</span>
+      </a>
+    </div>
+  </div>
+</div>
