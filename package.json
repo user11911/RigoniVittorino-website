@@ -16,7 +16,8 @@
     "test:compare": "node scripts/screenshot-compare.mjs",
     "test:unit": "vitest run",
     "wrangler:types": "wrangler types",
-    "wrangler:dev": "wrangler dev"
+    "wrangler:dev": "wrangler dev",
+    "deploy": "astro build && wrangler deploy"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.1",
