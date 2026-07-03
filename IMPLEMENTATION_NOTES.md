@@ -3,6 +3,8 @@
 Rebuild of the Italian section of `rigonivittorino.com/it` (a WordPress site) as a
 static Astro site, per `.claude/CLAUDE.md` and `.claude/rules/testing.md`.
 
+ARTIFACT: https://claude.ai/code/artifact/a24f06b3-a666-44e7-b664-cba104bea07e
+
 ## 1. Framework / architecture
 
 - **Astro 7**, static output (`output: "static"`, the default), `trailingSlash: "always"`
