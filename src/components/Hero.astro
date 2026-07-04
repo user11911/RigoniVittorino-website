@@ -8,6 +8,15 @@
 // Valpolicella", linking to a different winery) was measured to be permanently
 // clipped outside the slider's visible bounds on the live site and is intentionally
 // NOT reproduced here since it is never actually seen by visitors.
+//
+// Caption entrance animation (Task 3, defect 6): the live slider's caption layer
+// was measured frame-by-frame (Playwright, sampling every 50ms across a live slide
+// transition) rather than guessed — it slides in from the right (~50px offset) and
+// fades in from opacity 0, essentially fully settled by ~200ms, with an ease-out
+// deceleration curve (biggest position change in the first 50ms). Reproduced below
+// as a CSS keyframe animation on `.hero-slider__caption`, distinct from the 1s
+// background crossfade — each slide has its own caption element in the DOM, so
+// toggling `.is-active` naturally retriggers the animation per slide.
 const slides = [
   { image: "/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg", caption: "Questo è il segno di Vittorino" },
   { image: "/wp-content/uploads/2021/01/rigoni-s3-vigneti.jpg", caption: "Amore per la terra e per la famiglia" },

@@ -455,3 +455,174 @@ screenshots above are pixel-identical to the Task 1 baseline.
   matching `Origin` header — transparent for real browser submissions (which always
   send one), but worth knowing when testing the endpoint directly with `curl`
   (needs an explicit `-H "Origin: ..."` matching the request host).
+
+---
+
+# Task 3 — Fix visual parity bugs from the Italian remake
+
+Per `.claude/TODO.md`: six specific visual defects found by the site owner
+reviewing the rebuild against the live site. Visual-correction-only — no redesign,
+no content changes, no Task 2 backend changes.
+
+## Summary of each defect
+
+| # | Defect | Root cause | Status |
+|---|---|---|---|
+| 1 | Main images "zoom" on `/it/chi-siamo/` and `/it/cantina/` | Missing global CSS (see below) | **Fixed**, verified |
+| 2 | "Sepúlveda" quote stretches on mobile | Same missing CSS | **Fixed**, verified |
+| 3 | `/it/contatti/` image→description spacing too low | Not conclusively reproduced — see below | **Investigated, not changed** |
+| 4 | Unwanted site-level image zoom | Task 1's own hover-scale addition | **Fixed** (removed) |
+| 5 | Malformed slider/carousel buttons | Missing icon-centering CSS | **Fixed**, verified |
+| 6 | Missing homepage hero animation | Task 1's crossfade dropped the caption's own entrance motion | **Fixed**, verified against measured live timing |
+
+## Defects 1 & 2: a single missing global CSS block
+
+The live site's `<head>` includes a style tag `id="grids-frontend-inline-css"` that
+Task 1's scraper never captured — it wasn't in the list of "known" style IDs the
+extraction script (`scripts/extract-head-assets.mjs`) checked for, and it's easy to
+miss precisely because most pages' `<head>` blocks look identical to the ones
+already captured. Confirmed byte-identical across every page type. Its content
+reassigns the generic `--_gs-d`/`--_gs-min-height`/etc. custom properties from
+their `-tablet`/`-mobile` values at `max-width:1024px`/`768px` — without it, every
+`.grids-section` permanently falls back to its `-desktop` values regardless of
+viewport width (per `grids-frontend.min.css`'s own fallback chain, which is a
+separate, correctly-captured file).
+
+**Concretely, on `/it/chi-siamo/` and `/it/cantina/`**: the desktop hero band (a
+`background-image:cover` div, `--_gs-min-height-desktop:600px`,
+`--_gs-d-mobile:none`) never actually received `display:none` on mobile without
+this rule, so it rendered at a fixed 600px height on a 375px-wide viewport — the
+"zoom". A plain `<img>` mobile-specific fallback already existed right next to it
+in the transplanted markup and simply never got a chance to show.
+
+**On the Sepúlveda quote** (`/it/cantina/`, spelled "Sepùlveda" with a grave accent
+on the live site itself — worth noting since searching for the correct Spanish
+spelling "Sepúlveda" finds nothing): its wrapping `.grids-area` has extreme
+mobile-only values (`--_ga-m-mobile:-200px 0 0 0`, `--_ga-p-mobile:0 10px 300px
+10px`) that only make sense once actually switched on at the right breakpoint.
+
+**Fix**: added `grids-frontend-inline-css` to the `GLOBAL_STYLE_IDS` list in
+`scripts/extract-head-assets.mjs` (so future re-scrapes capture it automatically)
+and regenerated `public/styles/wp-global.css` from the existing cached scrape.
+
+**Verification**: measured directly (Playwright, computed styles + bounding boxes)
+before and after, at 375px:
+- chi-siamo hero: before — desktop band visible, 600px tall, no mobile `<img>`
+  showing; after — desktop band `display:none`, mobile `<img>` visible at 134px
+  tall (matches the live site's 134px exactly).
+- Full-page screenshot comparison confirms both pages now show the compact
+  landscape crop matching the live site, not the zoomed portrait crop.
+
+## Defect 3: investigated, not changed
+
+Could not reproduce "spacing between images and their descriptions is too low" as
+a measurable defect. What was checked, at both 375px and 1440px:
+- Team-member photo → its own bio paragraph gap: **100px in both live and local,
+  identical**.
+- Team-member card visual comparison (cropped screenshots): **pixel-identical**
+  between live and local at both breakpoints.
+- Address/hours icon-box → heading text spacing: **visually identical**.
+- Did find a uniform ~108px vertical offset earlier on the mobile page (everything
+  from the team section downward starts ~108px lower in the rebuild than live) —
+  but this makes the rebuild *more* spacious before that point, not tighter, which
+  contradicts "too low" spacing, and doesn't change the gap between any image and
+  its own caption (both shift together).
+
+Given the literal defects checked don't show a "too tight" spacing bug, no change
+was made rather than risk an unfounded fix. **This needs the site owner to point at
+the specific image/description pairing and ideally a screenshot** — flagged as an
+open item rather than closed.
+
+## Defect 4: unwanted zoom removed
+
+Audited every zoom-capable mechanism in the codebase (`grep` across all site CSS/
+JS/components for `zoom`, `scale(`, `transform`, `lightbox`, `fancybox`,
+`draggable`): found exactly one, `.wine-image:hover img.zoooom { transform:
+scale(1.15) }` in `public/styles/site.css`, added in Task 1 as a stand-in for the
+original's real interaction. Checked the live product page directly: the
+original's `wp-image-zoooom` plugin implements a cursor-following magnifier lens
+(`.zoomContainer`/`.zoomTint`/`.zoomLens` elements), not a scale transform — so
+Task 1's replacement was already a different interaction from the source of truth.
+**Removed outright** rather than attempt to reproduce a jQuery magnifier plugin,
+which would be disproportionate to a bug-fix task; the image is now static.
+
+Also checked (and confirmed benign, not touched): `.hvr-grow:hover{transform:
+scale(1.03)}` on wine category cards is the **original theme's own CSS** (not a
+Task 1 addition), and several UAGB "Spectra image gallery" lightbox/scale rules
+exist in the self-hosted vendor CSS but are unreachable — no page in this rebuild
+uses the `spectra-image-gallery`/`uagb-image-gallery` block classes those rules key
+off, confirmed via `grep` across all transplanted content.
+
+## Defect 5: slider/carousel button shapes
+
+`.getwid-slider-arrow` (the homepage's featured-wines carousel prev/next buttons,
+`public/styles/site.css`) had no `display:flex`/centering for its `‹`/`›` glyph and
+no padding reset on the underlying `<button>`, producing the "odd blob" shape
+already noted (but left unfixed) during Task 1's own verification pass. Fixed with
+proper flex-centering, a padding reset, and improved contrast/hover state.
+
+Checked and confirmed **not** affected: the wine category grid's arrow button
+(`.arrowBtn.arrow-list` in `WineCard.astro`) and the hero's pagination dots
+(`.hero-slider__dot`) — both already render as clean circular controls (the
+category arrow uses the original theme's own `.arrowBtn` CSS with a FontAwesome
+icon, unrelated to the Getwid slider bug).
+
+## Defect 6: homepage hero animation
+
+Measured the live hero's caption entrance frame-by-frame (Playwright, sampling
+every 50ms across a live slide transition, filtering to the layer actually within
+the slider's visible/clipped bounds) rather than guessing from the RevSlider
+`data-frame_0`/`data-frame_1` attributes directly. Result: the caption slides in
+from the right (~50px starting offset) while fading in from opacity 0, with an
+ease-out deceleration curve (biggest position change in the first ~50ms), fully
+settled by roughly 200ms.
+
+Task 1's `Hero.astro` used one flat 1s opacity crossfade for the background *and*
+caption together — no separate caption entrance at all. Added a distinct
+`@keyframes hero-caption-in` (translateX 50px→0, opacity 0→1, 250ms ease-out) to
+`public/styles/site.css`, applied only while a slide is `.is-active`; since each
+slide has its own caption element in the DOM, toggling the active class naturally
+retriggers the animation per slide. Includes a `prefers-reduced-motion` override.
+
+**Verification**: re-measured the local build the same way (every 50ms across a
+triggered slide change) — settles by ~200ms with the same ease-out shape as the
+live measurement (e.g. live: 316→272→268→267px over 100ms; local: 75→61→48→41px
+over 100ms toward its own final position — same curve shape, same settle time).
+
+## Files changed
+
+- `scripts/extract-head-assets.mjs` — added `grids-frontend-inline-css` to the
+  captured global style IDs (defects 1/2).
+- `public/styles/wp-global.css` — regenerated to include the above block.
+- `public/styles/site.css` — removed the hover-zoom effect (4); fixed
+  `.getwid-slider-arrow` centering (5); added the caption entrance keyframe (6).
+- `src/components/Hero.astro` — comment documenting the measured animation basis;
+  no markup changes needed (each slide already has its own caption element).
+
+No other files touched. No changes to page content/text, routes, Task 2 backend/
+contact code, `/it/privacy-policy/`, `/it/dati-societari/`, News routing, or shop
+links.
+
+## Testing and confirmations
+
+- `npx astro build`: succeeds, 42 static pages + 1 server function, 0 errors.
+- `node scripts/route-smoke-test.mjs` against `wrangler dev`: **42/42 routes pass**,
+  0 console errors; both blank routes still confirmed empty.
+- `node scripts/screenshot-compare.mjs`: all 4 breakpoints × 6 representative pages
+  captured with 0 console errors; before/after evidence in `docs/parity/rebuilt/`
+  (before-state captured earlier in this same directory prior to the fixes, and in
+  `docs/parity/baseline/` for the live site).
+- ✅ `/it/privacy-policy/` and `/it/dati-societari/` remain blank (unaffected by any
+  Task 3 change; reconfirmed by the smoke test).
+- ✅ News remains excluded from routing; shop links remain external (unaffected,
+  reconfirmed by the smoke test).
+- ✅ Task 2 contact backend not touched; not exercised again since nothing in its
+  code path changed.
+
+## Known limitations / open items
+
+- **Defect 3 is unresolved** — see above. Needs the site owner to identify the
+  specific image/description pairing (ideally with a screenshot or a more precise
+  page location) before a fix can be safely made.
+- The small floating icon widget noted as unidentified in Task 1's notes is still
+  present and still not investigated (out of scope for the six named defects).

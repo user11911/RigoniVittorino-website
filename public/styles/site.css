@@ -46,6 +46,28 @@
   line-height: 1.25;
   color: #222;
   z-index: 2;
+  opacity: 0;
+}
+/* Entrance animation, measured against the live slider — see Hero.astro. Runs only
+ * while the parent slide is active, so it retriggers each time a new slide comes in. */
+@keyframes hero-caption-in {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.hero-slider__slide.is-active .hero-slider__caption {
+  animation: hero-caption-in 250ms ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-slider__slide.is-active .hero-slider__caption {
+    animation: none;
+    opacity: 1;
+  }
 }
 .hero-slider__dots {
   position: absolute;
@@ -99,12 +121,23 @@
   z-index: 2;
   width: 36px;
   height: 36px;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.2);
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.85);
   cursor: pointer;
-  font-size: 16px;
+  font-family: inherit;
+  font-size: 20px;
   line-height: 1;
+  color: #333;
+}
+.getwid-slider-arrow:hover {
+  background: #fff;
+  border-color: rgba(0, 0, 0, 0.35);
 }
 .getwid-slider-arrow.prev {
   left: 10px;
@@ -168,15 +201,10 @@
   align-self: flex-end;
 }
 
-/* --- Product image zoom (replaces wp-image-zoooom jQuery plugin) --- */
-.wine-image {
-  overflow: hidden;
-}
-.wine-image img.zoooom {
-  cursor: zoom-in;
-  transition: transform 0.4s ease;
-  transform-origin: center;
-}
-.wine-image:hover img.zoooom {
-  transform: scale(1.15);
-}
+/* Task 1 originally replaced wp-image-zoooom (the live site's real behavior is a
+ * cursor-following magnifier lens via .zoomContainer/.zoomTint, confirmed by
+ * inspecting the live product page) with a simple hover-scale transform. Per
+ * Task 3, that's a different, unintended site-level zoom interaction rather than a
+ * faithful reproduction, so it's removed outright — the image is static, matching
+ * neither a fabricated effect nor a disproportionate jQuery-plugin reimplementation.
+ */

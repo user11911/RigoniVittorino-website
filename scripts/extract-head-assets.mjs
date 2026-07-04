@@ -28,6 +28,13 @@ const GLOBAL_STYLE_IDS = [
   "twentytwenty-style-inline-css",
   "custom-background-css",
   "uagb-style-conditional-extension",
+  // Missed in the original Task 1 pass — this is the block that actually
+  // reassigns the generic --_gs-d/--_gs-min-height/etc. custom properties from
+  // their -tablet/-mobile values at the right breakpoints. Without it every
+  // .grids-section permanently falls back to its -desktop values regardless of
+  // viewport width (see IMPLEMENTATION_NOTES.md Task 3 for the visible symptoms
+  // this caused). Confirmed byte-identical across every page type.
+  "grids-frontend-inline-css",
 ];
 
 const PAGE_SPECIFIC = [
