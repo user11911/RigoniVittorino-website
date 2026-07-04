@@ -11,9 +11,10 @@ Task-specific instructions belong in `TODO.md`. Before starting work, read this 
 ## Current project state
 
 - Task 1, the Italian website remake, is completed and frozen.
+- Task 2, the `/it/contatti/` backend/contact-form work, is completed and frozen unless `TODO.md` says otherwise.
 - Treat the existing project as approved work.
-- Do not modify completed pages, shared layouts, shared styles, routing, assets, animations, or behavior unless the active task strictly requires it.
-- If a change could affect completed work, first explain the need, list the affected files or folders, and obtain explicit user approval before making the change.
+- Do not modify completed pages, backend code, shared layouts, shared styles, routing, assets, animations, or behavior unless the active task strictly requires it.
+- If a change could affect completed work outside the active task, first explain the need, list the affected files or folders, and obtain explicit user approval before making the change.
 - Any folder not evidently related to the active task requires a written reason before it is touched.
 
 ## Source of truth
@@ -36,7 +37,7 @@ Task-specific instructions belong in `TODO.md`. Before starting work, read this 
 ## Security and data handling
 
 - Never hardcode secrets, credentials, API keys, SMTP passwords, database passwords, private tokens, or sensitive configuration.
-- Use environment variables and provide safe placeholder names in `.env.example` or equivalent documentation.
+- Use environment variables and provide safe placeholder names in `.env.example` or equivalent documentation when backend or integration work requires them.
 - Treat the site as a public production website.
 - Validate and sanitize all user input on the server, even when client-side validation exists.
 - Prefer minimal data collection and document any retained user data.
@@ -44,6 +45,7 @@ Task-specific instructions belong in `TODO.md`. Before starting work, read this 
 
 ## Backend and integration principles
 
+- Apply this section only when the active task touches backend, storage, email, captcha, deployment configuration, or external integrations.
 - Prefer simple, maintainable, low-cost, production-suitable backend choices that fit the detected framework and deployment model.
 - Use framework-native server/API features when they are reliable and compatible with the project.
 - Do not add a separate backend service unless it is clearly justified by the active task.
@@ -62,10 +64,10 @@ Before changing code for any task:
 
 ## Visual parity and regression control
 
-- Preserve the approved visual result from Task 1.
+- Preserve the approved visual result from completed work except where the active task explicitly requires a correction.
 - For any page affected by the active task, compare before and after at these widths: 375px, 768px, 1024px, and 1440px.
 - Verify header, footer, navigation, typography, spacing, form layout, images, animations, hover states, scroll behavior, and responsive behavior.
-- Use screenshots or other repeatable evidence to prove that unrelated pages were not visually changed.
+- Use screenshots, recordings, or other repeatable evidence to prove that affected defects were fixed and unrelated pages were not visually changed.
 
 ## Testing requirements
 
@@ -82,9 +84,8 @@ At completion, report:
 - Summary of what changed.
 - Files changed.
 - Files or folders touched that were not obviously task-related, with reasons.
-- Backend or integration choices and why they were selected.
-- Environment variables and setup steps.
+- Backend or integration choices, environment variables, and setup steps, if the active task touched backend or integrations.
 - Tests and commands run, with results.
-- Visual parity evidence for affected pages.
-- Confirmation that completed Task 1 work was not modified except where strictly necessary.
+- Visual parity evidence for affected pages and defects.
+- Confirmation that completed work was not modified except where strictly necessary for the active task.
 - Known limitations, risks, or unresolved configuration items.
