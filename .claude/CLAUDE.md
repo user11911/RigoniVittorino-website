@@ -31,7 +31,7 @@ Task-specific instructions belong in `TODO.md`. Before starting work, read this 
 - Do not rebuild or modify English or German pages.
 - Do not rebuild or modify `rigonivittorinoshop.it`, its backend, ecommerce system, cart, checkout, accounts, products, or payments.
 - Preserve visible shop links and keep them pointing to `rigonivittorinoshop.it`.
-- Do not implement, route, migrate, or rebuild News pages, archives, tags, categories, detail pages, or CMS data.
+- Do not implement, route, migrate, or rebuild News pages, archives, tags, categories, detail pages, or CMS data unless the active task in `TODO.md` explicitly authorizes News work. When News work is authorized, touch only the News scope named in `TODO.md` and preserve all other completed Italian-site work.
 - `/it/privacy-policy/` and `/it/dati-societari/` must remain accessible but completely blank unless the user later gives explicit approval to change that rule.
 
 ## Security and data handling

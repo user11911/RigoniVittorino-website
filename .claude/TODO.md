@@ -251,9 +251,9 @@ At completion, provide:
 - Evidence that unrelated completed pages were not modified or visually regressed.
 - Known limitations or remaining user-provided configuration needed before production launch.
 
-## Task 3 - Active: fix remaining visual parity bugs from the Italian remake
+## Task 3 - Paused/inactive: fix remaining visual parity bugs from the Italian remake
 
-Status: active.
+Status: paused/inactive for the current work. This section remains preserved as project context, but it is not the active task while Task 4 is active. Do not work on Task 3 unless the user explicitly reactivates it.
 
 ### User request
 
@@ -360,3 +360,190 @@ At completion, provide:
 - Confirmation that News remains excluded and shop links remain external.
 - Commands run and results.
 - Known limitations, risks, or items requiring user review.
+
+## Task 4 - Active: add the Italian News landing page at `/it/news`
+
+Status: active.
+
+### User request
+
+Add the `/it/news` site to the existing project, based on the one in the live site.
+
+The current project is the completed Italian remake from Task 1, the completed `/it/contatti/` backend from Task 2, and the preserved Task 3 visual-parity context. Task 4 is the only active task. Completed work remains frozen except for the smallest changes required to add the Italian News landing page safely and accurately.
+
+### User clarifications for Task 4
+
+The user has clarified the scope:
+
+1. Implement only `/it/news/`.
+2. Do not implement live News detail pages.
+3. Do not migrate any existing live news posts.
+4. Add News to the existing Italian navigation if the live site shows News in navigation.
+5. Create reusable structure, components, content model, styles, and classes so future News posts can be published easily.
+6. Choose the simplest professional-friendly content workflow that fits the inspected project, so a professional without deep coding experience can manage future posts without making the implementation complex.
+7. Since no existing posts are being recreated, do not copy post assets. If assets are necessary for the empty `/it/news/` page itself, copy them locally using the same asset strategy as prior work and record original source URLs and local paths.
+
+### Task 4 authorization and relationship to previous News exclusion
+
+This task explicitly authorizes News work only for the Italian News landing page at `/it/news/` and for directly required future-ready News scaffolding.
+
+This authorization supersedes prior “News remains excluded” rules only to the minimum extent required to implement `/it/news/`, navigation integration for `/it/news/`, and reusable future-post infrastructure. It does not authorize implementation of existing live News posts, News detail pages, archive pages, tag pages, category pages, English pages, German pages, ecommerce, shop systems, contact backend behavior, legal/company blank pages, wine pages, or unrelated visual-parity work.
+
+If an older instruction says News is excluded, treat that older instruction as superseded only for the active Task 4 scope.
+
+### Non-negotiable constraints for Task 4
+
+* Do not redesign the website.
+* Do not migrate existing News posts from the live site.
+* Do not create routes for live News post detail pages.
+* Do not create visible placeholder cards pretending that live posts were migrated.
+* Do not invent new editorial content.
+* Do not add a fake news item, lorem ipsum article, sample article, or test article to the production-visible `/it/news/` page.
+* Do not make approximate aesthetic improvements that are not grounded in the live Italian source website.
+* The live Italian website at `rigonivittorino.com/it/news` is the source of truth for visible `/it/news/` layout, typography, spacing, navigation relationship, heading treatment, empty/listing structure, pagination treatment if relevant to the listing shell, colors, hover behavior, metadata, and responsive behavior.
+* Preserve Italian text exactly where visible text is copied from the live `/it/news/` page, including capitalization, punctuation, labels, and any visible typos.
+* Do not change wine data, contact details, product pages, URLs outside the authorized News landing-page scope, footer content outside required News integration, shop links, blank legal pages, or Task 2 backend behavior.
+* Do not modify `/it/privacy-policy/` or `/it/dati-societari/`; both must remain accessible and completely blank.
+* Do not modify `rigonivittorinoshop.it`, ecommerce systems, cart, checkout, accounts, products, payments, or external shop behavior.
+* Keep all existing visible shop links pointing to `rigonivittorinoshop.it`.
+* Do not implement comments, newsletter backend, authentication, public admin routes, search backend, WordPress backend routes, feeds, or XML-RPC.
+* Do not hardcode secrets or introduce unnecessary backend configuration.
+* Do not touch Task 2 contact backend files unless a build/runtime integration issue makes it strictly necessary; document the reason before doing so.
+* Do not work on Task 3 visual-parity bugs as part of this task unless a directly shared News component forces a narrow regression-safe change.
+
+### Route scope
+
+Implement:
+
+* `/it/news/`
+
+Do not implement:
+
+* Existing live News detail pages.
+* Existing live News post slugs.
+* Existing live News category pages.
+* Existing live News tag pages.
+* Existing live News author pages.
+* Existing live News archive pages.
+* Existing News feeds.
+* English News routes.
+* German News routes.
+* WordPress backend or admin routes.
+
+If the live `/it/news/` page contains visible links to existing post detail pages, do not reproduce them as migrated posts. Instead, build the future-ready internal structure so future posts can generate equivalent links when real new content is added later.
+
+If the live `/it/news/` page would normally show a list of posts, the implemented page should match the live page’s layout shell and empty/future-ready state without migrating the actual live posts. If the live site has no empty state, use the most visually conservative implementation: preserve the page structure and omit post cards rather than inventing visible copy.
+
+### Future-post publishing requirements
+
+Create the cleanest maintainable structure for future News posts after inspecting the current project.
+
+Preferred direction:
+
+* Use a simple local content model if it fits the stack, such as Markdown/MDX, JSON, TypeScript data objects, or the project’s existing content convention.
+* Provide a reusable News listing component that can render zero posts now and real posts later.
+* Provide reusable post-card, date/category/tag, pagination, excerpt, featured-image, slug, and metadata structures where appropriate.
+* Provide clear field names and validation/helper functions so future posts can be added consistently.
+* Keep future support for pagination, categories, tags, archives, and detail pages in the content model or component design, but do not expose those routes now unless the user later authorizes them.
+* If the project already supports a simple CMS/admin/content collection tool, use that existing mechanism rather than inventing a new one.
+* If the project has no such tool, prefer the lowest-complexity professional-friendly option. A professional editor should be able to add or edit a future post by filling a clearly structured content file or supported content entry, not by editing layout code.
+* Do not add a heavy CMS, database, authentication system, or new backend service unless repository inspection proves it is clearly the best low-complexity fit.
+
+The future publishing structure must be production-safe even though the production-visible page has no migrated posts.
+
+### Discovery required before implementation
+
+Before coding:
+
+1. Read `CLAUDE.md`, then this `TODO.md`, and confirm Task 4 is the only active task.
+2. Inspect the repository structure, package manager, framework, routing, styling system, shared layout, image handling, data/content conventions, build scripts, tests, and existing documentation.
+3. Inspect the current local route structure and confirm that News is currently absent or excluded.
+4. Inspect the live Italian News landing page at `https://www.rigonivittorino.com/it/news/`.
+5. Inspect the live Italian navigation/header/footer and determine whether News appears there. If it does, add the corresponding `/it/news/` link in the rebuilt Italian navigation as narrowly as possible.
+6. Do not crawl or migrate live News post detail pages except to understand whether the listing shell expects post cards, dates, categories, pagination, or other reusable future-post structures.
+7. Determine the live `/it/news/` landing-page layout at 375px, 768px, 1024px, and 1440px.
+8. Identify whether any assets are necessary for the `/it/news/` landing page itself without migrated posts. If assets are necessary, copy them locally using the project’s existing asset strategy and record original source URLs and local paths.
+9. Determine whether the existing project architecture favors static routes, generated routes from local data, markdown/MDX content, JSON/TypeScript content data, or another existing content pattern.
+10. Decide the simplest professional-friendly future-post workflow after inspecting the stack. Do not add unnecessary infrastructure.
+11. Record findings, chosen approach, assumptions, risks, affected files, and route scope in `IMPLEMENTATION_NOTES.md` or the closest existing project notes file.
+
+### Implementation requirements
+
+* Build `/it/news/` so it visually and behaviorally matches the live Italian News landing page as closely as possible, within the clarified constraint that no existing live posts are migrated.
+* Implement the page so it renders correctly with zero posts.
+* Do not show dummy posts.
+* Do not show migrated live posts.
+* Do not create post detail pages.
+* Keep the page future-ready so adding real posts later is straightforward.
+* Preserve the live News landing-page layout, including heading treatment, spacing, typography, list/grid shell, empty/listing container behavior, button styles where structurally relevant, pagination shell if needed for future posts, hover states where relevant, and responsive behavior.
+* Preserve SEO-relevant metadata for `/it/news/` where practical, including title, description, canonical URL, Open Graph/Twitter metadata, and structured data only if appropriate for an empty/future-ready News landing page.
+* If the live navigation includes News and the rebuilt navigation does not, update the shared Italian navigation only as required for live parity, then verify that existing Italian routes are not visually regressed.
+* Keep reusable News components/classes narrowly scoped to News where possible.
+* Use shared layout, navigation, metadata, image, or route utilities only when required for News parity or routing correctness.
+* Keep future categories/tags/archive/pagination support internal and dormant unless visible on `/it/news/` or needed for future-ready component design.
+* Do not add new visible legal copy, placeholder text, “coming soon” notices, fake editorial text, or explanatory production text unless the live `/it/news/` page itself has equivalent text.
+* If an empty state is unavoidable for accessibility or usability, make it minimal, Italian, visually conservative, and document why it was added.
+* Keep accessibility improvements invisible or visually equivalent.
+
+### Allowed scope for Task 4
+
+Task 4 authorizes changes only where needed to implement the Italian News landing page and future-ready publishing structure:
+
+* `/it/news/` route.
+* News-specific content/data model.
+* News-specific components and styles.
+* News-specific utility functions for future slugs, dates, categories, tags, excerpts, metadata, and pagination.
+* Shared Italian navigation only if required to add the visible News link.
+* Shared layout, image, metadata, or route utilities only if required for News parity or routing correctness.
+* Asset folders only for assets required by the `/it/news/` landing page itself.
+* Existing documentation or implementation notes needed to record findings and verification.
+
+Any folder not evidently related to News routing, News content, News styling, News assets, shared layout/navigation touched for News parity, metadata, route generation, tests, or documentation requires a written reason before it is touched.
+
+### Testing and validation for Task 4
+
+Run all relevant existing checks and add targeted tests only where appropriate.
+
+Required verification:
+
+* `/it/news/` exists and renders successfully.
+* `/it/news/` renders correctly with zero posts.
+* No existing live News posts are visible in the rebuilt page.
+* No existing live News detail routes were implemented.
+* The future-post content model can accept at least one local draft/test post in development or tests without requiring layout-code edits, but no such post is production-visible unless explicitly configured as a non-production fixture.
+* The future-post structure supports titles, slugs, dates, excerpts, categories/tags if chosen, featured images if chosen, body/content references if chosen, and metadata.
+* News listing visual layout matches the live Italian News landing page at 375px, 768px, 1024px, and 1440px, accounting for the clarified zero-post production state.
+* Header/navigation includes News if the live Italian site includes News, and existing Italian navigation remains otherwise unchanged.
+* Header and footer remain unchanged except for the authorized News navigation integration.
+* `/it/privacy-policy/` remains completely blank.
+* `/it/dati-societari/` remains completely blank.
+* Shop links remain external and continue pointing to `rigonivittorinoshop.it`.
+* Task 2 contact backend behavior is not modified. If any contact-adjacent file is touched, run relevant contact regression checks.
+* Task 3 visual-parity work is not modified unless a directly shared component required a narrow change for News.
+* Existing Italian routes from Tasks 1 and 2 still build and route correctly.
+* Production build succeeds.
+* Relevant lint/typecheck/test commands succeed, or unavailable commands are documented as unavailable.
+
+Use screenshots, browser tests, Playwright traces, route smoke tests, local preview, production build output, or other repeatable evidence when available. If a verification tool is unavailable, document that limitation clearly and provide the strongest available alternative evidence.
+
+### Required Task 4 deliverables
+
+At completion, provide:
+
+* Summary of the implemented `/it/news/` scope.
+* Confirmation that only `/it/news/` was implemented as a visible route.
+* Confirmation that no existing live News posts were migrated.
+* Confirmation that no News detail pages were implemented.
+* Explanation of the chosen future-post content/data approach and why it is the simplest professional-friendly fit for the inspected project.
+* Description of how a future professional editor or maintainer would add a real News post.
+* Files changed.
+* Any shared components, layouts, global styles, route utilities, or metadata utilities touched, with reasons and affected routes.
+* Asset inventory for any `/it/news/` landing-page assets copied locally, with original live source URLs and local paths. If no assets were copied, state that no News assets were required because no posts were migrated.
+* Visual parity evidence for `/it/news/` at 375px, 768px, 1024px, and 1440px.
+* Navigation evidence showing whether News was added and where.
+* Confirmation that `/it/privacy-policy/` and `/it/dati-societari/` remain blank.
+* Confirmation that shop links remain external and continue pointing to `rigonivittorinoshop.it`.
+* Confirmation that Task 2 contact backend behavior was not modified, or regression evidence if any contact-adjacent file was touched.
+* Confirmation that Task 3 was not worked on except for any documented directly required shared-component impact.
+* Commands run and results.
+* Known limitations, risks, or user-review items.
