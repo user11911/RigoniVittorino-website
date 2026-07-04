@@ -626,3 +626,150 @@ links.
   page location) before a fix can be safely made.
 - The small floating icon widget noted as unidentified in Task 1's notes is still
   present and still not investigated (out of scope for the six named defects).
+
+---
+
+# Task 4 — Add the Italian News landing page at `/it/news/`
+
+Per `.claude/TODO.md`: implement only the `/it/news/` landing page shell, matching
+the live site's visual layout, without migrating any of the live site's actual News
+posts, post detail pages, categories, tags, or archives — plus a reusable content
+model so a non-technical professional can add real posts later. This explicitly
+supersedes the earlier Task 1/`.claude/rules/testing.md` "News is excluded" rule,
+but only for this narrow scope (see CLAUDE.md's own text authorizing that override).
+
+## What was implemented
+
+- `/it/news/` is now a real local route. It uses WordPress's plain `body.blog`
+  archive template (confirmed on the live site via `<body class="blog ...">`),
+  not the Grids page-builder the four main pages use — that CSS
+  (`main#site-content.columns-3` grid, `.btn-trasp` button, responsive breakpoints
+  down to one column on mobile) was already self-hosted from Task 1
+  (`twentytwenty-style.min.css`/`style-custom.min.css`), so no new CSS was needed.
+- The header/mobile-menu "News" link now points to the local `/it/news/` route
+  instead of the live site. It correctly gets the same active-page highlight as
+  every other nav item once on that page (verified — the site's existing
+  active-nav script needed no changes, it works generically off the URL path).
+- The page currently renders **with zero posts** — a genuinely empty content area,
+  matching the live template's own behavior with no invented empty-state text,
+  no dummy/lorem articles, and no migrated live posts.
+- A **reusable content model** was added (Astro Content Collections, the
+  framework's own built-in mechanism for exactly this — a professional edits a
+  Markdown file with frontmatter, gets type-checked fields, never touches layout
+  code) so publishing a real post later requires no code changes.
+
+## How a future editor adds a real post
+
+1. Create a new Markdown file in `src/content/news/`, e.g.
+   `2026-06-15-titolo-articolo.md`.
+2. Copy the frontmatter block from `src/content/news/_esempio-bozza.md` (shipped as
+   a worked example — itself always excluded from the live site, see below).
+3. Fill in `title` (required) and `date` (required, `YYYY-MM-DD`). `excerpt` and
+   `image` are optional. Set `draft: false` (or delete the line) when ready to
+   publish — while `draft: true`, the post never appears on `/it/news/`.
+4. Write the article body under the frontmatter (not yet rendered on the listing
+   page, but present for when detail pages are authorized — see Known limitations).
+5. Rebuild/redeploy the site as usual — no other file needs to change.
+
+`_esempio-bozza.md` (`draft: true`, title "ESEMPIO — non pubblicare") ships
+permanently as living documentation of this shape and doubles as the fixture the
+unit tests exercise; it can never appear on the production page because the
+listing page filters on `draft`, and the fixture is the one file guaranteed to
+have `draft: true`.
+
+## Architecture
+
+- `src/content.config.ts` — defines the `news` collection: `title` (string),
+  `date` (date), `excerpt` (optional string), `image` (optional string),
+  `draft` (boolean, default `false`). Uses Astro's Content Layer API
+  (`glob()` loader from `astro/loaders`, `z` from `astro/zod` rather than the
+  now-deprecated `astro:content` re-export) — this Astro version (7.0.6) requires
+  the config at `src/content.config.ts`, not the older `src/content/config.ts`
+  path, which now throws a build error.
+- `src/lib/news.ts` — `selectPublishedNews()`, a pure filter+sort function over a
+  locally-defined `NewsEntry` type (mirroring, not importing,
+  `CollectionEntry<"news">` — vitest's config has no `astro:content` virtual-module
+  resolution, so the type is kept local and testable, same pattern already used by
+  `src/lib/rate-limit.ts`'s `D1Like` interface). `src/lib/news.test.ts` covers: a
+  draft post is excluded, a published one is included and sorted newest-first, and
+  an all-draft collection (today's actual production state) returns empty.
+- `src/components/NewsCard.astro` — renders one post using the exact live markup/
+  classes (`article.post`, `figure.featured-media`, `entry-header`/`entry-title`,
+  `post-inner`/`entry-content`). Deliberately has **no link/button** on the title —
+  the live card's "Scopri" button points at a post detail page, and this task does
+  not implement detail pages, so there is nowhere for a link to go yet. Adding one
+  is a small, contained change (wire the title to `/it/news/<slug>/`) whenever
+  detail pages are authorized in a future task — not built speculatively now, to
+  avoid ever shipping a dead link.
+- `src/pages/it/news/index.astro` — `export const prerender = true` (content
+  collections resolve at build time; no reason for this route to be dynamic).
+  Queries `getCollection("news")`, filters via `selectPublishedNews`, renders a
+  `NewsCard` per result. Passes `bodyClass="blog"` and the newly added
+  `mainClass="columns-3"` prop to `BaseLayout`.
+- `src/layouts/BaseLayout.astro` — added a `mainClass` prop (default `""`), applied
+  alongside the existing `site-content` class on the shared `<main id="site-content">`.
+  This was the one necessarily shared-layout change: `BaseLayout` already wraps
+  every page's content in that single `<main>`, so News's required `columns-3`
+  class has to be appended there rather than via a second nested `<main>` (which
+  would have been invalid HTML). Every other page passes no `mainClass`, so their
+  output is byte-identical to before (confirmed via the full screenshot/route
+  regression pass below).
+- `scripts/extract-chrome.mjs` — added `/it/news` to `IMPLEMENTED_PAGE_PREFIXES`
+  (the allowlist deciding which internal links get rewritten to local paths).
+  Regenerated `src/content/chrome/header.html` from the existing cached scrape
+  (no live re-fetch needed); the diff is exactly the one "News" href, nothing else.
+- `scripts/routes.mjs` / `scripts/screenshot-compare.mjs` — added `news/` to the
+  shared route list (`NEWS_PAGES`, consumed by the route smoke test) and to the
+  screenshot-comparison page list.
+
+## Assets
+
+No assets were required for the `/it/news/` landing page itself — it renders with
+zero posts (no images to copy), and the shell reuses CSS already self-hosted from
+Task 1. Nothing new was added under `public/wp-content/`.
+
+## Testing and confirmations
+
+- `npx astro check`: 0 errors, 0 warnings (fixed one initial warning: `z` from
+  `astro:content` is deprecated in this Astro version, switched to `astro/zod`).
+- `npx vitest run`: **31/31 tests pass** (28 previous + 3 new for
+  `selectPublishedNews`).
+- `npx astro build`: succeeds, 43 routes now (was 42) — verified `dist/client/it/news/index.html`
+  has `<body class="... blog">` and `<main id="site-content" class="site-content columns-3"></main>`,
+  i.e. genuinely empty, exactly as intended.
+- `node scripts/route-smoke-test.mjs`: **43/43 routes pass**, 0 console errors.
+  Reconfirmed both blank legal pages still render genuinely empty.
+- `node scripts/screenshot-compare.mjs`: captured `/it/news/` at 375/768/1024/1440px
+  (`docs/parity/rebuilt/news__*.png`), 0 console errors. Visually: header renders
+  with "NEWS" correctly shown as the active nav item; footer identical to every
+  other page; content area empty, matching the live template's own no-fabricated-
+  content behavior.
+- ✅ Only `/it/news/` was implemented as a visible route — no post/detail/category/
+  tag/archive pages.
+- ✅ No existing live News posts were migrated.
+- ✅ `/it/privacy-policy/` and `/it/dati-societari/` still render completely blank
+  (reconfirmed by the smoke test).
+- ✅ Shop links remain external, still pointing to `rigonivittorinoshop.it`
+  (unaffected — confirmed via the same smoke test and a direct check of the mobile
+  menu's "Shop" link).
+- ✅ Task 2 contact backend untouched — no files in its path were touched.
+- ✅ Task 3 (paused) was not worked on; no shared component needed a Task-3-adjacent
+  change.
+- Navigation evidence: desktop nav "News" now links to `/it/news/` and gets the
+  active-page highlight there (screenshot evidence in `docs/parity/rebuilt/news__1440w.png`).
+  Confirmed directly from the raw scraped homepage HTML that the **live site's own
+  mobile hamburger menu never included a News item at all** (only one `>News<`
+  occurrence exists in the entire cached homepage HTML, and it's the desktop-nav
+  one) — so no separate mobile-menu link needed adding; this isn't a gap introduced
+  by this task.
+
+## Known limitations / open items
+
+- No post detail pages exist yet (out of scope for Task 4), so `NewsCard` cannot
+  link anywhere yet — titles render as plain text. When detail pages are
+  authorized, wiring this up is a small, contained follow-up (a `slug` field plus a
+  `/it/news/[slug]/` route), deliberately not built now to avoid a schema field or
+  button with nowhere valid to point.
+- The content schema has no category/tag/pagination fields — none are visible on
+  the live landing page's shell, so adding them now would be speculative; per
+  TODO.md's guidance these are meant to stay dormant until actually needed.

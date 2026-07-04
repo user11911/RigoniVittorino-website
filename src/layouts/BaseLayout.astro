@@ -8,9 +8,12 @@ export interface Props {
   ogTitle?: string;
   extraStyleFile?: string; // e.g. "home-extra-style.css" (page-specific UAGB CSS)
   bodyClass?: string;
+  // Extra class(es) on the shared <main id="site-content">, e.g. "columns-3" for
+  // /it/news/ to match the live site's body.blog main#site-content.columns-3 CSS.
+  mainClass?: string;
 }
 
-const { title, description, ogTitle, extraStyleFile, bodyClass = "" } = Astro.props;
+const { title, description, ogTitle, extraStyleFile, bodyClass = "", mainClass = "" } = Astro.props;
 
 const headerHtml = await readFile(
   path.join(process.cwd(), "src/content/chrome/header.html"),
@@ -74,7 +77,7 @@ const canonical = new URL(Astro.url.pathname, "https://rigonivittorino.com").toS
   </head>
   <body class={`custom-background wp-custom-logo wp-theme-twentytwenty wp-child-theme-geppa reduced-spacing ${bodyClass}`}>
     <Fragment set:html={headerHtml} />
-    <main id="site-content" class="site-content">
+    <main id="site-content" class={`site-content ${mainClass}`.trim()}>
       <slot />
     </main>
     <Fragment set:html={footerHtml} />

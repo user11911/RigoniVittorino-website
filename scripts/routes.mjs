@@ -5,6 +5,9 @@ export const MAIN_PAGES = ["", "chi-siamo/", "cantina/", "contatti/"];
 
 export const BLANK_PAGES = ["privacy-policy/", "dati-societari/"];
 
+// Task 4 — News landing page only (no post/detail/category/tag/archive routes).
+export const NEWS_PAGES = ["news/"];
+
 export const CATEGORY_PAGES = [
   "spumanti/",
   "bianchi/",
@@ -68,6 +71,7 @@ export function allRoutes() {
   const routes = [];
   for (const p of MAIN_PAGES) routes.push({ path: p, kind: "main" });
   for (const p of BLANK_PAGES) routes.push({ path: p, kind: "blank" });
+  for (const p of NEWS_PAGES) routes.push({ path: p, kind: "news" });
   for (const p of CATEGORY_PAGES) routes.push({ path: p, kind: "category" });
   for (const slug of PRODUCT_SLUGS)
     routes.push({ path: `i-nostri-vini/${slug}/`, kind: "product", slug });

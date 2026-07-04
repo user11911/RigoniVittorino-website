@@ -16,9 +16,12 @@ const OUT_DIR = path.join(__dirname, "../src/content/chrome");
 const DOMAIN = "https://rigonivittorino.com";
 
 // Every route this rebuild actually implements. Any other rigonivittorino.com link
-// (News, the EU rural-development funding disclosure page, etc.) is explicitly out
-// of scope and MUST stay an absolute link to the live site — rewriting it to a local
-// path would 404 since no such local route exists.
+// (the EU rural-development funding disclosure page, News post/category/tag/archive
+// pages, etc.) is explicitly out of scope and MUST stay an absolute link to the live
+// site — rewriting it to a local path would 404 since no such local route exists.
+// /it/news itself was added in Task 4 (the landing page only, not its post/detail
+// pages — those aren't implemented, but no link to them exists in the header/footer
+// chrome this script processes, so no extra exclusion logic is needed here).
 const IMPLEMENTED_PAGE_PREFIXES = [
   "/it/chi-siamo",
   "/it/cantina",
@@ -32,6 +35,7 @@ const IMPLEMENTED_PAGE_PREFIXES = [
   "/it/affinati",
   "/it/frizzanti-e-rosati",
   "/it/passiti",
+  "/it/news",
 ];
 
 function rewriteUrl(u) {

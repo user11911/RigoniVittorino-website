@@ -1,0 +1,33 @@
+---
+// Mirrors the live /it/news/ archive template's post-card markup exactly (see
+// IMPLEMENTATION_NOTES.md Task 4) — styled entirely by the self-hosted
+// twentytwenty-style.min.css / style-custom.min.css (body.blog rules) with no new
+// CSS needed. No live posts are migrated; this only renders posts from the local
+// content collection (src/content/news/), used once real ones are published.
+export interface Props {
+  title: string;
+  excerpt?: string;
+  image?: string;
+}
+const { title, excerpt, image } = Astro.props;
+---
+
+<article class="post">
+  {
+    image && (
+      <figure class="featured-media">
+        <div class="featured-media-inner section-inner" style={`background-image:url(${image})`} />
+      </figure>
+    )
+  }
+  <header class="entry-header">
+    <div class="entry-header-inner section-inner">
+      <h3 class="entry-title">{title}</h3>
+    </div>
+  </header>
+  <div class="post-inner">
+    <div class="entry-content">
+      {excerpt && <p>{excerpt}</p>}
+    </div>
+  </div>
+</article>
