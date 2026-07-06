@@ -1,6 +1,32 @@
 ---
 export const prerender = true;
-import BlankLayout from "../../../layouts/BlankLayout.astro";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+
+const contentHtml = await readFile(
+  path.join(process.cwd(), "src/content/main/dati-societari.html"),
+  "utf8",
+);
 ---
 
-<BlankLayout />
+<!--
+  bodyClass matches two classes the live page's <body> actually carries:
+  - "singular": a standard WordPress "singular page" template class, gates real
+    layout CSS (e.g. `:not(.singular) main>article:first-of-type{padding:4rem 0 0}`
+    in parent-style.min.css, which would otherwise add unwanted top padding here).
+  - "missing-post-thumbnail": this page has no featured image, matching live;
+    combined with the existing "reduced-spacing" class it zeroes
+    `.post-inner{padding-top:8rem}` via `.reduced-spacing.missing-post-thumbnail
+    .post-inner{padding-top:0}`, which otherwise pushed the text block down.
+  Scoped to just this page (not added to BaseLayout's shared default class list)
+  since it wasn't required for Task 5's authorized scope beyond this one route —
+  see IMPLEMENTATION_NOTES.md Task 5.
+-->
+<BaseLayout
+  title="Dati societari - Rigoni Vittorino"
+  ogTitle="Dati societari"
+  bodyClass="singular missing-post-thumbnail"
+>
+  <Fragment set:html={contentHtml} />
+</BaseLayout>

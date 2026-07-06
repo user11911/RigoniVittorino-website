@@ -1,9 +1,10 @@
 // Canonical list of in-scope Italian routes, taken from .claude/CLAUDE.md.
 // Used by every scraping/testing script so there is exactly one source of truth.
 
-export const MAIN_PAGES = ["", "chi-siamo/", "cantina/", "contatti/"];
+// Task 5 moved dati-societari/ here from BLANK_PAGES — it's a real content page now.
+export const MAIN_PAGES = ["", "chi-siamo/", "cantina/", "contatti/", "dati-societari/"];
 
-export const BLANK_PAGES = ["privacy-policy/", "dati-societari/"];
+export const BLANK_PAGES = ["privacy-policy/"];
 
 // Task 4 — News landing page only (no post/detail/category/tag/archive routes).
 export const NEWS_PAGES = ["news/"];

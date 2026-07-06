@@ -24,6 +24,7 @@ const PAGES = [
   { name: "spumanti-category", path: "spumanti/" },
   { name: "creativo-product", path: "i-nostri-vini/creativo-prosecco-millesimato-brut-doc-treviso/" },
   { name: "news", path: "news/" },
+  { name: "dati-societari", path: "dati-societari/" },
 ];
 
 async function main() {

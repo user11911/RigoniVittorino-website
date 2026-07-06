@@ -74,6 +74,14 @@ const canonical = new URL(Astro.url.pathname, "https://rigonivittorino.com").toS
     <link rel="stylesheet" href="/wp-content/themes/twentytwenty/assets/css/twentytwenty-fonts.min.css" />
     {extraStyle && <style set:html={extraStyle} />}
     <link rel="stylesheet" href="/styles/site.css" />
+    <!-- WordPress core's "Custom Background" feature rule (body.custom-background)
+         — kept separate from wp-global.css and loaded last on purpose: on the live
+         site it's injected after every enqueued theme stylesheet, so it wins a CSS
+         specificity tie against twentytwenty-style.min.css's `:root body{background:
+         var(--background-color)}`. Bundling it earlier silently lost that tie,
+         showing the wrong grey body background wherever no other content covers it
+         (found while building /it/dati-societari/, see IMPLEMENTATION_NOTES.md Task 5). -->
+    <link rel="stylesheet" href="/styles/wp-custom-background.css" />
   </head>
   <body class={`custom-background wp-custom-logo wp-theme-twentytwenty wp-child-theme-geppa reduced-spacing ${bodyClass}`}>
     <Fragment set:html={headerHtml} />

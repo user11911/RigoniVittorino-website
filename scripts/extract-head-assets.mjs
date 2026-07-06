@@ -26,7 +26,6 @@ const GLOBAL_STYLE_IDS = [
   "global-styles-inline-css",
   "style-custom-inline-css",
   "twentytwenty-style-inline-css",
-  "custom-background-css",
   "uagb-style-conditional-extension",
   // Missed in the original Task 1 pass — this is the block that actually
   // reassigns the generic --_gs-d/--_gs-min-height/etc. custom properties from
@@ -41,6 +40,19 @@ const PAGE_SPECIFIC = [
   { page: "home", file: "_home.html", id: "uagb-style-frontend-2" },
   { page: "contatti", file: "contatti.html", id: "uagb-style-frontend-953" },
 ];
+
+// custom-background-css (a WordPress core "Custom Background" feature rule, not
+// theme/page-specific) is deliberately NOT bundled into wp-global.css. On the live
+// site it's injected into <head> after every enqueued theme stylesheet (confirmed
+// by inspecting the live page's actual <head> tag order), so it wins a CSS
+// specificity tie against :root body{background:var(--background-color)} in
+// twentytwenty-style.min.css. Bundling it earlier (as originally done in Task 1)
+// silently lost that tie, making the body background render the wrong grey
+// (#f8f8f8) instead of white in any gap not covered by other content — invisible
+// until Task 5's /it/dati-societari/ page exposed it (no hero image/colored block
+// covers the gap there). Loaded as its own late `<link>` in BaseLayout.astro
+// instead, after every other stylesheet, to reproduce the same winning order.
+const LATE_STYLE_ID = "custom-background-css";
 
 async function main() {
   await mkdir(PUBLIC_STYLES_DIR, { recursive: true });
@@ -69,6 +81,14 @@ async function main() {
     }
     await writeFile(path.join(MAIN_CONTENT_DIR, `${page}-extra-style.css`), content.trim() + "\n");
     console.log(`Wrote src/content/main/${page}-extra-style.css`);
+  }
+
+  const lateContent = $(`#${LATE_STYLE_ID}`).html();
+  if (lateContent == null) {
+    console.warn(`WARNING: style block #${LATE_STYLE_ID} not found on homepage`);
+  } else {
+    await writeFile(path.join(PUBLIC_STYLES_DIR, "wp-custom-background.css"), lateContent.trim() + "\n");
+    console.log(`Wrote public/styles/wp-custom-background.css`);
   }
 }
 

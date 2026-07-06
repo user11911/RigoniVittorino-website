@@ -22,7 +22,24 @@ const PAGES = [
   { name: "chi-siamo", file: "chi-siamo.html" },
   { name: "cantina", file: "cantina.html" },
   { name: "contatti", file: "contatti.html" },
+  // Task 5: was blank in earlier completed work, now authorized to match the live
+  // page. Unlike the other 4 pages, its grids-section/grids-area inline styles are
+  // identical across desktop/tablet/mobile (no responsive variation), and its
+  // entry-header (auto-generated "Dati societari" H1) is already hidden by an
+  // existing self-hosted CSS rule (header.entry-header.has-text-align-center
+  // .header-footer-group{display:none}) — confirmed against the live site's own
+  // rendered output, so no extra markup changes are needed to match it.
+  { name: "dati-societari", file: "dati-societari.html", fixTypo: true },
 ];
+
+// The one text correction TODO.md's Task 5 explicitly authorizes — the live page
+// itself has this typo (double period). Kept as an explicit, documented replace
+// here (rather than hand-edited into generated output) so it survives re-running
+// this script against a fresh scrape.
+const TYPO_FIX = {
+  from: "Az. Agr.. Rigoni Vittorino Società Agricola SNC",
+  to: "Az. Agr. Rigoni Vittorino Società Agricola SNC",
+};
 
 function rewriteUrl(u) {
   if (!u) return u;
@@ -72,7 +89,8 @@ function rewriteAssetsIn($, root) {
         rel.startsWith("/it/rossi") ||
         rel.startsWith("/it/affinati") ||
         rel.startsWith("/it/frizzanti-e-rosati") ||
-        rel.startsWith("/it/passiti")
+        rel.startsWith("/it/passiti") ||
+        rel.startsWith("/it/dati-societari")
       ) {
         $el.attr("href", rel);
       }
@@ -94,7 +112,8 @@ async function main() {
 
     rewriteAssetsIn($, article);
 
-    const out = article.prop("outerHTML");
+    let out = article.prop("outerHTML");
+    if (p.fixTypo) out = out.replaceAll(TYPO_FIX.from, TYPO_FIX.to);
     await writeFile(path.join(OUT_DIR, `${p.name}.html`), out, "utf8");
     console.log(`Wrote ${p.name}.html (${out.length} bytes)`);
   }
