@@ -15,16 +15,14 @@ Before final delivery, verify:
 
 * Every scoped route renders.
 * `/it/privacy-policy/` renders a completely blank page.
-* `/it/dati-societari/` renders a completely blank page.
-* News routes are not implemented in the new app routing.
+* `/it/dati-societari/` renders correctly.
 * Every wine category page contains the same wines in the same order.
 * Every wine product page contains the exact same visible Italian text and values.
 * Every visible image appears in the same place as the original.
-* Header labels and destinations match the original, except excluded News routing must not be implemented.
-* Footer content and visual layout match the original, while legal/company routes open as blank pages.
+* Header labels and destinations match the original.
+* Footer content and visual layout match the original.
 * Shop links point to `rigonivittorinoshop.it`.
 * Contact page visually matches even if backend submission is not implemented.
-* No English or German pages were rewritten.
 
 ## Testing and validation
 

@@ -32,8 +32,8 @@ Task-specific instructions belong in `TODO.md`. Before starting work, read this 
 - Do not rebuild or modify `rigonivittorinoshop.it`, its backend, ecommerce system, cart, checkout, accounts, products, or payments.
 - Preserve visible shop links and keep them pointing to `rigonivittorinoshop.it`.
 - Do not implement, route, migrate, or rebuild News pages, archives, tags, categories, detail pages, or CMS data unless the active task in `TODO.md` explicitly authorizes News work. When News work is authorized, touch only the News scope named in `TODO.md` and preserve all other completed Italian-site work.
-- `/it/privacy-policy/` and `/it/dati-societari/` must remain accessible but completely blank unless the user later gives explicit approval to change that rule.
-
+- `/it/privacy-policy/` must remain accessible but completely blank unless the user later gives explicit approval to change that rule.
+- `/it/dati-societari/` was blank in earlier completed work, but this rule is superseded when the active task in `TODO.md` explicitly authorizes implementing or preserving the live Dati societari page.
 ## Security and data handling
 
 - Never hardcode secrets, credentials, API keys, SMTP passwords, database passwords, private tokens, or sensitive configuration.
