@@ -19,8 +19,8 @@ Completed or inactive work:
   `716b02a` on `fix-flagged-bugs` (not yet merged to `main`).
 - Task 8: completed/inactive fix for missing `bodyClass="singular missing-post-thumbnail"` on `chi-siamo`,
   `cantina`, and `contatti` (all three confirmed via `scripts/.cache/html/` to carry these classes live,
-  matching `dati-societari` exactly). Do not modify unless explicitly reactivated. On `fix-flagged-bugs`,
-  not yet committed.
+  matching `dati-societari` exactly). Do not modify unless explicitly reactivated. Committed at `03a0459`
+  on `fix-flagged-bugs` (not yet merged to `main`).
 
 Preserved constraints from completed work:
 
@@ -40,8 +40,8 @@ Preserved constraints from completed work:
 
 ## Task 8 - Complete: fix missing `bodyClass` on chi-siamo, cantina, and contatti
 
-Status: complete, pending commit/merge. No task is currently active — confirm scope with the user before
-starting new work.
+Status: complete. Committed at `03a0459` on `fix-flagged-bugs` (not yet merged to `main`). No task is
+currently active — confirm scope with the user before starting new work.
 
 ### Summary
 
