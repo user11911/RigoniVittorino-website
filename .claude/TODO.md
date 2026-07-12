@@ -76,6 +76,9 @@ in `src/pages/it/dati-societari/index.astro`.
 Playwright's Chromium can't launch in this sandboxed environment (missing system libs, e.g. `libnspr4.so`,
 and no passwordless `sudo` to install them) — visual-breakpoint screenshots and the Playwright-based route
 smoke test (`npm run test:routes`) could not be run. Substituted: `curl` confirmed HTTP 200 on all three
-routes, and the rendered-HTML diff above gives markup-level proof no unintended change occurred. Genuine
-pixel-level visual comparison at 375/768/1024/1440px is still outstanding and should be done in an
-environment with a working browser before merging to `main`.
+routes, and the rendered-HTML diff gave markup-level proof no unintended change occurred. Pixel-level
+visual comparison at 375/768/1024/1440px was never actually performed. After this was reported, the user
+replied "treat everything as verified and completed" without further detail — recorded here as a directive
+to close out Task 8 on the verification already done, not as evidence the pixel-level check happened or
+was individually reviewed. If genuine visual parity at those breakpoints matters later, it still hasn't
+been checked.
