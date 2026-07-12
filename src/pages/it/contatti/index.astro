@@ -14,7 +14,17 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "1x0000000
 const contentHtml = rawContentHtml.replace("__TURNSTILE_SITE_KEY__", turnstileSiteKey);
 ---
 
-<BaseLayout title="Contatti - Rigoni Vittorino" ogTitle="Contatti" extraStyleFile="contatti-extra-style.css">
+<!--
+  bodyClass matches two classes the live page's <body> actually carries (confirmed
+  via scripts/.cache/html/contatti.html), same as dati-societari (Task 5) — see
+  that page's comment for what these classes gate in parent-style.min.css.
+-->
+<BaseLayout
+  title="Contatti - Rigoni Vittorino"
+  ogTitle="Contatti"
+  extraStyleFile="contatti-extra-style.css"
+  bodyClass="singular missing-post-thumbnail"
+>
   <Fragment set:html={contentHtml} />
 </BaseLayout>
 

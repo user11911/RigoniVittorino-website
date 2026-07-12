@@ -14,6 +14,13 @@ Completed or inactive work:
 - Task 4: completed/inactive Italian News landing page at `/it/news/`. Do not extend News work unless the user explicitly asks.
 - Task 5: completed/inactive Italian Dati societari page at `/it/dati-societari/`. Do not modify unless explicitly reactivated.
 - Task 6: completed/inactive Cloudflare Web Analytics beacon + real `/it/privacy-policy/` page. Do not modify unless explicitly reactivated. Merged to `main` at commit `94209c1`.
+- Task 7: completed/inactive fix for `ShareButtons.astro` URL-encoding (all 6 links, including Stumbleupon)
+  and contact-form server-side length validation. Do not modify unless explicitly reactivated. Committed at
+  `716b02a` on `fix-flagged-bugs` (not yet merged to `main`).
+- Task 8: completed/inactive fix for missing `bodyClass="singular missing-post-thumbnail"` on `chi-siamo`,
+  `cantina`, and `contatti` (all three confirmed via `scripts/.cache/html/` to carry these classes live,
+  matching `dati-societari` exactly). Do not modify unless explicitly reactivated. On `fix-flagged-bugs`,
+  not yet committed.
 
 Preserved constraints from completed work:
 
@@ -22,106 +29,53 @@ Preserved constraints from completed work:
 - Do not modify English or German pages.
 - Do not modify `rigonivittorinoshop.it`, ecommerce systems, cart, checkout, account, products, payments, or external shop behavior.
 - Keep existing visible shop links pointing to `rigonivittorinoshop.it`.
-- Do not modify Task 2 contact-backend code, except that Task 7 below narrowly authorizes adding
-  server-side length validation to `src/lib/contact-validation.ts`. No other Task 2 file may be touched.
+- Do not modify Task 2 contact-backend code (`src/pages/api/contact.ts`, `src/lib/rate-limit.ts`,
+  `src/lib/email.ts`, `src/lib/turnstile.ts`, the D1 migration); Task 7's narrow authorization to touch
+  `src/lib/contact-validation.ts` is complete and frozen along with it.
 - `/it/privacy-policy/` and Cloudflare Web Analytics are implemented (Task 6, frozen); do not modify unless
   explicitly reactivated.
 - `/it/dati-societari/` (Task 5) is completed/frozen; do not modify it except to reuse its already-finalized company-identity text for reference.
 - Do not work on Task 3 visual bugs or further News scope as part of this task.
 
 
-## Task 7 - Active: fix ShareButtons and contact-form validation bugs
+## Task 8 - Complete: fix missing `bodyClass` on chi-siamo, cantina, and contatti
 
-Status: active.
+Status: complete, pending commit/merge. No task is currently active — confirm scope with the user before
+starting new work.
 
-### User request
+### Summary
 
-Fix two known, previously-reported bugs that were identified during an earlier full-project bug review but
-never actioned, because every task since then stayed narrowly scoped to its own goal:
+`chi-siamo`, `cantina`, and `contatti` never got the `bodyClass="singular missing-post-thumbnail"`
+treatment Task 5 discovered and applied to `dati-societari`. Confirmed via `scripts/.cache/html/{chi-siamo,
+cantina,contatti}.html` that all three live pages' `<body>` carry exactly the same `singular
+missing-post-thumbnail` classes as `dati-societari` did — no per-page variation. Added the identical
+`bodyClass="singular missing-post-thumbnail"` prop to all three, following the exact pattern already used
+in `src/pages/it/dati-societari/index.astro`.
 
-1. `ShareButtons.astro`'s share links aren't URL-encoded.
-2. The contact form's server-side validation has no max-length caps matching the client's `maxlength`
-   attributes.
+### Files changed
 
-### Bug 1 — `ShareButtons.astro` missing URL-encoding
+- `src/pages/it/chi-siamo/index.astro`
+- `src/pages/it/cantina/index.astro`
+- `src/pages/it/contatti/index.astro`
 
-- File: `src/components/ShareButtons.astro`.
-- Problem: the `title` and `url` props are interpolated directly into the `mailto:`, Facebook, Twitter,
-  Reddit, and LinkedIn share URLs without `encodeURIComponent()`. Currently dormant — no current wine title
-  contains `&`, `#`, `?`, or similar — but will silently produce a broken share link the moment one does.
-- Fix: wrap `title` and `url` with `encodeURIComponent()` at all 5 interpolation sites.
-- No visual or markup change: same links, same targets, same rendered appearance — only the generated
-  `href` values become correctly encoded.
+### Verification performed
 
-### Bug 2 — contact form missing server-side length validation
+- `npm run test:unit`: 37/37 passed. `npm run check`: 0 errors. `npm run build`: succeeded, all routes
+  prerendered.
+- Rendered-HTML diff (local preview, before vs. after) for all three routes confirms the *only* change is
+  the `<body>` class attribute gaining `singular missing-post-thumbnail` — no other markup, content, or
+  structure changed.
+- `git diff --stat` confirms only the three files above changed (plus this TODO.md entry).
+- Confirmed via `dist/client/.../parent-style.min.css` that the CSS rules described in the original
+  background section (`:not(.singular) main>article:first-of-type{padding:4rem 0 0}` and
+  `.reduced-spacing.missing-post-thumbnail .post-inner{padding-top:0}`) are present and now correctly gated
+  for these three pages, matching `dati-societari`.
 
-- File: `src/lib/contact-validation.ts` (`validateContactFields()`).
-- Problem: validation checks presence and email format but not length, even though the client form
-  (`src/content/main/contatti.html`) declares `maxlength="400"` on `your-name`/`your-email` and
-  `maxlength="2000"` on `your-message`. A direct POST to `/api/contact` bypasses the client's `maxlength`
-  entirely. This also runs against `CLAUDE.md`'s own rule: "Validate and sanitize all user input on the
-  server, even when client-side validation exists."
-- Fix: add max-length checks to `validateContactFields()` mirroring the client's declared limits exactly —
-  name ≤ 400, email ≤ 400, message ≤ 2000 — with Italian error copy consistent with the file's existing
-  style (e.g. the existing `"Questo campo è obbligatorio."` pattern). Exact wording is a judgment call to
-  finalize during implementation, not fixed here.
-- Extend `src/lib/contact-validation.test.ts` to cover the new boundary: exactly at the limit (valid), one
-  character over (invalid, correct error key).
+### Known limitation
 
-### Authorization and relationship to earlier constraints
-
-This task narrowly supersedes the "do not modify Task 2 contact-backend code" constraint, but only for the
-additive length-cap validation in `src/lib/contact-validation.ts` described above. No other Task 2 file
-(`src/pages/api/contact.ts`, `src/lib/rate-limit.ts`, `src/lib/email.ts`, `src/lib/turnstile.ts`, the D1
-migration) may be touched unless a build/runtime issue strictly requires it — if so, document why.
-
-### Route/file scope
-
-Implement:
-
-- `src/components/ShareButtons.astro`
-- `src/lib/contact-validation.ts` (and its test file)
-
-Do not implement or modify:
-
-- Any other Task 2 backend file.
-- `/it/dati-societari/`, `/it/privacy-policy/`, Cloudflare Web Analytics, News, shop, or Task 3 visual fixes.
-- Any component or page not named above.
-- Field names, the honeypot mechanism, the email-format regex, or which fields are required/optional.
-
-### Non-negotiable constraints
-
-- No visual/behavioral change to `ShareButtons` beyond correct URL-encoding.
-- No change to required/optional fields, the honeypot check, or the email regex.
-- Error message copy matches the existing Italian style already used in the file.
-- Touch only the files named above.
-
-### Discovery required before implementation
-
-1. Read `CLAUDE.md`, then this `TODO.md`, confirm Task 7 is the only active task.
-2. Re-read `src/components/ShareButtons.astro`, `src/lib/contact-validation.ts`, and
-   `src/lib/contact-validation.test.ts` in full before editing.
-3. Reconfirm the client's exact `maxlength` values against `src/content/main/contatti.html` at
-   implementation time, in case the content has changed since this was written.
-
-### Implementation requirements
-
-- Add `encodeURIComponent()` around `title`/`url` at all 5 share-link interpolation sites in
-  `ShareButtons.astro`.
-- Add length checks to `validateContactFields()`, extending the existing `ValidationResult`/`errors` shape.
-- Add tests for the new boundary conditions described above.
-
-### Testing and validation
-
-- `npm run check`, `npm run test:unit` (existing 31 tests + new length-validation tests), `npm run build`.
-- Confirm `git diff` touches only the files named in scope.
-- Confirm Task 2's other backend files, Task 3, Task 5, Task 6, and News remain untouched.
-
-### Required Task 7 deliverables
-
-- Summary of both fixes.
-- Files changed.
-- New/updated tests and their results.
-- Confirmation no unrelated files were touched.
-- Commands run and results.
-- Known limitations, if any (e.g. exact error-message wording as a judgment call, flagged for review).
+Playwright's Chromium can't launch in this sandboxed environment (missing system libs, e.g. `libnspr4.so`,
+and no passwordless `sudo` to install them) — visual-breakpoint screenshots and the Playwright-based route
+smoke test (`npm run test:routes`) could not be run. Substituted: `curl` confirmed HTTP 200 on all three
+routes, and the rendered-HTML diff above gives markup-level proof no unintended change occurred. Genuine
+pixel-level visual comparison at 375/768/1024/1440px is still outstanding and should be done in an
+environment with a working browser before merging to `main`.

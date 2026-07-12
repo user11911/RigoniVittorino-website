@@ -10,6 +10,11 @@ const contentHtml = await readFile(
 );
 ---
 
-<BaseLayout title="Cantina - Rigoni Vittorino" ogTitle="Cantina">
+<!--
+  bodyClass matches two classes the live page's <body> actually carries (confirmed
+  via scripts/.cache/html/cantina.html), same as dati-societari (Task 5) — see
+  that page's comment for what these classes gate in parent-style.min.css.
+-->
+<BaseLayout title="Cantina - Rigoni Vittorino" ogTitle="Cantina" bodyClass="singular missing-post-thumbnail">
   <Fragment set:html={contentHtml} />
 </BaseLayout>
