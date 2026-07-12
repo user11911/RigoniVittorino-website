@@ -74,3 +74,40 @@ describe("validateContactFields", () => {
     expect(Object.keys(result.errors).sort()).toEqual(["acceptance", "email", "name"]);
   });
 });
+
+describe("validateContactFields — length limits", () => {
+  it("accepts a name exactly at the 400-character limit", () => {
+    const result = validateContactFields(fields({ name: "a".repeat(400) }));
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects a name one character over the 400-character limit", () => {
+    const result = validateContactFields(fields({ name: "a".repeat(401) }));
+    expect(result.valid).toBe(false);
+    expect(result.errors.name).toBeDefined();
+  });
+
+  it("accepts an email exactly at the 400-character limit", () => {
+    const email = "a".repeat(388) + "@example.com"; // 388 + 12 = 400
+    const result = validateContactFields(fields({ email }));
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects an email one character over the 400-character limit", () => {
+    const email = "a".repeat(389) + "@example.com"; // 389 + 12 = 401
+    const result = validateContactFields(fields({ email }));
+    expect(result.valid).toBe(false);
+    expect(result.errors.email).toBeDefined();
+  });
+
+  it("accepts a message exactly at the 2000-character limit", () => {
+    const result = validateContactFields(fields({ message: "a".repeat(2000) }));
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects a message one character over the 2000-character limit", () => {
+    const result = validateContactFields(fields({ message: "a".repeat(2001) }));
+    expect(result.valid).toBe(false);
+    expect(result.errors.message).toBeDefined();
+  });
+});

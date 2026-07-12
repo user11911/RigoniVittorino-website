@@ -34,12 +34,20 @@ export function validateContactFields(fields: ContactFields): ValidationResult {
 
   if (!fields.name.trim()) {
     errors.name = "Questo campo è obbligatorio.";
+  } else if (fields.name.length > 400) {
+    errors.name = "Il nome non può superare i 400 caratteri.";
   }
 
   if (!fields.email.trim()) {
     errors.email = "Questo campo è obbligatorio.";
   } else if (!EMAIL_RE.test(fields.email.trim())) {
     errors.email = "Inserisci un indirizzo email valido.";
+  } else if (fields.email.length > 400) {
+    errors.email = "L'indirizzo email non può superare i 400 caratteri.";
+  }
+
+  if (fields.message.length > 2000) {
+    errors.message = "Il messaggio non può superare i 2000 caratteri.";
   }
 
   if (!fields.acceptance) {
