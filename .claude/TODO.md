@@ -16,11 +16,11 @@ Completed or inactive work:
 - Task 6: completed/inactive Cloudflare Web Analytics beacon + real `/it/privacy-policy/` page. Do not modify unless explicitly reactivated. Merged to `main` at commit `94209c1`.
 - Task 7: completed/inactive fix for `ShareButtons.astro` URL-encoding (all 6 links, including Stumbleupon)
   and contact-form server-side length validation. Do not modify unless explicitly reactivated. Committed at
-  `716b02a` on `fix-flagged-bugs` (not yet merged to `main`).
+  `716b02a`, merged to `main`.
 - Task 8: completed/inactive fix for missing `bodyClass="singular missing-post-thumbnail"` on `chi-siamo`,
   `cantina`, and `contatti` (all three confirmed via `scripts/.cache/html/` to carry these classes live,
-  matching `dati-societari` exactly). Do not modify unless explicitly reactivated. Committed at `03a0459`
-  on `fix-flagged-bugs` (not yet merged to `main`).
+  matching `dati-societari` exactly). Do not modify unless explicitly reactivated. Committed at `03a0459`,
+  merged to `main`.
 
 Preserved constraints from completed work:
 
@@ -40,8 +40,8 @@ Preserved constraints from completed work:
 
 ## Task 8 - Complete: fix missing `bodyClass` on chi-siamo, cantina, and contatti
 
-Status: complete. Committed at `03a0459` on `fix-flagged-bugs` (not yet merged to `main`). No task is
-currently active — confirm scope with the user before starting new work.
+Status: complete. Committed at `03a0459`, merged to `main`. No task is currently active — confirm scope
+with the user before starting new work.
 
 ### Summary
 
