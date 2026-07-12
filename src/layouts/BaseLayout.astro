@@ -82,6 +82,22 @@ const canonical = new URL(Astro.url.pathname, "https://rigonivittorino.com").toS
          showing the wrong grey body background wherever no other content covers it
          (found while building /it/dati-societari/, see IMPLEMENTATION_NOTES.md Task 5). -->
     <link rel="stylesheet" href="/styles/wp-custom-background.css" />
+    <!-- Cloudflare Web Analytics manual beacon (Task 6). Cookie-free by design (no
+         cookies/localStorage, server-side edge collection — confirmed against
+         Cloudflare's own docs, see IMPLEMENTATION_NOTES.md Task 6), so no consent
+         banner is needed. Gated on two conditions: only in a production build
+         (`import.meta.env.PROD` — false under `astro dev`, so local traffic is never
+         counted) and only once a real site token is configured (empty/unset
+         `PUBLIC_CF_ANALYTICS_TOKEN` is the normal dry-run state before the site
+         owner provisions one, same convention as `RESEND_API_KEY`). -->
+    {import.meta.env.PROD && import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN && (
+      <script
+        is:inline
+        defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={JSON.stringify({ token: import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN })}
+      />
+    )}
   </head>
   <body class={`custom-background wp-custom-logo wp-theme-twentytwenty wp-child-theme-geppa reduced-spacing ${bodyClass}`}>
     <Fragment set:html={headerHtml} />

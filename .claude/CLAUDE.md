@@ -32,7 +32,7 @@ Task-specific instructions belong in `TODO.md`. Before starting work, read this 
 - Do not rebuild or modify `rigonivittorinoshop.it`, its backend, ecommerce system, cart, checkout, accounts, products, or payments.
 - Preserve visible shop links and keep them pointing to `rigonivittorinoshop.it`.
 - Do not implement, route, migrate, or rebuild News pages, archives, tags, categories, detail pages, or CMS data unless the active task in `TODO.md` explicitly authorizes News work. When News work is authorized, touch only the News scope named in `TODO.md` and preserve all other completed Italian-site work.
-- `/it/privacy-policy/` must remain accessible but completely blank unless the user later gives explicit approval to change that rule.
+- `/it/privacy-policy/` was blank in earlier completed work; the user has given the explicit approval this rule required to populate it with a real, accurate privacy/cookie policy. This rule is superseded when the active task in `TODO.md` explicitly authorizes implementing it (see Task 6).
 - `/it/dati-societari/` was blank in earlier completed work, but this rule is superseded when the active task in `TODO.md` explicitly authorizes implementing or preserving the live Dati societari page.
 ## Security and data handling
 
@@ -42,6 +42,7 @@ Task-specific instructions belong in `TODO.md`. Before starting work, read this 
 - Validate and sanitize all user input on the server, even when client-side validation exists.
 - Prefer minimal data collection and document any retained user data.
 - Do not expose stack traces, raw provider errors, secrets, or sensitive internals to users.
+- Any privacy/cookie policy content on this site must accurately describe the rebuild's actual current data processing (not the original WordPress site's stack, which used different tools) and must be flagged for the site owner's/legal counsel's review before production launch — AI-drafted policy text is not a substitute for legal sign-off.
 
 ## Backend and integration principles
 

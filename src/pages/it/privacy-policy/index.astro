@@ -1,6 +1,33 @@
 ---
 export const prerender = true;
-import BlankLayout from "../../../layouts/BlankLayout.astro";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+
+const contentHtml = await readFile(
+  path.join(process.cwd(), "src/content/main/privacy-policy.html"),
+  "utf8",
+);
 ---
 
-<BlankLayout />
+<!--
+  This page has no live static markup to transplant: the live site's own
+  /it/privacy-policy/ only loads a third-party Iubenda widget client-side, so the
+  real legal text was never present in its HTML (see IMPLEMENTATION_NOTES.md
+  Task 6). The content below is self-hosted, drafted from this rebuild's actual
+  data-handling behavior, not copied from the live site.
+
+  bodyClass reuses the same "singular missing-post-thumbnail" combination
+  Task 5 established for /it/dati-societari/ — both are plain WordPress
+  "page" post-type content with no hero/featured image, as opposed to the four
+  main pages' Grids page-builder template. See dati-societari/index.astro and
+  IMPLEMENTATION_NOTES.md Task 5 for why these classes matter (background color
+  and top-spacing CSS gated behind them).
+-->
+<BaseLayout
+  title="Norme sulla privacy e cookie - Rigoni Vittorino"
+  ogTitle="Norme sulla privacy e cookie"
+  bodyClass="singular missing-post-thumbnail"
+>
+  <Fragment set:html={contentHtml} />
+</BaseLayout>

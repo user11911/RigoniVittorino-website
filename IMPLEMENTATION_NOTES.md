@@ -913,3 +913,148 @@ footer's address/phone/email/social icons are already self-hosted from Task 1.
   `singular`/`missing-post-thumbnail` body classes as dati-societari had before this
   fix; not touched, since their hero images/colored sections mask any visible
   effect and fixing them wasn't in Task 5's scope.
+
+---
+
+# Task 6 — Cloudflare Web Analytics + a real `/it/privacy-policy/` page
+
+Per `.claude/TODO.md`: add cookieless analytics (Cloudflare Web Analytics), and — because that surfaced a
+real, pre-existing gap — replace the hard-locked blank `/it/privacy-policy/` with a real page that discloses
+both the new analytics and the `/it/contatti/` backend's data handling, which has been undisclosed anywhere
+since Task 2 shipped.
+
+## ⚠️ Legal status — read before deploying
+
+**The privacy-policy text delivered by this task is a factual draft of this rebuild's actual technical
+behavior, not a legally reviewed document.** It must be reviewed and approved by the site owner's legal
+counsel / privacy consultant before production launch. Two fields are explicitly left as open decisions
+(marked `[DA CONFERMARE]` in the page itself) rather than invented:
+
+1. **Data retention period** — no automatic deletion of contact-form submissions exists in code today; rows
+   persist indefinitely in D1. The page states this honestly instead of asserting a retention period that
+   isn't real. The site owner needs to decide an actual policy (and, if a period other than "indefinite" is
+   chosen, someone needs to build the deletion mechanism — out of scope for this task).
+2. **DPO (Responsabile della protezione dei dati)** — whether one is legally required or already appointed
+   is not something this task can determine; left as an explicit placeholder.
+
+A third item needs confirmation but isn't blocking: the exact data-transfer safeguards Resend has in place
+for data leaving the EU/EEA (Standard Contractual Clauses or equivalent) — flagged in the page's "Fornitori
+terzi" section for the site owner to verify against Resend's DPA.
+
+## What was implemented
+
+### 1. Cloudflare Web Analytics beacon
+
+- Added to the shared `BaseLayout.astro`, just before `</head>`, as Cloudflare's own current manual-setup
+  snippet (confirmed live against [Cloudflare's docs](https://developers.cloudflare.com/web-analytics/get-started/)
+  rather than assumed from memory):
+  ```html
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"..."}'></script>
+  ```
+- Gated on two conditions, both required: `import.meta.env.PROD` (true only for `astro build` output, false
+  under `astro dev`) AND `import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN` being set.
+- **No-cookies confirmation**: verified against Cloudflare's own documentation and community answers (not
+  assumed from general reputation) that Web Analytics "does not use any client-side state, such as cookies
+  or localStorage" and collects data server-side at Cloudflare's edge — so no consent banner is required for
+  this specific beacon. See
+  [Cloudflare Web Analytics FAQ](https://developers.cloudflare.com/web-analytics/faq/) and
+  [Cloudflare Cookies · Fundamentals docs](https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/).
+- New env var `PUBLIC_CF_ANALYTICS_TOKEN` added to `.env.example` (empty default) with setup instructions
+  (Cloudflare dashboard → Analytics & Logs → Web Analytics → add site → copy token) — same "empty is a
+  supported dry-run state" treatment already used for `RESEND_API_KEY`, and the same public-env-var pattern
+  already used for `PUBLIC_TURNSTILE_SITE_KEY`.
+- **Prod/dev distinction, verified concretely, not just trusted from docs**: since every page using
+  `BaseLayout` is prerendered at build time (the only server-rendered route, `/api/contact`, doesn't use
+  `BaseLayout` at all), both gating conditions are resolved once, at build time. Practical effect: `npm run
+  dev` never renders the beacon regardless of token (verified by curling a running dev server with a dummy
+  token set — beacon absent); any `astro build` output renders it once a token is present (verified by
+  rebuilding with a dummy token and grepping the generated HTML — beacon present with the correct token
+  substituted), then reverted back to the unset state before finishing.
+
+### 2. `/it/privacy-policy/` — real content
+
+- `src/pages/it/privacy-policy/index.astro` no longer renders `<BlankLayout />`. It now reads
+  `src/content/main/privacy-policy.html` (new file, self-authored — see below) through the shared
+  `BaseLayout`, using the same `bodyClass="singular missing-post-thumbnail"` combination Task 5 established
+  for `/it/dati-societari/` (both are plain WordPress "page" post-type content with no hero/featured image,
+  as opposed to the four main pages' Grids page-builder template).
+- **Why this content couldn't be transplanted like every other page**: the live site's actual
+  `/it/privacy-policy/` has no real static text of its own — its cached scrape shows it only loads a
+  third-party Iubenda widget client-side (`cdn.iubenda.com/iubenda.js`), which injects the real legal text
+  from Iubenda's own servers at runtime. There was nothing to scrape/transplant. The page's `<title>` was
+  reused ("Norme sulla privacy e cookie — Rigoni Vittorino", confirmed from the cached scrape) since that
+  much genuinely is live-site truth; the body content is new, factual, drafted text (see the legal-status
+  section above).
+- Content sections (all in Italian, matching site language): Titolare del trattamento (reusing the real
+  company identity Task 5 already implemented at `/it/dati-societari/` — company name, address, P.IVA,
+  contact email), Dati raccolti tramite il modulo di contatto (name/email/message → D1; IP hashed with a
+  salt, never stored raw, used only for rate-limiting; legal basis = the existing consent checkbox),
+  Fornitori terzi (Cloudflare Turnstile, Resend — both named, with what each actually does), Conservazione
+  dei dati (honest "no automatic deletion exists" statement + placeholder), Cloudflare Web Analytics
+  (cookie-free explanation), Diritti dell'interessato (standard GDPR Art. 15–22 rights — statutory
+  boilerplate, not company-specific invention), Autorità di controllo (Garante per la protezione dei dati
+  personali), and RPD/DPO (placeholder). A highlighted notice box at the top states the legal-review
+  requirement explicitly, so it's visible to whoever looks at the deployed page, not just to whoever reads
+  this file.
+- `src/layouts/BlankLayout.astro` deleted — confirmed via `grep -rl BlankLayout src/` that
+  `/it/privacy-policy/` was its only remaining consumer (its other historical use, `/it/dati-societari/`,
+  already stopped using it back in Task 5).
+
+## Files changed
+
+- `.env.example` — added `PUBLIC_CF_ANALYTICS_TOKEN`.
+- `src/layouts/BaseLayout.astro` — added the conditional analytics beacon.
+- `src/pages/it/privacy-policy/index.astro` — rewritten (was `<BlankLayout />`).
+- `src/content/main/privacy-policy.html` (new, self-authored, not scraped).
+- `src/layouts/BlankLayout.astro` — deleted (no remaining consumers).
+
+No changes to `/it/dati-societari/`, Task 2's contact-backend code (`src/pages/api/contact.ts`,
+`src/lib/rate-limit.ts`, `src/lib/email.ts`, `src/lib/turnstile.ts`,
+`migrations/0001_contact_submissions.sql`), Task 3, Task 4/News, `src/content/chrome/footer.html` (its
+existing `<a href="/it/privacy-policy/">Privacy</a>` link, present since Task 1, already pointed at the
+right place — confirmed, not modified), or shop links.
+
+## Testing and confirmations
+
+- `npx astro check`: 0 errors, 0 warnings (same baseline as before this task; one fewer file now that
+  `BlankLayout.astro` is deleted).
+- `npx vitest run`: 31/31 tests pass, unaffected (no logic under test touched).
+- `npx astro build`: succeeds. Verified directly in `dist/`:
+  - `dist/client/it/privacy-policy/index.html` is now 22.6 KB of real content (title, headings, all
+    sections present) versus the previous empty `<html><head><title></title></head><body></body></html>`
+    shell.
+  - With `PUBLIC_CF_ANALYTICS_TOKEN` unset (the committed `.env.example` default and this environment's
+    actual `.env` state): beacon script absent from built HTML (`grep -c cloudflareinsights` → 0 on both
+    the homepage and the privacy page).
+  - With a dummy token temporarily set and rebuilt: beacon script present on both pages, with the correct
+    token value substituted into `data-cf-beacon`. Reverted `.env` back to its original state afterward.
+  - With a dummy token set but served via `npm run dev` (not a production build): beacon absent (verified
+    by curling the running dev server), confirming the prod-only gate works as intended, not just the
+    token-present gate.
+- `node scripts/route-smoke-test.mjs`: still fails in this environment — Playwright's headless Chromium
+  can't load `libnspr4.so`, a pre-existing system-library gap in this WSL environment identified separately
+  from this task (not a regression introduced here). Direct `dist/` HTML inspection above was used as the
+  alternative evidence, per the project's own testing rules allowing documented substitutes when a tool is
+  unavailable.
+- ✅ `/it/dati-societari/` confirmed unaffected: `git diff` on `src/pages/it/dati-societari/index.astro` and
+  `src/content/main/dati-societari.html` is empty.
+- ✅ Task 2 contact-backend code confirmed byte-for-byte unmodified: `git diff` on `src/pages/api/contact.ts`,
+  `src/lib/rate-limit.ts`, `src/lib/email.ts`, `src/lib/turnstile.ts`, and the D1 migration is empty.
+- ✅ Shop links unaffected: `rigonivittorinoshop.it` still referenced 3 times across
+  `src/content/chrome/footer.html`/`header.html`, no shop-related file touched.
+- ✅ Task 3 not worked on; Task 4/News not expanded.
+
+## Known limitations / risks / user-review items
+
+- **The drafted privacy-policy text needs the site owner's/legal counsel's review before production
+  launch** — repeating this here as it's the single most important open item from this task, not just a
+  footnote (see the "Legal status" section at the top).
+- Retention period for contact-form submissions is undecided and unimplemented (indefinite retention today).
+- Whether a DPO is required/appointed is undecided.
+- Resend's exact cross-border data-transfer safeguards should be confirmed against their current DPA.
+- Route smoke test remains blocked by the pre-existing Playwright system-library gap in this environment;
+  fixing that (e.g. `sudo npx playwright install-deps`) is outside this task's scope but would let future
+  work run the full automated regression suite this project's own rules call for.
+- No Cloudflare Web Analytics token has been provisioned yet — analytics collection won't actually start
+  until the site owner creates a Web Analytics site in the Cloudflare dashboard and sets
+  `PUBLIC_CF_ANALYTICS_TOKEN` in production.

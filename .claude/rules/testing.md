@@ -14,7 +14,7 @@ Test at these viewport widths:
 Before final delivery, verify:
 
 * Every scoped route renders.
-* `/it/privacy-policy/` renders a completely blank page.
+* `/it/privacy-policy/` renders the real privacy/cookie policy page (see TODO.md Task 6) — no longer blank.
 * `/it/dati-societari/` renders correctly.
 * Every wine category page contains the same wines in the same order.
 * Every wine product page contains the exact same visible Italian text and values.
