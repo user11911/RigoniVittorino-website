@@ -38,7 +38,7 @@ Run all relevant available commands in the repository, such as:
 
 If commands are unavailable, document that they are unavailable.
 
-Also create or run a route smoke test covering every scoped route. Each scoped route must return a valid page without console errors, except News routes must not be part of the implemented route set.
+Also create or run a route smoke test covering every scoped route. Each scoped route must return a valid page without console errors. News routes must be excluded unless the active task explicitly authorizes News work; when News is authorized, test only the authorized News scope.
 
 ## Required final deliverables
 
@@ -57,7 +57,7 @@ At completion, provide:
 * Known differences, if any.
 * Notes on any unavailable third-party scripts, assets, PDFs, forms, or behavior.
 * Confirmation that shop links remain external.
-* Confirmation that News was excluded from routing.
+* Confirmation that News routing matches the active task scope, including any shared News route, redirects, aliases, or exclusions.
 
 For each scoped page type, compare the rewritten site against the current live site:
 
