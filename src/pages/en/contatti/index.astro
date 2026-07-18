@@ -1,0 +1,114 @@
+---
+export const prerender = true;
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import localeEquivalents from "../../../data/locale-equivalents.json";
+
+const rawContentHtml = await readFile(
+  path.join(process.cwd(), "src/content/main/en/contatti.html"),
+  "utf8",
+);
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "1x00000000000000000000AA";
+const contentHtml = rawContentHtml.replace("__TURNSTILE_SITE_KEY__", turnstileSiteKey);
+---
+
+<BaseLayout
+  title="Contacts - Rigoni Vittorino"
+  ogTitle="Contacts"
+  extraStyleFile="contatti-extra-style.css"
+  bodyClass="singular missing-post-thumbnail"
+  lang="en"
+  otherLangUrls={localeEquivalents.pages.contact}
+>
+  <Fragment set:html={contentHtml} />
+</BaseLayout>
+
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+<script>
+  // Same progressive-enhancement flow as /it/contatti/ (see IMPLEMENTATION_NOTES.md
+  // "Task 2") against the same shared /api/contact endpoint — the backend and its
+  // field-level validation-tip strings stay Italian (frozen, not reopened per Task 9
+  // scope). Only this page-level status copy (new, non-frozen microcopy) is in
+  // English, per explicit user decision.
+  const form = document.querySelector<HTMLFormElement>("#contact-form");
+  const wpcf7Wrapper = form?.closest(".wpcf7");
+  const responseOutput = form?.querySelector<HTMLElement>(".wpcf7-response-output");
+
+  const FIELD_SELECTORS: Record<string, string> = {
+    name: '[name="your-name"]',
+    email: '[name="your-email"]',
+    acceptance: '[name="acceptance-698"]',
+  };
+
+  function clearFieldErrors() {
+    form?.querySelectorAll(".wpcf7-not-valid-tip").forEach((el) => el.remove());
+    form?.querySelectorAll(".wpcf7-form-control").forEach((el) => el.classList.remove("wpcf7-not-valid"));
+  }
+
+  function showFieldErrors(errors: Record<string, string>) {
+    for (const [field, message] of Object.entries(errors)) {
+      const selector = FIELD_SELECTORS[field];
+      const input = selector ? form?.querySelector<HTMLElement>(selector) : null;
+      if (!input) continue;
+      input.classList.add("wpcf7-not-valid");
+      input.setAttribute("aria-invalid", "true");
+      const tip = document.createElement("span");
+      tip.className = "wpcf7-not-valid-tip";
+      tip.setAttribute("role", "alert");
+      tip.textContent = message;
+      input.insertAdjacentElement("afterend", tip);
+    }
+  }
+
+  function setStatus(status: "init" | "submitting" | "sent" | "invalid" | "failed" | "aborted") {
+    if (!form || !wpcf7Wrapper) return;
+    form.dataset.status = status;
+    form.classList.remove("init", "submitting", "sent", "invalid", "failed", "aborted");
+    form.classList.add(status);
+    wpcf7Wrapper.classList.toggle("no-js", false);
+  }
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!form) return;
+
+    clearFieldErrors();
+    setStatus("submitting");
+    const submitButton = form.querySelector<HTMLButtonElement | HTMLInputElement>('[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
+
+    try {
+      const formData = new FormData(form);
+      const res = await fetch(form.action, { method: "POST", body: formData });
+      const data = (await res.json()) as {
+        success: boolean;
+        error?: string;
+        errors?: Record<string, string>;
+      };
+
+      if (data.success) {
+        setStatus("sent");
+        if (responseOutput) responseOutput.textContent = "Thank you, your message has been sent successfully.";
+        form.reset();
+        // @ts-expect-error -- global injected by the Turnstile script tag above
+        window.turnstile?.reset();
+      } else if (data.errors) {
+        setStatus("invalid");
+        showFieldErrors(data.errors);
+        if (responseOutput) responseOutput.textContent = "One or more fields were not filled in correctly.";
+      } else {
+        setStatus(res.status === 400 ? "aborted" : "failed");
+        if (responseOutput) responseOutput.textContent = data.error ?? "An error occurred. Please try again later.";
+        // @ts-expect-error -- global injected by the Turnstile script tag above
+        window.turnstile?.reset();
+      }
+    } catch {
+      setStatus("failed");
+      if (responseOutput) responseOutput.textContent = "Unable to send the message. Please check your connection and try again.";
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
+  });
+</script>

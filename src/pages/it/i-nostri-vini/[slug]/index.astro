@@ -13,9 +13,11 @@ export function getStaticPaths() {
 
 const { wine } = Astro.props;
 const pageUrl = `https://rigonivittorino.com/it/i-nostri-vini/${wine.slug}/`;
+// Confirmed live: product slugs are identical across it/en/de.
+const otherLangUrls = { en: `/en/wines/${wine.slug}/`, de: `/de/wines/${wine.slug}/` };
 ---
 
-<BaseLayout title={`${wine.title} - Rigoni Vittorino`} ogTitle={wine.title}>
+<BaseLayout title={`${wine.title} - Rigoni Vittorino`} ogTitle={wine.title} lang="it" otherLangUrls={otherLangUrls}>
   <article class="wines-template-default single single-wines hentry">
     <div class="wine-container">
       <div class="wine-image">

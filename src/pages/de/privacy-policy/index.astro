@@ -1,0 +1,21 @@
+---
+export const prerender = true;
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import localeEquivalents from "../../../data/locale-equivalents.json";
+---
+
+<!--
+  Task 9: confirmed live, /de/privacy-policy/ (like IT's before Task 6) has no
+  real static text — only a client-side Iubenda widget embed, which this
+  project doesn't re-host. Per CLAUDE.md's "do not create placeholder pages
+  with invented content", this stays genuinely blank rather than getting
+  self-authored German legal text — see src/pages/en/privacy-policy/index.astro
+  for the identical reasoning.
+-->
+<BaseLayout
+  title="Privacy Policy and Cookies - Rigoni Vittorino"
+  ogTitle="Privacy Policy and Cookies"
+  bodyClass="singular missing-post-thumbnail"
+  lang="de"
+  otherLangUrls={localeEquivalents.pages["privacy-policy"]}
+/>

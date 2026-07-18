@@ -4,12 +4,17 @@
 // logic is needed anywhere else — an absolute URL just has its domain stripped, and a
 // domain-relative URL is already the local path). Emits asset-inventory.json, one of
 // the required final deliverables.
-import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir, access } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CACHE_DIR = path.join(__dirname, ".cache/html");
+// Task 9: WPML sites typically share one media library across translations,
+// so EN/DE pages mostly reference the same asset URLs IT already downloaded
+// — scan all three language caches together (IT stays the default/primary
+// dir) and let the existing-file check below skip anything already fetched.
+const LANG_CACHE_DIRS = [CACHE_DIR, path.join(CACHE_DIR, "en"), path.join(CACHE_DIR, "de")];
 const CSS_DIR = path.join(__dirname, ".cache/css");
 const PUBLIC_DIR = path.join(__dirname, "../public");
 const INVENTORY_FILE = path.join(__dirname, "../asset-inventory.json");
@@ -69,17 +74,28 @@ function extractCssUrls(css) {
   return urls;
 }
 
+async function fileExists(p) {
+  try {
+    await access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function main() {
-  const files = (await readdir(CACHE_DIR)).filter((f) => f.endsWith(".html"));
   const found = new Map(); // localPath -> originalUrl
 
-  for (const file of files) {
-    const html = await readFile(path.join(CACHE_DIR, file), "utf8");
-    for (const url of extractUrls(html)) {
-      const local = toLocalPath(url);
-      if (!local) continue;
-      const original = url.startsWith("http") ? url : `${DOMAIN}${url}`;
-      found.set(local, original);
+  for (const dir of LANG_CACHE_DIRS) {
+    const files = (await readdir(dir).catch(() => [])).filter((f) => f.endsWith(".html"));
+    for (const file of files) {
+      const html = await readFile(path.join(dir, file), "utf8");
+      for (const url of extractUrls(html)) {
+        const local = toLocalPath(url);
+        if (!local) continue;
+        const original = url.startsWith("http") ? url : `${DOMAIN}${url}`;
+        found.set(local, original);
+      }
     }
   }
 
@@ -96,13 +112,19 @@ async function main() {
     }
   }
 
-  console.log(`Found ${found.size} unique in-scope assets across ${files.length} pages.`);
+  console.log(`Found ${found.size} unique in-scope assets across ${LANG_CACHE_DIRS.length} language caches.`);
 
   const inventory = [];
   let downloaded = 0;
+  let skipped = 0;
   let failed = 0;
   for (const [localPath, originalUrl] of found) {
     const destPath = path.join(PUBLIC_DIR, localPath);
+    if (await fileExists(destPath)) {
+      inventory.push({ originalUrl, localPath: `public${localPath}`, status: "already-present" });
+      skipped++;
+      continue;
+    }
     await mkdir(path.dirname(destPath), { recursive: true });
     try {
       const res = await fetch(originalUrl);
@@ -120,7 +142,9 @@ async function main() {
 
   inventory.sort((a, b) => a.localPath.localeCompare(b.localPath));
   await writeFile(INVENTORY_FILE, JSON.stringify(inventory, null, 2));
-  console.log(`Downloaded ${downloaded}, failed ${failed}. Inventory -> ${path.relative(process.cwd(), INVENTORY_FILE)}`);
+  console.log(
+    `Downloaded ${downloaded}, already present ${skipped}, failed ${failed}. Inventory -> ${path.relative(process.cwd(), INVENTORY_FILE)}`,
+  );
   if (failed) process.exitCode = 1;
 }
 

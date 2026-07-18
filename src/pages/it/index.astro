@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Hero from "../../components/Hero.astro";
+import localeEquivalents from "../../data/locale-equivalents.json";
 
 const contentHtml = await readFile(
   path.join(process.cwd(), "src/content/main/home.html"),
@@ -11,7 +12,14 @@ const contentHtml = await readFile(
 );
 ---
 
-<BaseLayout title="Rigoni Vittorino" ogTitle="Home" extraStyleFile="home-extra-style.css" bodyClass="home">
+<BaseLayout
+  title="Rigoni Vittorino"
+  ogTitle="Home"
+  extraStyleFile="home-extra-style.css"
+  bodyClass="home"
+  lang="it"
+  otherLangUrls={localeEquivalents.pages.home}
+>
   <Hero />
   <Fragment set:html={contentHtml} />
 </BaseLayout>

@@ -1,0 +1,18 @@
+{
+  "pages": {
+    "home": { "it": "/it/", "en": "/en/", "de": "/de/" },
+    "about": { "it": "/it/chi-siamo/", "en": "/en/the-estate/", "de": "/de/unternehmen/" },
+    "cantina": { "it": "/it/cantina/", "en": "/en/winery/", "de": "/de/weinkeller/" },
+    "contact": { "it": "/it/contatti/", "en": "/en/contatti/", "de": "/de/contacts/" },
+    "company-data": { "it": "/it/dati-societari/", "en": "/en/company-data/", "de": "/de/firmen-daten/" },
+    "privacy-policy": { "it": "/it/privacy-policy/", "en": "/en/privacy-policy/", "de": "/de/privacy-policy/" }
+  },
+  "categories": {
+    "spumanti": { "it": "/it/spumanti/", "en": "/en/sparkling/", "de": "/de/schaumweine/" },
+    "bianchi": { "it": "/it/bianchi/", "en": "/en/white-wines/", "de": "/de/weissweine/" },
+    "rossi": { "it": "/it/rossi/", "en": "/en/red-wines/", "de": "/de/rotweine/" },
+    "affinati": { "it": "/it/affinati/", "en": "/en/matured/", "de": "/de/gereift-im-eichenfass/" },
+    "frizzanti-e-rosati": { "it": "/it/frizzanti-e-rosati/", "en": "/en/fizzy-and-rose/", "de": "/de/perlweine-und-roseweine/" },
+    "passiti": { "it": "/it/passiti/", "en": "/en/passiti/", "de": "/de/strohweine/" }
+  }
+}

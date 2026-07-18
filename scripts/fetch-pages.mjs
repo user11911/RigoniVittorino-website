@@ -4,10 +4,17 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { allRoutes, cacheFileFor, BASE_URL } from "./routes.mjs";
+import { allRoutes, cacheFileFor, BASE_URL, allRoutesForLang, ROUTES_BY_LANG } from "./routes.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CACHE_DIR = path.join(__dirname, ".cache/html");
+
+// --lang=en|de (default it, preserving the original unprefixed cache path
+// exactly — see scripts/routes.mjs's Task 9 notes on why IT stays untouched).
+const langArg = process.argv.find((a) => a.startsWith("--lang="));
+const LANG = langArg ? langArg.slice("--lang=".length) : "it";
+const CACHE_DIR = path.join(__dirname, LANG === "it" ? ".cache/html" : `.cache/html/${LANG}`);
+const routes = LANG === "it" ? allRoutes() : allRoutesForLang(LANG);
+const base = LANG === "it" ? BASE_URL : ROUTES_BY_LANG[LANG].BASE_URL;
 
 async function fetchWithRetry(url, attempts = 3) {
   for (let i = 0; i < attempts; i++) {
@@ -26,10 +33,9 @@ async function fetchWithRetry(url, attempts = 3) {
 
 async function main() {
   await mkdir(CACHE_DIR, { recursive: true });
-  const routes = allRoutes();
   const results = [];
   for (const route of routes) {
-    const url = `${BASE_URL}${route.path}`;
+    const url = `${base}${route.path}`;
     process.stdout.write(`Fetching ${url} ... `);
     try {
       const html = await fetchWithRetry(url);

@@ -1,0 +1,50 @@
+[
+  {
+    "slug": "sparkling",
+    "key": "spumanti",
+    "cssClass": "prosecco-and-sparkling-wines",
+    "title": "Prosecco and Sparkling",
+    "navLabel": "Prosecco and Sparkling",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "white-wines",
+    "key": "bianchi",
+    "cssClass": "white-wines",
+    "title": "White Wines",
+    "navLabel": "White Wines",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "red-wines",
+    "key": "rossi",
+    "cssClass": "red-wines",
+    "title": "Red Wines",
+    "navLabel": "Red Wines",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "matured",
+    "key": "affinati",
+    "cssClass": "matured",
+    "title": "Matured",
+    "navLabel": "Matured",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "fizzy-and-rose",
+    "key": "frizzanti-e-rosati",
+    "cssClass": "fizzy-and-rose",
+    "title": "Fizzy and Rosé",
+    "navLabel": "Fizzy and Rosé",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "passiti",
+    "key": "passiti",
+    "cssClass": "passiti-wines",
+    "title": "Passiti",
+    "navLabel": "Passiti",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  }
+]

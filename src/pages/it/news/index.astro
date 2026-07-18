@@ -1,24 +1,10 @@
 ---
-export const prerender = true;
-// The live /it/news/ page uses WordPress's plain body.blog archive template (not
-// the Grids page-builder the 4 main pages use) — confirmed by inspecting the live
-// page's body class and #site-content markup. That CSS is already self-hosted from
-// Task 1 (twentytwenty-style.min.css / style-custom.min.css); this page only needs
-// to reuse the matching classes. See IMPLEMENTATION_NOTES.md Task 4.
-//
-// No live News posts are migrated (out of scope per .claude/TODO.md Task 4) — posts
-// come only from the local content collection (src/content/news/), which currently
-// contains a single draft-only example, so this renders with zero posts, matching
-// the live template's actual behavior with no fabricated empty-state copy.
-import BaseLayout from "../../../layouts/BaseLayout.astro";
-import NewsCard from "../../../components/NewsCard.astro";
-import { getCollection } from "astro:content";
-import { selectPublishedNews } from "../../../lib/news";
-
-const allEntries = await getCollection("news");
-const posts = selectPublishedNews(allEntries);
+// Task 9: /it/news/ (Task 4) is now a compatibility redirect to the shared,
+// language-neutral /news/ route (src/pages/news/index.astro). On-demand, not
+// prerendered — the same pattern already proven by src/pages/api/contact.ts —
+// since Astro.redirect() with a custom status code requires on-demand rendering.
+// 301 (permanent): this is a real, permanent URL move for a GET-only
+// navigational link, unlike root "/"'s per-visitor 302 country redirect.
+export const prerender = false;
+return Astro.redirect("/news/", 301);
 ---
-
-<BaseLayout title="News - Rigoni Vittorino" ogTitle="News" bodyClass="blog" mainClass="columns-3">
-  {posts.map((post) => <NewsCard title={post.data.title} excerpt={post.data.excerpt} image={post.data.image} />)}
-</BaseLayout>

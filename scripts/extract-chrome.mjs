@@ -8,35 +8,43 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as cheerio from "cheerio";
+import { ROUTES_BY_LANG, CATEGORY_KEYS } from "./routes.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CACHE_DIR = path.join(__dirname, ".cache/html");
-const OUT_DIR = path.join(__dirname, "../src/content/chrome");
+
+// --lang=en|de (default it — original flat CACHE_DIR/OUT_DIR/rewrite rules
+// untouched; IT's WPML switcher hrefs now become tokens too, see Task 9 notes
+// below, since all 3 languages are locally implemented as of this task).
+const langArg = process.argv.find((a) => a.startsWith("--lang="));
+const LANG = langArg ? langArg.slice("--lang=".length) : "it";
+const CACHE_DIR = path.join(__dirname, LANG === "it" ? ".cache/html" : `.cache/html/${LANG}`);
+const OUT_DIR = path.join(__dirname, LANG === "it" ? "../src/content/chrome" : `../src/content/chrome/${LANG}`);
 
 const DOMAIN = "https://rigonivittorino.com";
+const OTHER_LANGS = { it: ["en", "de"], en: ["it", "de"], de: ["it", "en"] }[LANG];
 
-// Every route this rebuild actually implements. Any other rigonivittorino.com link
-// (the EU rural-development funding disclosure page, News post/category/tag/archive
-// pages, etc.) is explicitly out of scope and MUST stay an absolute link to the live
-// site — rewriting it to a local path would 404 since no such local route exists.
-// /it/news itself was added in Task 4 (the landing page only, not its post/detail
-// pages — those aren't implemented, but no link to them exists in the header/footer
-// chrome this script processes, so no extra exclusion logic is needed here).
-const IMPLEMENTED_PAGE_PREFIXES = [
-  "/it/chi-siamo",
-  "/it/cantina",
-  "/it/contatti",
-  "/it/privacy-policy",
-  "/it/dati-societari",
-  "/it/i-nostri-vini",
-  "/it/spumanti",
-  "/it/bianchi",
-  "/it/rossi",
-  "/it/affinati",
-  "/it/frizzanti-e-rosati",
-  "/it/passiti",
-  "/it/news",
-];
+function inScopePrefixesFor(lang) {
+  // No trailing slashes on any entry — matches the isImplemented check below
+  // (`rel === p || rel.startsWith(`${p}/`)`), which needs the bare prefix to
+  // correctly match both exact top-level hrefs and any subpath.
+  const cfg = ROUTES_BY_LANG[lang];
+  const strip = (s) => `/${lang}/${s}`.replace(/\/$/, "");
+  const prefixes = [`/${lang}/`];
+  for (const p of cfg.MAIN_PAGES) if (p) prefixes.push(strip(p));
+  for (const p of cfg.BLANK_PAGES) prefixes.push(strip(p));
+  for (const key of CATEGORY_KEYS) prefixes.push(strip(cfg.CATEGORY_SLUGS[key]));
+  prefixes.push(strip(cfg.PRODUCT_BASE));
+  return prefixes;
+}
+
+// Every route this rebuild actually implements for LANG. Any other
+// rigonivittorino.com link (the EU rural-development funding disclosure page,
+// legacy WP News post/category/tag pages excluded from this rebuild, etc.) is
+// explicitly out of scope and MUST stay an absolute link to the live site —
+// rewriting it to a local path would 404 since no such local route exists.
+// The shared News link is handled separately below, not via this list, since
+// it now points at the language-neutral /news/ route for every language.
+const IMPLEMENTED_PAGE_PREFIXES = inScopePrefixesFor(LANG);
 
 function rewriteUrl(u) {
   if (!u) return u;
@@ -53,15 +61,15 @@ function rewriteLinks($, root) {
     const $el = $(el);
     const href = $el.attr("href");
     if (!href) return;
-    if (href === `${DOMAIN}/it/` || href === `${DOMAIN}/it` || href === "/it/" || href === "/it") {
-      $el.attr("href", "/it/");
+    if (href === `${DOMAIN}/${LANG}/` || href === `${DOMAIN}/${LANG}` || href === `/${LANG}/` || href === `/${LANG}`) {
+      $el.attr("href", `/${LANG}/`);
       return;
     }
     // Some of the live site's own links are already root-relative (e.g. the footer's
     // "/it/privacy-policy", no domain prefix, no trailing slash) rather than absolute.
     let rel;
     if (href.startsWith(DOMAIN)) rel = href.slice(DOMAIN.length);
-    else if (href.startsWith("/it/")) rel = href;
+    else if (href.startsWith(`/${LANG}/`)) rel = href;
     else return; // external (shop, social, geppa.it...) untouched
     const isImplemented = IMPLEMENTED_PAGE_PREFIXES.some((p) => rel === p || rel.startsWith(`${p}/`));
     if (!isImplemented) return; // News, funding page, etc. — leave as absolute external link
@@ -106,20 +114,54 @@ async function main() {
   // client script re-applies the correct one per page.
   header.find(".current-menu-item").removeClass("current-menu-item");
   header.find("[aria-current='page']").removeAttr("aria-current");
-  header.find(".wpml-ls-item-en a").attr("href", "https://rigonivittorino.com/en/");
-  header.find(".wpml-ls-item-de a").attr("href", "https://rigonivittorino.com/de/");
   menuModal.find(".current-menu-item").removeClass("current-menu-item");
   menuModal.find("[aria-current='page']").removeAttr("aria-current");
+
+  // Task 9: all 3 languages are now implemented locally, so the WPML switcher's
+  // *other*-language links become BaseLayout-substituted tokens (resolved from
+  // the page's own `otherLangUrls` prop) instead of the live external site —
+  // this is the one place IT's own generated chrome intentionally changes too.
+  for (const other of OTHER_LANGS) {
+    const token = `__SWITCHER_${other.toUpperCase()}_URL__`;
+    header.find(`.wpml-ls-item-${other} a`).attr("href", token);
+  }
+  // The current-language switcher item is a self-link — always the local home.
+  header.find(`.wpml-ls-item-${LANG} a`).attr("href", `/${LANG}/`);
+
+  // Shared News (Task 9): every language's News nav link points at the single
+  // canonical /news/ route. DE's live nav has no News item at all (confirmed
+  // live) — user decision: add one, matching EN/IT's structural pattern, since
+  // this is new local UI chrome (not scraped content) rather than a translated
+  // live string.
+  const newsLink = header.find('a[href*="/news/"]').filter((i, el) => {
+    const href = $(el).attr("href") ?? "";
+    return href.endsWith("/news/") || href.endsWith("/news");
+  });
+  if (newsLink.length) {
+    newsLink.attr("href", "/news/");
+  } else if (LANG === "de") {
+    const template = header.find(".menu-item").last();
+    const newsLi = template
+      .clone()
+      .removeAttr("id")
+      .attr("class", "menu-item menu-item-type-custom menu-item-object-custom menu-item-news")
+      .empty();
+    newsLi.append(`<a href="/news/">News</a>`);
+    template.after(newsLi);
+  }
+
   rewriteLinks($, header);
   rewriteLinks($, menuModal);
   const combined = header.prop("outerHTML") + "\n" + menuModal.prop("outerHTML");
   await writeFile(path.join(OUT_DIR, "header.html"), combined, "utf8");
 
   const footer = $("#site-footer").first();
+  const footerNewsLink = footer.find('a[href*="/news/"]');
+  footerNewsLink.attr("href", "/news/");
   rewriteLinks($, footer);
   await writeFile(path.join(OUT_DIR, "footer.html"), footer.prop("outerHTML"), "utf8");
 
-  console.log("Wrote src/content/chrome/header.html and footer.html");
+  console.log(`Wrote ${path.relative(process.cwd(), OUT_DIR)}/header.html and footer.html`);
 }
 
 main();

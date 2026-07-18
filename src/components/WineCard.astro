@@ -9,9 +9,15 @@ export interface Props {
   cardImageSrcset?: string;
   cardImageWidth?: string;
   cardImageHeight?: string;
+  // Task 9: defaults to "it" so every existing caller (all of which omit this
+  // prop) renders the exact same href as before this task.
+  lang?: string;
 }
-const { slug, title, cardImageSrc, cardImageSrcset, cardImageWidth, cardImageHeight } = Astro.props;
-const href = `/it/i-nostri-vini/${slug}/`;
+const { slug, title, cardImageSrc, cardImageSrcset, cardImageWidth, cardImageHeight, lang = "it" } = Astro.props;
+// Confirmed live: product slugs are identical across it/en/de; only the route's
+// base segment differs ("i-nostri-vini" vs the confirmed-live "wines").
+const PRODUCT_BASE: Record<string, string> = { it: "i-nostri-vini", en: "wines", de: "wines" };
+const href = `/${lang}/${PRODUCT_BASE[lang]}/${slug}/`;
 ---
 
 <div class="single-wine-container hvr-grow">

@@ -1,0 +1,22 @@
+---
+export const prerender = true;
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import localeEquivalents from "../../../data/locale-equivalents.json";
+
+const contentHtml = await readFile(
+  path.join(process.cwd(), "src/content/main/en/company-data.html"),
+  "utf8",
+);
+---
+
+<BaseLayout
+  title="Company Data - Rigoni Vittorino"
+  ogTitle="Company Data"
+  bodyClass="singular missing-post-thumbnail"
+  lang="en"
+  otherLangUrls={localeEquivalents.pages["company-data"]}
+>
+  <Fragment set:html={contentHtml} />
+</BaseLayout>

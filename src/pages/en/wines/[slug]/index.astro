@@ -1,0 +1,92 @@
+---
+export const prerender = true;
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import ShareButtons from "../../../../components/ShareButtons.astro";
+import wines from "../../../../data/wines.en.json";
+import localeEquivalents from "../../../../data/locale-equivalents.json";
+
+export function getStaticPaths() {
+  return wines.map((wine) => ({
+    params: { slug: wine.slug },
+    props: { wine },
+  }));
+}
+
+const { wine } = Astro.props;
+const pageUrl = `https://rigonivittorino.com/en/wines/${wine.slug}/`;
+// Confirmed live: product slugs are identical across it/en/de.
+const otherLangUrls = { it: `/it/i-nostri-vini/${wine.slug}/`, de: `/de/wines/${wine.slug}/` };
+const categoryHref = (localeEquivalents.categories as Record<string, { it: string; en: string; de: string }>)[wine.category].en;
+---
+
+<BaseLayout title={`${wine.title} - Rigoni Vittorino`} ogTitle={wine.title} lang="en" otherLangUrls={otherLangUrls}>
+  <article class="wines-template-default single single-wines hentry">
+    <div class="wine-container">
+      <div class="wine-image">
+        <img class="zoooom" src={wine.productImage} alt={wine.title} />
+      </div>
+      <div class="description">
+        <h1>{wine.title}</h1>
+        <div class="specs-row">
+          <div class={`wine-glass wine-detail ${wine.categoryClass}`}>
+            <img class="glass-ico-wine" src={wine.glassIcon} />
+          </div>
+          <div class={`wine-grado wine-detail ${wine.categoryClass}`}>
+            <p class="contenuto-specs">{wine.servingTempBadge}</p>
+          </div>
+          <div class={`wine-food-ico wine-detail ${wine.categoryClass}`}>
+            <img class="glass-ico-wine" src={wine.foodIcon} />
+          </div>
+          <div class="buy-wine">
+            <a class="scheda-wine" target="_blank" rel="noopener" href={wine.shopUrl}>
+              <button class="hvr-sweep-to-right info-wine-btn">SHOP ONLINE</button>
+              <button class="arrowBtn"><span class="icon"><i class="fal fa-arrow-right" /></span></button>
+            </a>
+          </div>
+        </div>
+
+        <div class="tipologia-row">
+          <span class="wine-specs">
+            <strong>Type:</strong> <a class="category-link" href={categoryHref}>{wine.typologyLabel}</a>
+          </span>
+          <hr class="wine-separator" />
+          <span class="wine-specs"><strong>Degree:</strong> {wine.gradazione}</span>
+          <hr class="wine-separator" />
+          <span class="wine-specs"><strong>Cultivation:</strong> {wine.coltivazione}</span>
+          <hr class="wine-separator" />
+          <span class="wine-specs"><strong>Winemaking Process:</strong> {wine.vinificazione}</span>
+          <hr class="wine-separator" />
+          <span class="wine-specs"><strong>Average Yield:</strong> {wine.resaMedia}</span>
+          <hr class="wine-separator" />
+          <span class="wine-specs"><strong>Pairings:</strong> {wine.abbinamenti}</span>
+          <hr class="wine-separator" />
+          <span class="wine-specs"><strong>Serving Temperature:</strong> {wine.servizio}</span>
+        </div>
+
+        <div class="buttons-row">
+          <div class="info-wine">
+            <a class="scheda-wine" target="_blank" rel="noopener" href={wine.pdfUrl}>
+              <button class="hvr-sweep-to-right info-wine-btn">PRODUCT SHEET</button>
+              <button class="arrowBtn"><span class="icon"><i class="fal fa-arrow-right" /></span></button>
+            </a>
+          </div>
+        </div>
+
+        <ShareButtons postId={wine.slug} title={wine.title} url={pageUrl} />
+      </div>
+    </div>
+
+    <div class="text-wine-container">
+      <div class="wine-color-logo">
+        <span class=""><img class="v-ico-wine" src={wine.categoryLogo} /></span>
+      </div>
+      <div class="wine-description">
+        <div>
+          <span class="wine-description-text">
+            {wine.tastingNoteParagraphs.map((p: string) => <p>{p}</p>)}
+          </span>
+        </div>
+      </div>
+    </div>
+  </article>
+</BaseLayout>

@@ -83,3 +83,88 @@ export function cacheFileFor(routePath) {
   const safe = routePath === "" ? "_home" : routePath.replace(/\/$/, "").replace(/\//g, "__");
   return `${safe}.html`;
 }
+
+// --- Task 9: multilingual route registry -----------------------------------
+// Everything above this line is untouched and remains the IT-only, zero-arg
+// default every existing script/consumer already relies on. Everything below
+// is additive: a lang-parameterized registry used only by callers that opt in
+// via a --lang= flag (see fetch-pages.mjs et al.). Confirmed via direct live
+// sitemap checks (wp-sitemap-posts-page-1.xml, wp-sitemap-posts-wines-1.xml)
+// during Task 9 planning: product slugs are IDENTICAL across it/en/de; static
+// page and category slugs are genuinely translated per language; the live DE
+// site has no News page/nav item at all (IT/EN both do).
+
+// Neutral, language-independent category keys (IT's own slugs, reused as the
+// stable cross-language key — matches CATEGORY_BY_PRODUCT_GROUP above).
+export const CATEGORY_KEYS = [
+  "spumanti",
+  "bianchi",
+  "rossi",
+  "affinati",
+  "frizzanti-e-rosati",
+  "passiti",
+];
+
+export const LANGS = ["it", "en", "de"];
+
+export const ROUTES_BY_LANG = {
+  it: {
+    BASE_URL: "https://rigonivittorino.com/it/",
+    MAIN_PAGES: MAIN_PAGES,
+    BLANK_PAGES: BLANK_PAGES,
+    PRODUCT_BASE: "i-nostri-vini",
+    CATEGORY_SLUGS: Object.fromEntries(CATEGORY_KEYS.map((k) => [k, k])),
+    // The shared /news/ page (Task 9) replaces /it/news/; /it/news/ becomes a
+    // redirect stub, not a scraped page — no local EN/DE News pages are built.
+    HAS_LOCAL_NEWS_NAV: true,
+  },
+  en: {
+    BASE_URL: "https://rigonivittorino.com/en/",
+    MAIN_PAGES: ["", "the-estate/", "winery/", "contatti/", "company-data/"],
+    BLANK_PAGES: ["privacy-policy/"],
+    PRODUCT_BASE: "wines",
+    CATEGORY_SLUGS: {
+      spumanti: "sparkling",
+      bianchi: "white-wines",
+      rossi: "red-wines",
+      affinati: "matured",
+      "frizzanti-e-rosati": "fizzy-and-rose",
+      passiti: "passiti",
+    },
+    HAS_LOCAL_NEWS_NAV: true,
+  },
+  de: {
+    BASE_URL: "https://rigonivittorino.com/de/",
+    MAIN_PAGES: ["", "unternehmen/", "weinkeller/", "contacts/", "firmen-daten/"],
+    BLANK_PAGES: ["privacy-policy/"],
+    PRODUCT_BASE: "wines",
+    CATEGORY_SLUGS: {
+      spumanti: "schaumweine",
+      bianchi: "weissweine",
+      rossi: "rotweine",
+      affinati: "gereift-im-eichenfass",
+      "frizzanti-e-rosati": "perlweine-und-roseweine",
+      passiti: "strohweine",
+    },
+    // Confirmed live: the DE site has no News page/nav item at all. Task 9
+    // adds one locally anyway (user decision, documented in TODO.md) so this
+    // flag only controls whether the *scrape* should expect one live — it
+    // never did, so extract-chrome.mjs adds the DE News <li> by hand.
+    HAS_LOCAL_NEWS_NAV: false,
+  },
+};
+
+export function allRoutesForLang(lang) {
+  const cfg = ROUTES_BY_LANG[lang];
+  if (!cfg) throw new Error(`Unknown lang ${lang}`);
+  const routes = [];
+  for (const p of cfg.MAIN_PAGES) routes.push({ path: p, kind: "main" });
+  for (const p of cfg.BLANK_PAGES) routes.push({ path: p, kind: "blank" });
+  for (const key of CATEGORY_KEYS) {
+    const slug = cfg.CATEGORY_SLUGS[key];
+    routes.push({ path: `${slug}/`, kind: "category", categoryKey: key });
+  }
+  for (const slug of PRODUCT_SLUGS)
+    routes.push({ path: `${cfg.PRODUCT_BASE}/${slug}/`, kind: "product", slug });
+  return routes;
+}

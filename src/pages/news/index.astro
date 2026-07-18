@@ -1,0 +1,35 @@
+---
+export const prerender = true;
+// Task 9: moved here from src/pages/it/news/index.astro to be a single,
+// language-neutral shared route — every language's nav News link now points
+// here. /it/news/ becomes a thin redirect stub to this route (see that file).
+// No local /en/news/ or /de/news/ route is created: neither ever existed
+// locally before this task, so their nav simply links straight here.
+//
+// The live /it/news/ page uses WordPress's plain body.blog archive template (not
+// the Grids page-builder the 4 main pages use) — confirmed by inspecting the live
+// page's body class and #site-content markup. That CSS is already self-hosted from
+// Task 1 (twentytwenty-style.min.css / style-custom.min.css); this page only needs
+// to reuse the matching classes. See IMPLEMENTATION_NOTES.md Task 4.
+//
+// No live News posts are migrated (out of scope per .claude/TODO.md Task 4) — posts
+// come only from the local content collection (src/content/news/), which currently
+// contains a single draft-only example, so this renders with zero posts, matching
+// the live template's actual behavior with no fabricated empty-state copy.
+//
+// lang="it": the page has no single-language identity anymore, but its only
+// real content today (the draft example post) is Italian, and that's the
+// company's primary operating language — a documented, user-confirmed choice,
+// not an assumption.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import NewsCard from "../../components/NewsCard.astro";
+import { getCollection } from "astro:content";
+import { selectPublishedNews } from "../../lib/news";
+
+const allEntries = await getCollection("news");
+const posts = selectPublishedNews(allEntries);
+---
+
+<BaseLayout title="News - Rigoni Vittorino" ogTitle="News" bodyClass="blog" mainClass="columns-3" lang="it">
+  {posts.map((post) => <NewsCard title={post.data.title} excerpt={post.data.excerpt} image={post.data.image} />)}
+</BaseLayout>

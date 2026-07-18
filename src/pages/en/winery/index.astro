@@ -1,0 +1,22 @@
+---
+export const prerender = true;
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import localeEquivalents from "../../../data/locale-equivalents.json";
+
+const contentHtml = await readFile(
+  path.join(process.cwd(), "src/content/main/en/winery.html"),
+  "utf8",
+);
+---
+
+<BaseLayout
+  title="Winery - Rigoni Vittorino"
+  ogTitle="Winery"
+  bodyClass="singular missing-post-thumbnail"
+  lang="en"
+  otherLangUrls={localeEquivalents.pages.cantina}
+>
+  <Fragment set:html={contentHtml} />
+</BaseLayout>

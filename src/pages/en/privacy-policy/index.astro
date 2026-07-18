@@ -1,0 +1,22 @@
+---
+export const prerender = true;
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import localeEquivalents from "../../../data/locale-equivalents.json";
+---
+
+<!--
+  Task 9: confirmed live, /en/privacy-policy/ (like IT's before Task 6) has no
+  real static text — only a client-side Iubenda widget embed, which this
+  project doesn't re-host (same policy as every other third-party plugin
+  script). Per CLAUDE.md's "do not create placeholder pages with invented
+  content", this stays genuinely blank rather than getting self-authored
+  English legal text — that would need its own explicit authorization, the
+  same way /it/privacy-policy/ needed Task 6's explicit approval.
+-->
+<BaseLayout
+  title="Privacy Policy and Cookies - Rigoni Vittorino"
+  ogTitle="Privacy Policy and Cookies"
+  bodyClass="singular missing-post-thumbnail"
+  lang="en"
+  otherLangUrls={localeEquivalents.pages["privacy-policy"]}
+/>

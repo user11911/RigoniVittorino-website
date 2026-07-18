@@ -4,6 +4,7 @@ import BaseLayout from "../../../layouts/BaseLayout.astro";
 import WineCard from "../../../components/WineCard.astro";
 import categories from "../../../data/categories.json";
 import wines from "../../../data/wines.json";
+import localeEquivalents from "../../../data/locale-equivalents.json";
 
 export function getStaticPaths() {
   return categories.map((cat) => ({
@@ -16,7 +17,12 @@ const { category } = Astro.props;
 const categoryWines = wines.filter((w) => w.category === category.slug);
 ---
 
-<BaseLayout title={`${category.title} - Rigoni Vittorino`} ogTitle={category.title}>
+<BaseLayout
+  title={`${category.title} - Rigoni Vittorino`}
+  ogTitle={category.title}
+  lang="it"
+  otherLangUrls={(localeEquivalents.categories as Record<string, { it: string; en: string; de: string }>)[category.slug]}
+>
   <article class={`page type-page status-publish hentry wines-category-${category.slug}`}>
     <header class="entry-header has-text-align-center header-footer-group">
       <div class="entry-header-inner section-inner medium">

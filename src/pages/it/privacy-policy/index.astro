@@ -3,6 +3,7 @@ export const prerender = true;
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
+import localeEquivalents from "../../../data/locale-equivalents.json";
 
 const contentHtml = await readFile(
   path.join(process.cwd(), "src/content/main/privacy-policy.html"),
@@ -28,6 +29,8 @@ const contentHtml = await readFile(
   title="Norme sulla privacy e cookie - Rigoni Vittorino"
   ogTitle="Norme sulla privacy e cookie"
   bodyClass="singular missing-post-thumbnail"
+  lang="it"
+  otherLangUrls={localeEquivalents.pages["privacy-policy"]}
 >
   <Fragment set:html={contentHtml} />
 </BaseLayout>

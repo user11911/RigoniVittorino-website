@@ -1,0 +1,28 @@
+---
+// Task 9: country-based root routing. On-demand (not prerendered) — the same
+// pattern already proven in this project by src/pages/api/contact.ts — since a
+// static/prerendered page cannot read the incoming request at all.
+//
+// Signal: the `CF-IPCountry` request header, not `Astro.request.cf?.country`.
+// Both are genuinely populated by Cloudflare's real edge in production, but
+// only the header is actually testable from a plain curl/fetch smoke test —
+// `Astro.request.cf` is populated by Miniflare's own opaque local mock/trace
+// logic in dev, which a test can't control. Gated on `import.meta.env.PROD`,
+// mirroring BaseLayout.astro's existing Cloudflare Analytics gating — this is
+// what makes local dev fall back to /en/ automatically, with no special-casing:
+// under `astro dev`/local preview the country branch is simply never reached.
+//
+// 302 (not 301/308): the redirect target varies per visitor, so it must never
+// be treated as a permanent, cacheable redirect by a browser or shared cache.
+export const prerender = false;
+import { resolveLocaleFromCountry } from "../lib/locale-routing";
+
+const country = import.meta.env.PROD ? Astro.request.headers.get("cf-ipcountry") : null;
+const locale = resolveLocaleFromCountry(country);
+// Cache-Control: no-store as defense-in-depth — a shared/browser cache must
+// never "stick" one visitor's country-based redirect onto a different visitor.
+return new Response(null, {
+  status: 302,
+  headers: { Location: `/${locale}/`, "Cache-Control": "no-store" },
+});
+---

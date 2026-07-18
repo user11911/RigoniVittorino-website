@@ -1,0 +1,58 @@
+---
+export const prerender = true;
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import WineCard from "../../../components/WineCard.astro";
+import categories from "../../../data/categories.en.json";
+import wines from "../../../data/wines.en.json";
+import localeEquivalents from "../../../data/locale-equivalents.json";
+
+export function getStaticPaths() {
+  return categories.map((cat) => ({
+    params: { category: cat.slug },
+    props: { category: cat },
+  }));
+}
+
+const { category } = Astro.props;
+const categoryWines = wines.filter((w) => w.category === category.key);
+---
+
+<BaseLayout
+  title={`${category.title} - Rigoni Vittorino`}
+  ogTitle={category.title}
+  lang="en"
+  otherLangUrls={(localeEquivalents.categories as Record<string, { it: string; en: string; de: string }>)[category.key]}
+>
+  <article class={`page type-page status-publish hentry wines-category-${category.slug}`}>
+    <header class="entry-header has-text-align-center header-footer-group">
+      <div class="entry-header-inner section-inner medium">
+        <h1 class="entry-title">{category.title}</h1>
+      </div>
+    </header>
+    <div class="post-inner">
+      <div class="entry-content">
+        <div class="wines-row-container">
+          <div class={`wine-cat-background ${category.cssClass}`}>
+            <img class="category-logo-ico logo-rigoni-ico ico-color" src={category.categoryLogo} />
+            <h1 class="category-title">{category.title}</h1>
+          </div>
+          <div class="wine-list-container">
+            {
+              categoryWines.map((wine) => (
+                <WineCard
+                  slug={wine.slug}
+                  title={wine.title}
+                  cardImageSrc={wine.cardImageSrc}
+                  cardImageSrcset={wine.cardImageSrcset}
+                  cardImageWidth={wine.cardImageWidth}
+                  cardImageHeight={wine.cardImageHeight}
+                  lang="en"
+                />
+              ))
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+</BaseLayout>

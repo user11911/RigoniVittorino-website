@@ -21,12 +21,19 @@ Completed or inactive work:
   `cantina`, and `contatti` (all three confirmed via `scripts/.cache/html/` to carry these classes live,
   matching `dati-societari` exactly). Do not modify unless explicitly reactivated. Committed at `03a0459`,
   merged to `main`.
+- Task 9: completed/inactive build of `/en/` and `/de/` website trees (mirroring the Italian architecture,
+  filled with real live English/German content), a shared language-neutral `/news/` page (with `/it/news/`
+  kept as a 301 redirect), and country-based root `/` routing. Do not modify unless explicitly reactivated.
+  Not yet committed.
 
 Preserved constraints from completed work:
 
 - The live Italian website at `rigonivittorino.com/it` remains the source of truth for visible layout, typography, images, spacing, animation, navigation, footer, content, and responsive behavior.
 - Preserve the approved rebuilt Italian site except where the active task requires a narrow change.
-- Do not modify English or German pages.
+- English (`/en/`) and German (`/de/`) websites, the shared `/news/` page, and root `/` country
+  routing are implemented (Task 9, frozen). Do not modify unless explicitly reactivated. Do not
+  translate/correct/improve their content, or reopen the frozen Italian pages beyond Task 9's narrow
+  language-switcher/shared-News wiring, without explicit reauthorization.
 - Do not modify `rigonivittorinoshop.it`, ecommerce systems, cart, checkout, account, products, payments, or external shop behavior.
 - Keep existing visible shop links pointing to `rigonivittorinoshop.it`.
 - Do not modify Task 2 contact-backend code (`src/pages/api/contact.ts`, `src/lib/rate-limit.ts`,
@@ -82,303 +89,154 @@ replied "treat everything as verified and completed" without further detail — 
 to close out Task 8 on the verification already done, not as evidence the pixel-level check happened or
 was individually reviewed. If genuine visual parity at those breakpoints matters later, it still hasn't
 been checked.
-## Task 9 - Active: build English and German website versions, shared News, and root language routing
 
-Status: active.
-
-### User request
-
-Build the English and German versions of the website in the project:
-
-- `/en/` is the English website.
-- `/de/` is the German website.
-- English and German pages must replicate the current approved Italian page architecture and structure.
-- English and German pages must be filled with the respective English and German content from the current live website.
-- Do not create new content.
-- Do not infer, translate, improve, summarize, correct, or fill missing text with likely content.
-- If live English or German content is missing, broken, duplicated, untranslated, mixed-language, or visibly inconsistent, reproduce the live content/behavior as-is where the route is in scope and document the issue.
-- Make the News page shared across all languages instead of limited to `/it/`.
-- Any News button/link in Italian, English, or German navigation must bring the user to the common shared News page.
-- The root route `/` must route users by country:
-  - Italy -> `/it/`
-  - Germany -> `/de/`
-  - all other countries -> `/en/`
-- Claude must inspect the repository and deployment setup, reason about the available options, and choose the best implementation route rather than assuming one prematurely.
-
-### Scope authorization
-
-This task explicitly supersedes the permanent Italian-only, “do not modify English or German pages,” and “do not extend News work” restrictions only for the minimum work required to implement:
-
-- `/en/`
-- `/de/`
-- root `/` country-based language routing
-- shared News landing page routing
-- navigation links/buttons that point all languages to the shared News page
-- shared multilingual utilities/components/data needed to keep the implementation maintainable
-- language switcher links needed by the implemented pages
-
-Do not use this authorization to refactor, redesign, or reopen the approved Italian website except where strictly required for:
-
-- shared News routing
-- multilingual navigation/language switching
-- root country routing
-- shared component/data extraction necessary to avoid brittle duplicated code
-
-Any touched Italian page must retain the approved Italian visual result and content unless the change is strictly required to link to the shared News page.
-
-### Core architecture requirement
-
-English and German pages must follow the architecture and structure of the current approved Italian implementation, not the legacy live WordPress architecture.
-
-Use the current Italian implementation as the structural model for:
-
-- route organization
-- page types
-- layout/component hierarchy
-- wine category pages
-- wine product pages
-- header/navigation structure
-- footer structure
-- contact page structure
-- static page structure
-- asset organization, where practical
-
-Use the live English and German website only as the source of the visible language-specific content, images, labels, links, and ordering.
-
-Do not copy legacy WordPress implementation patterns into the rebuilt project unless they are already part of the current approved architecture or are necessary to reproduce visible behavior.
-
-### Source of truth
-
-For this task, the source of truth is split:
-
-- Structure/architecture: current approved Italian project implementation.
-- Italian visible content/layout: existing approved rebuilt `/it/` implementation, except for narrow shared News/navigation changes authorized by this task.
-- English visible content: current live English pages on `rigonivittorino.com/en/...`.
-- German visible content: current live German pages on `rigonivittorino.com/de/...`.
-- Shared News: current project’s existing News landing page content/structure, adapted so it is shared across languages.
-- Root route: the user’s country-routing requirement in this task.
-
-Do not translate from Italian into English or German. Do not backfill missing English/German content from Italian unless the live English/German page itself visibly uses that Italian content.
-
-### Shared News requirement
-
-The existing project News page must become shared among all languages.
-
-Claude must inspect the current project and determine the best route for the shared News page. Acceptable outcomes include, but are not limited to:
-
-- moving the current `/it/news/` implementation to a language-neutral route such as `/news/`
-- keeping a canonical shared implementation and redirecting language-specific News URLs to it
-- preserving `/it/news/` as a compatibility redirect to the shared News route
-
-Claude must choose the option that best fits the existing framework, routing model, SEO behavior, maintainability, and user navigation.
-
-Requirements:
-
-- News must no longer be conceptually limited to `/it`.
-- Italian, English, and German News navigation/buttons must bring users to the common shared News page.
-- Do not implement News posts, News detail pages, archives, tags, categories, CMS feeds, or dynamic News systems unless already present and required by the existing shared News landing page.
-- Do not invent News content.
-- Preserve the visible content of the current project News landing page unless a route-neutral adjustment is strictly necessary.
-- Document the final canonical News route and any redirects/aliases.
-- Add route smoke tests for the canonical shared News route and any retained redirects/aliases.
-
-### Live route discovery
-
-Before implementation, discover and record the live English and German route inventory.
-
-Use multiple discovery methods where possible:
-
-- live navigation links
-- footer links
-- language switcher links
-- sitemap or WordPress-generated indexes if available
-- linked wine category pages
-- linked wine product pages
-- relevant crawled pages already visible through search
-- direct inspection of live `/en/` and `/de/`
-
-For every candidate route, classify it as:
-
-- implemented local page
-- canonical route redirected to another local route
-- excluded unreachable/legacy route
-- excluded duplicate route
-- unavailable/broken live route
-
-Do not assume the English, German, and Italian live route sets are identical.
-
-### Required local page model
-
-English and German pages should replicate the current Italian page architecture and route structure wherever the Italian project already has an equivalent page type.
-
-Implement English and German equivalents for the approved Italian site architecture, including:
-
-- landing page
-- company/about page
-- winery/cellar page
-- contact page
-- wine category pages
-- wine product pages
-- privacy policy page, if the Italian architecture includes it and live English/German content exists
-- company-data/legal-details page, if the Italian architecture includes it and live English/German content exists
-- any other currently implemented Italian page type that has a live English/German content equivalent
-
-Do not implement legacy English/German routes solely because they exist on the live WordPress site if they do not correspond to the current approved Italian architecture, unless they are visibly reachable and necessary for parity. Prefer canonical redirects for legacy or duplicate-looking routes when that best fits the project.
-
-### Live-content capture rules
-
-Before coding each English or German page:
-
-1. Fetch the current live page for that exact language and route.
-2. Save or document the source URL used.
-3. Capture all visible text exactly as rendered, including capitalization, spelling, punctuation, accents, apparent typos, mixed-language fragments, and duplicated text.
-4. Capture visible image source URLs and map them to local asset paths.
-5. Capture header, desktop navigation, mobile navigation, footer, language switcher, links, product/category ordering, and page-specific layout.
-6. Treat the live page’s visible language-specific content as canonical even if it appears linguistically wrong.
-7. Document unavailable assets, third-party scripts, forms, PDFs, embedded content, or broken links.
-
-### Root `/` routing requirement
-
-Implement `/` so that it sends users to the proper language landing page:
-
-- Italy -> `/it/`
-- Germany -> `/de/`
-- all other countries -> `/en/`
-
-Claude must inspect the repository and deployment configuration before choosing how to implement this. Prefer the best native option for the detected project and hosting model.
-
-Requirements:
-
-- Prefer a deployment-platform country signal when available, such as a Cloudflare request country header if the project actually runs in a Cloudflare request context.
-- If no reliable server/request country signal is available, reason through the alternatives and choose the least invasive, most maintainable option.
-- Do not use browser geolocation permission prompts.
-- Do not collect, store, or log precise location.
-- Do not add a third-party geolocation tracking service unless there is no reasonable native option and the user approves it first.
-- Preserve direct access to `/it/`, `/en/`, `/de/`, and the shared News route.
-- Avoid redirect loops.
-- Provide a safe local/development fallback that defaults to `/en/`.
-- Document production assumptions and local fallback behavior.
-- Add tests or smoke checks for Italy, Germany, and default/other-country cases.
-
-### Maintainability requirements
-
-Build the multilingual site so it is easy to edit and understand:
-
-- Prefer clear language-specific content/data files over hardcoded duplicated page markup when practical.
-- Reuse existing approved layouts/components when doing so does not alter the Italian result.
-- If shared components need to become multilingual, make the language/content inputs explicit.
-- Keep route names, content keys, image names, and component names readable.
-- Do not over-engineer a CMS, translation framework, or dynamic content system unless the repository already has one.
-- Keep implementation simple enough for a professional maintainer without deep coding experience.
-- Document how a maintainer can update English/German page text, wine data, and shared News links later.
-
-### Links and language switching
-
-- Language switcher links must point to the equivalent implemented route when an equivalent exists.
-- If an equivalent route does not exist in that language, use the nearest valid landing page for that language and document the reason.
-- All Italian, English, and German News links/buttons must point to the shared News page or to a redirect/alias that resolves to the shared News page.
-- Shop links must remain external and continue pointing to `rigonivittorinoshop.it`.
-- Do not modify the shop, cart, checkout, account, ecommerce products, payments, or any external shop behavior.
-- Footer privacy and company-data links must use the language-specific live destinations when implemented; otherwise document the exact live behavior and chosen local behavior.
-- Do not create placeholder pages with invented content.
-
-### Frozen work not to reopen
-
-Do not modify the completed Italian site, contact backend, Cloudflare Web Analytics, Italian privacy policy, Italian company-data page, ShareButtons, contact validation, prior body-class fixes, or Task 3 visual issues except where the active multilingual/shared-News task strictly requires a narrow shared-routing, shared-component, navigation, or language-switching adjustment.
-
-Do not modify `rigonivittorinoshop.it`, ecommerce systems, cart, checkout, account, products, payments, or external shop behavior.
-
-Do not implement News detail pages, News archives, News tags, News categories, dynamic CMS behavior, or News posts unless already required by the current shared News landing implementation.
-
-### Discovery checklist before editing
-
-Before making code changes, record in `IMPLEMENTATION_NOTES.md` or the closest existing project notes file:
-
-- Repository structure relevant to multilingual routes.
-- Framework and package manager.
-- Existing route implementation pattern.
-- Existing shared layout/component/data patterns.
-- Existing asset organization.
-- Existing tests/build scripts.
-- Deployment target evidence relevant to root country routing.
-- Existing Italian page architecture to be mirrored.
-- Existing News implementation and recommended shared News route strategy.
-- Live English route inventory.
-- Live German route inventory.
-- Planned local English route inventory.
-- Planned local German route inventory.
-- Routes to redirect, exclude, or leave unimplemented, with reasons.
-- The smallest set of files expected to change.
-- Any live pages or assets that cannot be fetched.
-- Any content contradictions or missing language equivalents.
-- Reasoning for the chosen country-routing implementation.
-- Reasoning for the chosen shared-News routing implementation.
-
-### Validation requirements
-
-Run all relevant available commands, including install if dependencies are not installed, typecheck, lint, unit tests, route smoke tests, browser tests, production build, and local preview where available.
-
-Create or update a route smoke test covering:
-
-- every implemented `/en/` route
-- every implemented `/de/` route
-- every affected `/it/` route
-- root `/` routing behavior
-- canonical shared News route
-- any retained News redirects or aliases
-- existing `/it/` scoped routes, to confirm they still return valid pages
-
-For root routing, test or simulate at least:
-
-- country = IT -> `/it/`
-- country = DE -> `/de/`
-- country = US -> `/en/`
-- country unset locally -> `/en/`
-
-For visual parity and regression control, compare representative English and German pages against the live site at:
-
-- 375px
-- 768px
-- 1024px
-- 1440px
-
-Also verify that affected Italian pages still match the approved local Italian implementation except for the intentional shared-News navigation/routing changes.
-
-At minimum, include representative screenshots for:
-
-- English landing page
-- German landing page
-- one English wine category page
-- one German wine category page
-- one English wine product page
-- one German wine product page
-- English contacts page
-- German contacts page
-- shared News page
-- one affected Italian page showing the News navigation now points to the shared News page
-
-If browser screenshot tooling cannot run, document the exact failure and substitute the strongest available checks, such as rendered HTML diffs, curl smoke tests, build output, route smoke tests, and manual source comparisons. Do not claim pixel-level visual parity unless screenshots or browser comparison were actually performed.
-
-### Final delivery requirements
-
-At completion, report:
-
-- Summary of architecture and multilingual implementation.
-- Summary of shared News implementation and canonical News route.
-- Files changed.
-- Files or folders touched outside the obvious multilingual/root-routing/shared-News scope, with reasons.
-- Full English route inventory implemented.
-- Full German route inventory implemented.
-- Routes redirected, excluded, or intentionally not implemented, with reasons.
-- Root-routing implementation details, alternatives considered, chosen approach, and production assumptions.
-- Asset inventory with live source URLs and local paths.
-- Page-by-page content/parity checklist.
-- Wine category and product route inventory by language.
-- Shared News route inventory, including redirects/aliases.
-- Before/after or live/local screenshots for representative pages and required breakpoints.
-- Commands run and results.
-- Known differences from the live site.
-- Unavailable assets, scripts, PDFs, forms, third-party behavior, or backend behavior.
-- Confirmation that shop links remain external.
-- Confirmation that no new content was invented.
-- Confirmation that completed Italian work was not modified except where strictly necessary.
+## Task 9 - Complete: English and German website versions, shared News, root language routing
+
+Status: complete, not yet committed. No task is currently active — confirm scope with the user before
+starting new work.
+
+### Summary
+
+Built `/en/` and `/de/` route trees mirroring the current Italian architecture (data-driven wine
+category/product pages, transplanted-HTML static pages, shared `BaseLayout`), filled with real live
+English/German content captured directly from `rigonivittorino.com/en/` and `/de/` (never translated or
+invented). Moved the shared News landing page to a language-neutral `/news/`, with `/it/news/` kept as a
+301 redirect. Implemented country-based root `/` routing via the `CF-IPCountry` request header. Added a
+working language switcher (WPML-derived, now pointing at local routes for all 3 languages) via a token-
+substitution scheme in `BaseLayout`.
+
+### Architecture decisions
+
+- **Content pipeline**: `scripts/routes.mjs`/`fetch-pages.mjs`/`extract-wines.mjs`/`extract-chrome.mjs`/
+  `extract-main-content.mjs`/`extract-assets.mjs` all gained a `--lang=<it|en|de>` flag (default `it`,
+  verified byte-identical output for the zero-arg IT case after refactor — see Known issues below for one
+  exception). New `scripts/extract-categories.mjs` generates `categories.en.json`/`categories.de.json` from
+  each live category page's own `<h1 class="category-title">`.
+- **Shared News**: `src/pages/news/index.astro` (moved from `it/news/`, unchanged internals — same content
+  collection, `lang="it"` per user decision since its only real content today is Italian).
+  `src/pages/it/news/index.astro` is now a thin on-demand page (`Astro.redirect("/news/", 301)`), the same
+  on-demand pattern already used by `src/pages/api/contact.ts`. No `/en/news/`/`/de/news/` routes exist —
+  neither language had one locally before, so their nav links straight to `/news/`.
+- **Root routing**: `src/pages/index.astro`, on-demand, reads `Astro.request.headers.get("cf-ipcountry")`
+  (gated on `import.meta.env.PROD`, mirroring `BaseLayout`'s existing Analytics-beacon gating — this is what
+  makes local dev/preview fall back to `/en/` automatically). Decision logic extracted to
+  `src/lib/locale-routing.ts` (`resolveLocaleFromCountry`), unit-tested. 302 (not 301), plus explicit
+  `Cache-Control: no-store` — the target varies per visitor and must never be cached as permanent.
+- **`BaseLayout`**: new `lang` prop (default `"it"`, so every un-migrated call renders byte-identically) and
+  `otherLangUrls` prop, which substitutes `__SWITCHER_{EN,DE,IT}_URL__` tokens written into each language's
+  generated header/footer by `extract-chrome.mjs`, falling back to that language's homepage when a page
+  doesn't supply a specific equivalent.
+- **Cross-language route equivalence**: `src/data/locale-equivalents.json` for the ~6 static pages and 6
+  categories (their slugs are genuinely translated per language — confirmed via live sitemaps, so a real
+  map was unavoidable there). Wine products need no such map — slugs are confirmed byte-identical across
+  it/en/de — the equivalent URL is computed inline as `/${lang}/wines/${slug}/` (IT keeps `i-nostri-vini`).
+- **Category CSS class vs. route slug**: discovered during implementation (not assumed) that the WordPress
+  taxonomy slug driving `.wine-cat-background`/`.wine-detail` color CSS is a *different* string from the
+  category page's own route slug for 2 of 6 English categories (route `sparkling` vs. CSS class
+  `prosecco-and-sparkling-wines`; route `passiti` vs. CSS class `passiti-wines`). Fixed by reading the real
+  class directly off each live page (`categoryClass` in `wines.en/de.json`, `cssClass` in
+  `categories.en/de.json`) rather than assuming route slug == CSS class.
+- **DE News nav item**: live German nav has no News link at all (Italian/English both do) — per explicit
+  user decision, added one locally (`extract-chrome.mjs` inserts a new `<li>` matching the EN/IT structural
+  pattern), documented as new UI chrome, not scraped content.
+- **Contact form on EN/DE**: wired to the same shared, frozen `/api/contact` backend as IT (same manual
+  `id="contact-form"`/`action="/api/contact/"` edit Task 2 applied to IT — not automatable by the scrape
+  pipeline, since it's a one-time hand edit per `IMPLEMENTATION_NOTES.md`). The honeypot field's WPCF7-
+  generated name differs per form instance (IT `mail-9`, EN `mail-557`, DE `mail-2`) — renamed EN/DE's to
+  `mail-9` to match the frozen `contact-validation.ts`'s hardcoded field name (a non-visible, non-linguistic
+  attribute rename, not a translation). Field names `your-name`/`your-email`/`your-message`/`acceptance-698`
+  are already identical across languages. Per user decision: page-level success/failure status text (not
+  frozen — lives in each page's own inline script) is genuinely translated per language; the frozen
+  backend's field-level validation-tip strings stay Italian on all three languages' forms.
+- **Live mixed-language content preserved as-is** (not corrected): EN/DE `/contatti|contacts/` pages both
+  have an aria-label of `"Modulo di contatto"` (EN, Italian) / `"Contact form"` (DE, English); EN's contact
+  route is literally `/en/contatti/` (Italian word); DE's is `/de/contacts/` (English word); DE's shop link
+  points at `/en/` shop; both EN/DE company-data pages carry the exact same `"Az. Agr.."` double-period typo
+  Task 5 fixed for IT (left unfixed here — that was a narrow, IT-specific authorization, not a general one);
+  EN/DE homepages both contain a verbatim untranslated Italian paragraph about Amarone; both EN/DE contact
+  pages carry a legacy Google reCAPTCHA legal notice paragraph even though this project's actual spam
+  protection is Cloudflare Turnstile (an existing live-site inconsistency, reproduced not invented).
+
+### Files changed
+
+Modified (all additive/narrow, no visual change to unmodified callers): `scripts/routes.mjs`,
+`fetch-pages.mjs`, `extract-wines.mjs`, `extract-chrome.mjs`, `extract-main-content.mjs`,
+`extract-assets.mjs`; `src/layouts/BaseLayout.astro`; `src/components/WineCard.astro`, `Hero.astro`;
+`src/content/chrome/header.html` (switcher tokens + News link, 3-line diff); 8 existing `/it/` page files
+(added `lang="it"` + `otherLangUrls` props only).
+
+New: `scripts/extract-categories.mjs`, `route-smoke-test-curl.mjs`; `src/lib/locale-routing.ts` (+ test);
+`src/data/{wines,categories}.{en,de}.json`, `locale-equivalents.json`; `src/content/chrome/{en,de}/`,
+`src/content/main/{en,de}/`; `src/pages/index.astro`, `src/pages/news/index.astro`; full `src/pages/en/` and
+`src/pages/de/` trees (home, about/cantina/contact/company-data equivalents, `privacy-policy` (blank —
+see below), one `[category]` dynamic file generating 6 category pages each, one `wines/[slug]` dynamic file
+generating 30 product pages each). 167 new asset files in `public/` (mostly EN/DE PDF tech sheets — WPML
+shares one media library, so most images were already present from the IT scrape; `extract-assets.mjs` now
+skips anything already downloaded).
+
+### Route inventories
+
+- **EN implemented**: `/en/`, `/en/the-estate/`, `/en/winery/`, `/en/contatti/`, `/en/company-data/`,
+  `/en/privacy-policy/` (blank, see below), `/en/{sparkling,white-wines,red-wines,matured,fizzy-and-rose,
+  passiti}/` (6), `/en/wines/<slug>/` (30, identical slugs to IT). Legacy `/en/news/` (a real live WP page)
+  intentionally NOT implemented locally — News is shared at `/news/` instead, per the task's own instruction
+  not to replicate legacy routes that don't match the current architecture.
+- **DE implemented**: `/de/`, `/de/unternehmen/`, `/de/weinkeller/`, `/de/contacts/`, `/de/firmen-daten/`,
+  `/de/privacy-policy/` (blank), `/de/{schaumweine,weissweine,rotweine,gereift-im-eichenfass,
+  perlweine-und-roseweine,strohweine}/` (6), `/de/wines/<slug>/` (30). No local `/de/news/` — the live DE
+  site never had a News page or nav item at all.
+- **Shared**: `/news/` (canonical), `/it/news/` (301 redirect alias, only remaining language-specific News
+  URL).
+- **Root**: `/` (302, country-routed).
+- **Excluded/not implemented**: legacy WP `/en/news/` (superseded by shared News); anything not in the
+  current approved Italian architecture (no News archives/tags/detail pages for any language, unchanged).
+
+### Known limitations / gaps (documented, not glossed over)
+
+- **No pixel-level visual comparison at 375/768/1024/1440px was performed.** Playwright's Chromium cannot
+  launch in this sandbox (missing `libnspr4.so`, no passwordless `sudo` — the identical, pre-existing
+  limitation hit on a prior task in this same repo). Substituted: full `curl`-based route smoke test
+  (`scripts/route-smoke-test-curl.mjs`, all it/en/de/news/root routes + redirects + country-routing
+  variants — all passing) and direct live-vs-local text/markup comparison for representative pages (EN home,
+  DE product page, EN tasting-note paragraph — confirmed byte-identical to live). Do not treat this as
+  pixel-level visual parity — it wasn't performed.
+- **Hero slider captions for `/en/`/`/de/` are omitted, not translated.** The 4 slide images are reused
+  (confirmed language-neutral), but the caption text is rendered by RevSlider's own JS from a config that
+  never appears in any language's static HTML scrape (confirmed by direct inspection, including IT's own
+  cache) — IT's existing captions were only ever obtainable via a live Playwright render, which this sandbox
+  can't do. Rather than invent EN/DE captions, `Hero.astro` now accepts an optional `slides` prop and EN/DE
+  pass captions as empty strings (not rendered). Same reasoning applies to the slide-dot `aria-label`, left
+  in Italian for all 3 languages rather than guessed at.
+- **`/en/privacy-policy/` and `/de/privacy-policy/` are genuinely blank**, matching the live pages exactly
+  (confirmed: both only load a client-side Iubenda widget, no real static text — the same state IT's page
+  was in before Task 6's explicit, separately-authorized legal-text drafting). Populating them with real
+  EN/DE legal text is out of scope here and would need the same kind of explicit authorization Task 6
+  required for IT.
+- Full one-by-one live verification of all ~30 products/6 categories was not performed beyond the sitemap-
+  based slug/count match — per explicit user decision, this was accepted as sufficient; no discrepancies
+  were found during the actual per-page scrape/build that followed.
+
+### Testing and validation performed
+
+- `npm run check`: 0 errors (65 files). `npm run test:unit`: 42/42 passed (37 pre-existing + 5 new
+  `locale-routing.test.ts`). `npm run build`: succeeds, all it/en/de/news static routes prerendered, `/`
+  and `/it/news/` correctly on-demand.
+- `node scripts/route-smoke-test-curl.mjs` against `npm run preview`: every implemented it/en/de route (123
+  total) → 200; `/news/` → 200; `/it/news/` → 301 → `/news/`; `/` with `cf-ipcountry: IT|DE|US|<none>` → 302
+  to `/it/|/de/|/en/|/en/` respectively. All passing.
+- Confirmed no unintended regression: IT's `src/data/wines.json`/`categories.json` byte-identical after the
+  pipeline refactor (git diff empty); IT's `src/content/main/contatti.html` — accidentally regressed once by
+  a naive re-run of `extract-main-content.mjs` (silently reverting Task 2's manual contact-form wiring),
+  caught immediately via this same diff-check habit, and restored via `git checkout` before proceeding.
+  IT's `header.html`/`footer.html` show only the intended 3-line diff (switcher tokens + News link).
+- Manual content-parity spot checks: EN home, DE product page title, EN tasting-note paragraph, IT nav News
+  link — all confirmed matching live source exactly (or, for the shared News link, matching the new
+  intentional target).
+
+### Confirmation
+
+No shop/ecommerce/checkout code touched. No News detail/archive/tag pages implemented for any language. No
+Task 2 backend files reopened except the two already-frozen, explicitly-scoped touch points (contact-form
+wiring pattern replicated per-language, honeypot field renamed for backend compatibility — both non-content,
+non-visual, technically necessary). No invented content — every gap above is either omitted (captions) or
+left genuinely blank (privacy policy), never fabricated.

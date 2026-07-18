@@ -5,11 +5,36 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as cheerio from "cheerio";
-import { PRODUCT_SLUGS, CATEGORY_PAGES, CATEGORY_BY_PRODUCT_GROUP, cacheFileFor } from "./routes.mjs";
+import {
+  PRODUCT_SLUGS,
+  CATEGORY_PAGES,
+  CATEGORY_BY_PRODUCT_GROUP,
+  cacheFileFor,
+  ROUTES_BY_LANG,
+  CATEGORY_KEYS,
+} from "./routes.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CACHE_DIR = path.join(__dirname, ".cache/html");
-const OUT_FILE = path.join(__dirname, "../src/data/wines.json");
+
+// --lang=en|de (default it, preserving the original file paths/behavior
+// exactly for the zero-arg call — see routes.mjs's Task 9 notes).
+const langArg = process.argv.find((a) => a.startsWith("--lang="));
+const LANG = langArg ? langArg.slice("--lang=".length) : "it";
+const CACHE_DIR = path.join(__dirname, LANG === "it" ? ".cache/html" : `.cache/html/${LANG}`);
+const OUT_FILE = path.join(__dirname, LANG === "it" ? "../src/data/wines.json" : `../src/data/wines.${LANG}.json`);
+const PRODUCT_BASE = LANG === "it" ? "i-nostri-vini" : ROUTES_BY_LANG[LANG].PRODUCT_BASE;
+const categorySlugFor = (key) => (LANG === "it" ? key : ROUTES_BY_LANG[LANG].CATEGORY_SLUGS[key]);
+
+// Field-label text is theme-template English/Italian/German copy, not CSS —
+// confirmed via direct inspection of live EN/DE product pages that every CSS
+// class used below (.wine-container, .wine-grado, .tipologia-row, etc.) is
+// byte-identical across languages; only these <strong> label strings change.
+const FIELD_LABELS = {
+  it: { gradazione: "Gradazione:", coltivazione: "Coltivazione:", vinificazione: "Vinificazione:", resaMedia: "Resa Media:", abbinamenti: "Abbinamenti:", servizio: "Servizio:" },
+  en: { gradazione: "Degree:", coltivazione: "Cultivation:", vinificazione: "Winemaking Process:", resaMedia: "Average Yield:", abbinamenti: "Pairings:", servizio: "Serving Temperature:" },
+  de: { gradazione: "Alkoholgehalt:", coltivazione: "Weinbau:", vinificazione: "Weinherstellung:", resaMedia: "Ertrag:", abbinamenti: "Empfehlungen:", servizio: "Serviertemperatur:" },
+};
+const LABELS = FIELD_LABELS[LANG];
 
 const DOMAIN = "https://rigonivittorino.com";
 function rewriteUrl(u) {
@@ -50,13 +75,16 @@ async function buildCardImageIndex() {
   // category pages themselves — reconstructing width descriptors by guesswork is
   // exactly the kind of thing that silently produces wrong srcset values.
   const index = new Map();
-  for (const cat of CATEGORY_PAGES) {
+  const categoryPaths =
+    LANG === "it" ? CATEGORY_PAGES : CATEGORY_KEYS.map((key) => `${categorySlugFor(key)}/`);
+  const hrefRe = new RegExp(`${PRODUCT_BASE}/([a-z0-9-]+)/?$`);
+  for (const cat of categoryPaths) {
     const html = await readFile(path.join(CACHE_DIR, cacheFileFor(cat)), "utf8");
     const $ = cheerio.load(html);
     $(".single-wine-container").each((i, el) => {
       const $el = $(el);
       const href = $el.find(".wine-image a").attr("href") ?? "";
-      const slugMatch = href.match(/i-nostri-vini\/([a-z0-9-]+)\/?$/);
+      const slugMatch = href.match(hrefRe);
       if (!slugMatch) return;
       const img = $el.find(".wine-image img");
       index.set(slugMatch[1], {
@@ -74,12 +102,22 @@ async function main() {
   const cardImages = await buildCardImageIndex();
   const wines = [];
   for (const slug of PRODUCT_SLUGS) {
-    const file = path.join(CACHE_DIR, cacheFileFor(`i-nostri-vini/${slug}/`));
+    const file = path.join(CACHE_DIR, cacheFileFor(`${PRODUCT_BASE}/${slug}/`));
     const html = await readFile(file, "utf8");
     const $ = cheerio.load(html);
 
     const title = $(".wine-container h1").first().text().trim();
     const productImage = rewriteUrl($(".wine-image img").first().attr("src"));
+    // The live per-product CSS class driving .wine-cat-background/.wine-detail
+    // color styling is the WP *taxonomy* slug, which for EN genuinely diverges
+    // from the category *page*'s own route slug (e.g. page "sparkling" vs class
+    // "prosecco-and-sparkling-wines", page "passiti" vs class "passiti-wines") —
+    // confirmed by direct inspection, not assumed. Read straight off the live
+    // page's own `.wine-glass.wine-detail` class list rather than hand-mapped,
+    // so it's correct even if IT/EN/DE ever diverge further than already found.
+    const detailClasses = ($(".wine-glass.wine-detail").first().attr("class") ?? "").split(/\s+/);
+    const categoryClass = detailClasses.find((c) => c && c !== "wine-glass" && c !== "wine-detail");
+    if (!categoryClass) throw new Error(`No category CSS class found for ${slug}`);
     const servingTempBadge = $(".wine-grado .contenuto-specs").first().text().trim();
     const glassIcon = $(".wine-glass img").first().attr("src");
     const foodIcon = $(".wine-food-ico img").first().attr("src");
@@ -93,12 +131,12 @@ async function main() {
       .get()
       .filter(Boolean);
 
-    const gradazione = fieldText($, "Gradazione:");
-    const coltivazione = fieldText($, "Coltivazione:");
-    const vinificazione = fieldText($, "Vinificazione:");
-    const resaMedia = fieldText($, "Resa Media:");
-    const abbinamenti = fieldText($, "Abbinamenti:");
-    const servizio = fieldText($, "Servizio:");
+    const gradazione = fieldText($, LABELS.gradazione);
+    const coltivazione = fieldText($, LABELS.coltivazione);
+    const vinificazione = fieldText($, LABELS.vinificazione);
+    const resaMedia = fieldText($, LABELS.resaMedia);
+    const abbinamenti = fieldText($, LABELS.abbinamenti);
+    const servizio = fieldText($, LABELS.servizio);
 
     const card = cardImages.get(slug);
     if (!card) throw new Error(`No category-grid card image found for ${slug}`);
@@ -106,6 +144,11 @@ async function main() {
     const record = {
       slug,
       category: categoryForSlug(slug),
+      // Only added for en/de — IT's existing template already uses `category`
+      // directly as the CSS class (the two happen to always be identical for
+      // IT), so its schema is left exactly as it was to avoid touching frozen
+      // work for no functional reason.
+      ...(LANG !== "it" ? { categoryClass } : {}),
       title,
       productImage,
       cardImageSrc: card.cardImageSrc,

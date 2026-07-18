@@ -3,6 +3,7 @@ export const prerender = true;
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
+import localeEquivalents from "../../../data/locale-equivalents.json";
 
 const contentHtml = await readFile(
   path.join(process.cwd(), "src/content/main/chi-siamo.html"),
@@ -15,6 +16,12 @@ const contentHtml = await readFile(
   via scripts/.cache/html/chi-siamo.html), same as dati-societari (Task 5) — see
   that page's comment for what these classes gate in parent-style.min.css.
 -->
-<BaseLayout title="Azienda - Rigoni Vittorino" ogTitle="Azienda" bodyClass="singular missing-post-thumbnail">
+<BaseLayout
+  title="Azienda - Rigoni Vittorino"
+  ogTitle="Azienda"
+  bodyClass="singular missing-post-thumbnail"
+  lang="it"
+  otherLangUrls={localeEquivalents.pages.about}
+>
   <Fragment set:html={contentHtml} />
 </BaseLayout>

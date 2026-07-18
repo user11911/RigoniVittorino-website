@@ -1,0 +1,33 @@
+---
+export const prerender = true;
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Hero from "../../components/Hero.astro";
+import localeEquivalents from "../../data/locale-equivalents.json";
+
+const contentHtml = await readFile(
+  path.join(process.cwd(), "src/content/main/de/home.html"),
+  "utf8",
+);
+// Same 4 images as /it/ (confirmed language-neutral), no captions — see
+// Hero.astro's Task 9 comment and src/pages/en/index.astro for why.
+const slides = [
+  { image: "/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg", caption: "" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s3-vigneti.jpg", caption: "" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s4-famiglia.jpg", caption: "" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s5-cantina.jpg", caption: "" },
+];
+---
+
+<BaseLayout
+  title="Rigoni Vittorino"
+  ogTitle="Home"
+  extraStyleFile="home-extra-style.css"
+  bodyClass="home"
+  lang="de"
+  otherLangUrls={localeEquivalents.pages.home}
+>
+  <Hero slides={slides} />
+  <Fragment set:html={contentHtml} />
+</BaseLayout>

@@ -10,27 +10,60 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as cheerio from "cheerio";
+import { ROUTES_BY_LANG, CATEGORY_KEYS } from "./routes.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CACHE_DIR = path.join(__dirname, ".cache/html");
-const OUT_DIR = path.join(__dirname, "../src/content/main");
+
+// --lang=en|de (default it — original flat CACHE_DIR/OUT_DIR/PAGES untouched).
+const langArg = process.argv.find((a) => a.startsWith("--lang="));
+const LANG = langArg ? langArg.slice("--lang=".length) : "it";
+const CACHE_DIR = path.join(__dirname, LANG === "it" ? ".cache/html" : `.cache/html/${LANG}`);
+const OUT_DIR = path.join(__dirname, LANG === "it" ? "../src/content/main" : `../src/content/main/${LANG}`);
 
 const DOMAIN = "https://rigonivittorino.com";
 
-const PAGES = [
-  { name: "home", file: "_home.html", stripRevslider: true },
-  { name: "chi-siamo", file: "chi-siamo.html" },
-  { name: "cantina", file: "cantina.html" },
-  { name: "contatti", file: "contatti.html" },
-  // Task 5: was blank in earlier completed work, now authorized to match the live
-  // page. Unlike the other 4 pages, its grids-section/grids-area inline styles are
-  // identical across desktop/tablet/mobile (no responsive variation), and its
-  // entry-header (auto-generated "Dati societari" H1) is already hidden by an
-  // existing self-hosted CSS rule (header.entry-header.has-text-align-center
-  // .header-footer-group{display:none}) — confirmed against the live site's own
-  // rendered output, so no extra markup changes are needed to match it.
-  { name: "dati-societari", file: "dati-societari.html", fixTypo: true },
-];
+// Task 9 note: privacy-policy is deliberately NOT in any language's PAGES list
+// here. Confirmed live: EN/DE /privacy-policy/ pages (like IT's before Task 6)
+// contain no real static text at all, only a client-side Iubenda widget embed
+// — CLAUDE.md's "do not create placeholder pages with invented content" rule
+// means these stay genuinely blank until a separate, explicitly-authorized
+// task writes real EN/DE privacy text (mirroring how IT's Task 6 worked).
+const PAGES_BY_LANG = {
+  it: [
+    { name: "home", file: "_home.html", stripRevslider: true },
+    { name: "chi-siamo", file: "chi-siamo.html" },
+    { name: "cantina", file: "cantina.html" },
+    { name: "contatti", file: "contatti.html" },
+    // Task 5: was blank in earlier completed work, now authorized to match the live
+    // page. Unlike the other 4 pages, its grids-section/grids-area inline styles are
+    // identical across desktop/tablet/mobile (no responsive variation), and its
+    // entry-header (auto-generated "Dati societari" H1) is already hidden by an
+    // existing self-hosted CSS rule (header.entry-header.has-text-align-center
+    // .header-footer-group{display:none}) — confirmed against the live site's own
+    // rendered output, so no extra markup changes are needed to match it.
+    { name: "dati-societari", file: "dati-societari.html", fixTypo: true },
+  ],
+  en: [
+    { name: "home", file: "_home.html", stripRevslider: true },
+    { name: "the-estate", file: "the-estate.html" },
+    { name: "winery", file: "winery.html" },
+    { name: "contatti", file: "contatti.html" },
+    // Confirmed live: the same "Az. Agr.." double-period typo Task 5 fixed for IT
+    // is present here too, and the company-identity text is untranslated Italian
+    // even on the EN page. Per "reproduce as-is" (the IT typo-fix was a narrow,
+    // IT-specific authorization, not a general one), this is intentionally left
+    // unfixed — no fixTypo flag here.
+    { name: "company-data", file: "company-data.html" },
+  ],
+  de: [
+    { name: "home", file: "_home.html", stripRevslider: true },
+    { name: "unternehmen", file: "unternehmen.html" },
+    { name: "weinkeller", file: "weinkeller.html" },
+    { name: "contacts", file: "contacts.html" },
+    { name: "firmen-daten", file: "firmen-daten.html" },
+  ],
+};
+const PAGES = PAGES_BY_LANG[LANG];
 
 // The one text correction TODO.md's Task 5 explicitly authorizes — the live page
 // itself has this typo (double period). Kept as an explicit, documented replace
@@ -48,7 +81,21 @@ function rewriteUrl(u) {
   return u;
 }
 
-function rewriteAssetsIn($, root) {
+// Lang-specific in-scope internal-link prefixes (mirrors the IT hardcoded list
+// below exactly, generated from the same route registry used everywhere else).
+function inScopePrefixesFor(lang) {
+  if (lang === "it") return null; // IT keeps its original hardcoded list untouched
+  const cfg = ROUTES_BY_LANG[lang];
+  const strip = (s) => `/${lang}/${s}`.replace(/\/$/, "");
+  const prefixes = [`/${lang}/`];
+  for (const p of cfg.MAIN_PAGES) if (p) prefixes.push(strip(p));
+  for (const p of cfg.BLANK_PAGES) prefixes.push(strip(p));
+  for (const key of CATEGORY_KEYS) prefixes.push(strip(cfg.CATEGORY_SLUGS[key]));
+  prefixes.push(strip(cfg.PRODUCT_BASE));
+  return prefixes;
+}
+
+function rewriteAssetsIn($, root, lang) {
   root.find("img, source").each((i, el) => {
     const $el = $(el);
     for (const attr of ["src", "data-src"]) {
@@ -78,20 +125,24 @@ function rewriteAssetsIn($, root) {
       const rel = href.slice(DOMAIN.length);
       if (rel.startsWith("/wp-content/")) {
         $el.attr("href", rel);
-      } else if (
-        rel === "/it/" ||
-        rel.startsWith("/it/chi-siamo") ||
-        rel.startsWith("/it/cantina") ||
-        rel.startsWith("/it/contatti") ||
-        rel.startsWith("/it/i-nostri-vini") ||
-        rel.startsWith("/it/spumanti") ||
-        rel.startsWith("/it/bianchi") ||
-        rel.startsWith("/it/rossi") ||
-        rel.startsWith("/it/affinati") ||
-        rel.startsWith("/it/frizzanti-e-rosati") ||
-        rel.startsWith("/it/passiti") ||
-        rel.startsWith("/it/dati-societari")
-      ) {
+      } else if (lang === "it") {
+        if (
+          rel === "/it/" ||
+          rel.startsWith("/it/chi-siamo") ||
+          rel.startsWith("/it/cantina") ||
+          rel.startsWith("/it/contatti") ||
+          rel.startsWith("/it/i-nostri-vini") ||
+          rel.startsWith("/it/spumanti") ||
+          rel.startsWith("/it/bianchi") ||
+          rel.startsWith("/it/rossi") ||
+          rel.startsWith("/it/affinati") ||
+          rel.startsWith("/it/frizzanti-e-rosati") ||
+          rel.startsWith("/it/passiti") ||
+          rel.startsWith("/it/dati-societari")
+        ) {
+          $el.attr("href", rel);
+        }
+      } else if (inScopePrefixesFor(lang).some((p) => rel === p || rel.startsWith(p))) {
         $el.attr("href", rel);
       }
       // everything else (news, shop, external) is left as the original absolute URL
@@ -110,7 +161,7 @@ async function main() {
       article.find(".wp-block-themepunch-revslider").remove();
     }
 
-    rewriteAssetsIn($, article);
+    rewriteAssetsIn($, article, LANG);
 
     let out = article.prop("outerHTML");
     if (p.fixTypo) out = out.replaceAll(TYPO_FIX.from, TYPO_FIX.to);

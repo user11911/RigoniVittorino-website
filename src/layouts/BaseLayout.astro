@@ -11,18 +11,38 @@ export interface Props {
   // Extra class(es) on the shared <main id="site-content">, e.g. "columns-3" for
   // /it/news/ to match the live site's body.blog main#site-content.columns-3 CSS.
   mainClass?: string;
+  // Task 9: defaults to "it" so every existing caller (all of which omit this
+  // prop) renders byte-identically to before this task.
+  lang?: string;
+  // Task 9: language-switcher targets for the *other* two languages, substituted
+  // into the chrome's __SWITCHER_..._URL__ tokens (see scripts/extract-chrome.mjs).
+  // Falls back to each language's homepage when a value isn't supplied — the
+  // "nearest valid landing page" allowance for pages with no direct equivalent.
+  otherLangUrls?: { it?: string; en?: string; de?: string };
 }
 
-const { title, description, ogTitle, extraStyleFile, bodyClass = "", mainClass = "" } = Astro.props;
+const {
+  title,
+  description,
+  ogTitle,
+  extraStyleFile,
+  bodyClass = "",
+  mainClass = "",
+  lang = "it",
+  otherLangUrls = {},
+} = Astro.props;
 
-const headerHtml = await readFile(
-  path.join(process.cwd(), "src/content/chrome/header.html"),
-  "utf8",
-);
-const footerHtml = await readFile(
-  path.join(process.cwd(), "src/content/chrome/footer.html"),
-  "utf8",
-);
+const chromeDir = lang === "it" ? "src/content/chrome" : `src/content/chrome/${lang}`;
+let headerHtml = await readFile(path.join(process.cwd(), chromeDir, "header.html"), "utf8");
+let footerHtml = await readFile(path.join(process.cwd(), chromeDir, "footer.html"), "utf8");
+
+const langHomepages: Record<string, string> = { it: "/it/", en: "/en/", de: "/de/" };
+for (const other of (["it", "en", "de"] as const).filter((l) => l !== lang)) {
+  const token = `__SWITCHER_${other.toUpperCase()}_URL__`;
+  const target = otherLangUrls[other] ?? langHomepages[other];
+  headerHtml = headerHtml.split(token).join(target);
+  footerHtml = footerHtml.split(token).join(target);
+}
 
 let extraStyle = "";
 if (extraStyleFile) {
@@ -36,7 +56,7 @@ const canonical = new URL(Astro.url.pathname, "https://rigonivittorino.com").toS
 ---
 
 <!DOCTYPE html>
-<html lang="it">
+<html lang={lang}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

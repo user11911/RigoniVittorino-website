@@ -1,0 +1,50 @@
+[
+  {
+    "slug": "schaumweine",
+    "key": "spumanti",
+    "cssClass": "schaumweine",
+    "title": "Schaumweine",
+    "navLabel": "Schaumweine",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "weissweine",
+    "key": "bianchi",
+    "cssClass": "weissweine",
+    "title": "Weissweine",
+    "navLabel": "Weissweine",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "rotweine",
+    "key": "rossi",
+    "cssClass": "rotweine",
+    "title": "Rotweine",
+    "navLabel": "Rotweine",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "gereift-im-eichenfass",
+    "key": "affinati",
+    "cssClass": "gereift-im-eichenfass",
+    "title": "Gereift Im Eichenfass",
+    "navLabel": "Gereift Im Eichenfass",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "perlweine-und-roseweine",
+    "key": "frizzanti-e-rosati",
+    "cssClass": "perlweine-und-roseweine",
+    "title": "Perlweine und Roseweine",
+    "navLabel": "Perlweine und Roseweine",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  },
+  {
+    "slug": "strohweine",
+    "key": "passiti",
+    "cssClass": "strohweine",
+    "title": "Strohweine",
+    "navLabel": "Strohweine",
+    "categoryLogo": "/wp-content/uploads/2020/12/V-rigoni-bianco.png"
+  }
+]

@@ -3,6 +3,7 @@ export const prerender = true;
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
+import localeEquivalents from "../../../data/locale-equivalents.json";
 
 const contentHtml = await readFile(
   path.join(process.cwd(), "src/content/main/dati-societari.html"),
@@ -27,6 +28,8 @@ const contentHtml = await readFile(
   title="Dati societari - Rigoni Vittorino"
   ogTitle="Dati societari"
   bodyClass="singular missing-post-thumbnail"
+  lang="it"
+  otherLangUrls={localeEquivalents.pages["company-data"]}
 >
   <Fragment set:html={contentHtml} />
 </BaseLayout>
