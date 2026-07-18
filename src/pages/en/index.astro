@@ -10,15 +10,19 @@ const contentHtml = await readFile(
   path.join(process.cwd(), "src/content/main/en/home.html"),
   "utf8",
 );
-// Same 4 images as /it/ (confirmed language-neutral), no captions — see
-// Hero.astro's Task 9 comment: the real caption text is rendered by RevSlider's
-// JS and was never present in any language's static HTML scrape, so it can't
-// be captured without a live browser render (unavailable in this environment).
+// Same 4 images as /it/ (confirmed language-neutral). Captions confirmed via
+// the live WordPress REST API (https://rigonivittorino.com/en/wp-json/wp/v2/pages/178,
+// the homepage's own raw block content, which includes the RevSlider <rs-layer
+// data-type="text"> blocks with the real caption text) — this sidesteps the
+// live-browser-render requirement Hero.astro's original IT captions needed,
+// since a browser isn't available in this environment. Cross-checked the same
+// method against IT's own page (id 2): it reproduces Hero.astro's existing
+// hardcoded IT captions exactly, confirming the method is reliable.
 const slides = [
-  { image: "/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg", caption: "" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s3-vigneti.jpg", caption: "" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s4-famiglia.jpg", caption: "" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s5-cantina.jpg", caption: "" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg", caption: "This is the hallmark of Vittorino" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s3-vigneti.jpg", caption: "A love for the land and for the family" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s4-famiglia.jpg", caption: "A passion that involves three generations" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s5-cantina.jpg", caption: "The best technology that embraces tradition" },
 ];
 ---
 

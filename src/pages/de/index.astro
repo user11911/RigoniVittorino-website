@@ -10,13 +10,14 @@ const contentHtml = await readFile(
   path.join(process.cwd(), "src/content/main/de/home.html"),
   "utf8",
 );
-// Same 4 images as /it/ (confirmed language-neutral), no captions — see
-// Hero.astro's Task 9 comment and src/pages/en/index.astro for why.
+// Same 4 images as /it/ (confirmed language-neutral). Captions confirmed via
+// the live WordPress REST API (https://rigonivittorino.com/de/wp-json/wp/v2/pages/1746) —
+// see src/pages/en/index.astro for the full method explanation.
 const slides = [
-  { image: "/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg", caption: "" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s3-vigneti.jpg", caption: "" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s4-famiglia.jpg", caption: "" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s5-cantina.jpg", caption: "" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg", caption: "Dies ist das Markenzeichen von Vittorino" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s3-vigneti.jpg", caption: "Liebe zum Land und zur Familie" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s4-famiglia.jpg", caption: "Eine Leidenschaft, an der drei Generationen beteiligt sind" },
+  { image: "/wp-content/uploads/2021/01/rigoni-s5-cantina.jpg", caption: "Die beste Technologie, die Tradition umfasst" },
 ];
 ---
 

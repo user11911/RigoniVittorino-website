@@ -20,12 +20,13 @@
 // Task 9: `slides` is now an optional prop (default = the exact IT array
 // below, unchanged) so /en/ and /de/ can reuse this component with the same
 // 4 images (confirmed language-neutral — identical src/alt across it/en/de
-// in the raw scrape) but WITHOUT inventing translated captions. The caption
-// text itself is rendered by RevSlider's JS from a config this project's
-// static-HTML scrape never captures (confirmed empty on every language's raw
-// cached HTML, not just EN/DE) — the IT captions were only ever obtainable by
-// a live Playwright render (see file header), which this sandbox cannot run.
-// Known gap, documented in the Task 9 report rather than guessed at here.
+// in the raw scrape). The caption text itself is rendered by RevSlider's JS
+// from a config this project's plain static-HTML scrape never captures — but
+// the WordPress REST API (e.g. https://rigonivittorino.com/en/wp-json/wp/v2/pages/178)
+// exposes each page's raw block content, including the RevSlider <rs-layer
+// data-type="text"> blocks with the real caption text, sidestepping the need
+// for a live browser render entirely. See src/pages/en/index.astro and
+// src/pages/de/index.astro for the confirmed EN/DE captions fetched this way.
 export interface Props {
   slides?: { image: string; caption: string }[];
 }

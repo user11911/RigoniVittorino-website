@@ -200,13 +200,15 @@ skips anything already downloaded).
   variants — all passing) and direct live-vs-local text/markup comparison for representative pages (EN home,
   DE product page, EN tasting-note paragraph — confirmed byte-identical to live). Do not treat this as
   pixel-level visual parity — it wasn't performed.
-- **Hero slider captions for `/en/`/`/de/` are omitted, not translated.** The 4 slide images are reused
-  (confirmed language-neutral), but the caption text is rendered by RevSlider's own JS from a config that
-  never appears in any language's static HTML scrape (confirmed by direct inspection, including IT's own
-  cache) — IT's existing captions were only ever obtainable via a live Playwright render, which this sandbox
-  can't do. Rather than invent EN/DE captions, `Hero.astro` now accepts an optional `slides` prop and EN/DE
-  pass captions as empty strings (not rendered). Same reasoning applies to the slide-dot `aria-label`, left
-  in Italian for all 3 languages rather than guessed at.
+- ~~Hero slider captions for `/en/`/`/de/` were initially omitted~~ — **fixed** (user-reported bug). Found
+  a reliable, no-browser-needed source: the WordPress REST API (e.g.
+  `https://rigonivittorino.com/en/wp-json/wp/v2/pages/178`) exposes each page's raw block content,
+  including the RevSlider `<rs-layer data-type="text">` blocks with the real caption text — sidesteps the
+  live-Playwright-render requirement entirely. Cross-checked against IT's own page this way: reproduces
+  `Hero.astro`'s existing hardcoded IT captions exactly, confirming the method. Real EN/DE captions are now
+  in `src/pages/en/index.astro` / `src/pages/de/index.astro`. The slide-dot `aria-label` remains in Italian
+  for all 3 languages (a screen-reader-only decorative label, not requested to be fixed, not re-verified via
+  this same method).
 - **`/en/privacy-policy/` and `/de/privacy-policy/` are genuinely blank**, matching the live pages exactly
   (confirmed: both only load a client-side Iubenda widget, no real static text — the same state IT's page
   was in before Task 6's explicit, separately-authorized legal-text drafting). Populating them with real
@@ -215,6 +217,27 @@ skips anything already downloaded).
 - Full one-by-one live verification of all ~30 products/6 categories was not performed beyond the sitemap-
   based slug/count match — per explicit user decision, this was accepted as sufficient; no discrepancies
   were found during the actual per-page scrape/build that followed.
+
+### Post-completion fix: landing-page category-list links (user-reported bug)
+
+The homepage's `elenco-categorie` wine-type CTA list (6 links, e.g. "PROSECCO AND SPARKLING") had broken
+hrefs, confirmed by diffing the raw live scrape — genuinely broken on the live site itself, not something
+Task 9 introduced, but in 3 different ways per language:
+
+- **IT**: missing the `/it/` prefix entirely (`href="/spumanti/"`) — a pre-existing Task 1 bug, found while
+  investigating the reported EN/DE issue; user confirmed in scope to fix too.
+- **EN**: 2 of 6 links used the WordPress *taxonomy* slug instead of the actual category *page* route slug
+  (`/en/prosecco-and-sparkling-wines/` instead of the real page `/en/sparkling/`; same for `passiti-wines`
+  vs. `passiti`) — confirmed these taxonomy-slug URLs are genuine 404s on the live site too. One link had a
+  stray double slash (`/en//fizzy-and-rose/`).
+- **DE**: one link (`schaumweine`) was missing its trailing slash.
+
+Fixed generically (not just patched for the 2 known EN cases) in `scripts/extract-main-content.mjs`: a new
+`normalizeCategoryHref()` maps any recognized category route slug *or* taxonomy `cssClass` (already
+captured per-language in `categories.<lang>.json`) to the canonical `/<lang>/<slug>/` form, regardless of
+missing prefix/slash quirks. Regenerated `home.html` for all 3 languages — diff confirmed to touch *only*
+the 6 category hrefs per file, nothing else. All 18 links (6 × 3 languages) now curl-verified to return 200
+and land on the matching category page.
 
 ### Testing and validation performed
 

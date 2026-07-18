@@ -81,6 +81,45 @@ function rewriteUrl(u) {
   return u;
 }
 
+// Bug fix (reported by user on /en/ and /de/ landing pages, also found to
+// affect /it/ once investigated): the homepage's "elenco-categorie" wine-type
+// list links straight to each category page, but the live source itself is
+// inconsistent per language — confirmed by diffing the raw scrape:
+//   - IT: missing the `/it/` prefix entirely (href="/spumanti/").
+//   - EN: 2 of 6 use the WordPress *taxonomy* slug instead of the actual page
+//     route slug (href="/en/prosecco-and-sparkling-wines/", a genuine 404 on
+//     the live site too — confirmed via curl); one has a stray double slash.
+//   - DE: one link is missing its trailing slash.
+// Fixed generically here (not just patched for the 2 known EN cases) by
+// mapping any recognized route slug OR taxonomy/cssClass slug to the
+// canonical local route, regardless of missing prefix/slash quirks.
+async function buildCategoryHrefMap(lang) {
+  const map = new Map(); // recognized slug or cssClass -> canonical route slug
+  if (lang === "it") {
+    for (const key of CATEGORY_KEYS) map.set(key, key);
+    return map;
+  }
+  const categoriesPath = path.join(__dirname, `../src/data/categories.${lang}.json`);
+  const categories = JSON.parse(await readFile(categoriesPath, "utf8"));
+  for (const cat of categories) {
+    map.set(cat.slug, cat.slug);
+    map.set(cat.cssClass, cat.slug);
+  }
+  return map;
+}
+
+function normalizeCategoryHref(href, lang, categoryHrefMap) {
+  let rel = href.startsWith(DOMAIN) ? href.slice(DOMAIN.length) : href;
+  if (!rel.startsWith("/")) return null;
+  rel = rel.replace(/\/{2,}/g, "/"); // collapse any stray double slashes
+  const withoutLangPrefix = rel.startsWith(`/${lang}/`) ? rel.slice(`/${lang}/`.length) : rel.slice(1);
+  const segment = withoutLangPrefix.replace(/\/$/, "").split("/")[0];
+  if (!segment) return null;
+  const canonicalSlug = categoryHrefMap.get(segment);
+  if (!canonicalSlug) return null;
+  return `/${lang}/${canonicalSlug}/`;
+}
+
 // Lang-specific in-scope internal-link prefixes (mirrors the IT hardcoded list
 // below exactly, generated from the same route registry used everywhere else).
 function inScopePrefixesFor(lang) {
@@ -95,7 +134,7 @@ function inScopePrefixesFor(lang) {
   return prefixes;
 }
 
-function rewriteAssetsIn($, root, lang) {
+function rewriteAssetsIn($, root, lang, categoryHrefMap) {
   root.find("img, source").each((i, el) => {
     const $el = $(el);
     for (const attr of ["src", "data-src"]) {
@@ -117,6 +156,14 @@ function rewriteAssetsIn($, root, lang) {
   root.find("a").each((i, el) => {
     const $el = $(el);
     const href = $el.attr("href");
+    if (!href) return;
+
+    const normalizedCategoryHref = normalizeCategoryHref(href, lang, categoryHrefMap);
+    if (normalizedCategoryHref) {
+      $el.attr("href", normalizedCategoryHref);
+      return;
+    }
+
     // Only rewrite links into our own uploads/theme assets (e.g. PDF/image links).
     // Real page links (chi-siamo, cantina, contatti, i-nostri-vini/...) are left
     // as absolute rigonivittorino.com URLs on purpose EXCEPT for in-scope internal
@@ -152,6 +199,7 @@ function rewriteAssetsIn($, root, lang) {
 
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
+  const categoryHrefMap = await buildCategoryHrefMap(LANG);
   for (const p of PAGES) {
     const html = await readFile(path.join(CACHE_DIR, p.file), "utf8");
     const $ = cheerio.load(html);
@@ -161,7 +209,7 @@ async function main() {
       article.find(".wp-block-themepunch-revslider").remove();
     }
 
-    rewriteAssetsIn($, article, LANG);
+    rewriteAssetsIn($, article, LANG, categoryHrefMap);
 
     let out = article.prop("outerHTML");
     if (p.fixTypo) out = out.replaceAll(TYPO_FIX.from, TYPO_FIX.to);
