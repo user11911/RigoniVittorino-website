@@ -1289,3 +1289,85 @@ Task 2 backend files reopened except the two already-frozen, explicitly-scoped t
 wiring pattern replicated per-language, honeypot field renamed for backend compatibility — both non-content,
 non-visual, technically necessary). No invented content — every gap above is either omitted (captions,
 fixed) or left genuinely blank (privacy policy), never fabricated.
+
+# Task 10 — Fix EN/DE profile font-size and landing-page wine-list formatting
+
+Two user-reported visual regressions on the `/en/` and `/de/` sites Task 9 built: the contact-page
+team-profile "description" text rendered at the same font size as the "role" text above it (should be
+visibly smaller/distinct, as on `/it/contatti/`), and the homepage's "Our collection" wine-type list
+rendered disorganized/unformatted (should be a properly arranged grid, as on `/it/`).
+
+## Root cause
+
+Some of this project's scraped-verbatim page styling comes from a page-specific inline
+`<style id="uagb-style-frontend-{postId}">` block in that exact page's own live `<head>`, containing CSS
+rules scoped to that page's own auto-generated Gutenberg/UAGB block IDs (e.g.
+`.uagb-block-2d6a9619 p.uagb-team__desc{font-size:15px}`). This is the *only* place
+`.uagb-team__desc`/`.uagb-team__prefix` font-size rules or the homepage `elenco-categorie` list's
+grid/flex layout rules exist anywhere in this project's self-hosted CSS (confirmed: `uagb-team__desc`
+appears in zero other CSS files).
+
+Task 1/2 captured this block for the Italian pages into `src/content/main/home-extra-style.css` and
+`contatti-extra-style.css`. Task 9 built `/en/`/`/de/` equivalents but reused these same two IT-specific
+files verbatim — an oversight. Since English and German pages are separate WordPress page instances, their
+block IDs are entirely different from Italian's and from each other:
+
+- Contatti team-profile blocks: IT `efaa6bd2`/`2d6a9619`/`72e6c065`, EN `0357eb0c`/`1f6735d2`/`2596b0a6`/
+  `3a5ba4de`/`bed9513f`, DE `17384929`/`6bdbf101`/`b8d8d3e7`/`c28081f7`/`f50a2397`.
+- Homepage `elenco-categorie` block: IT `2c399198`, EN `a2dba6df`, DE `13e23b96`.
+
+So the reused IT-specific selectors never matched EN/DE's markup, and neither bug had any fallback
+elsewhere — the font-size split and the list's layout formatting were entirely undefined for EN/DE.
+
+## What was implemented
+
+- `scripts/extract-main-content.mjs`: added `extractPageStyleBlock()`, which pulls the page's own
+  `<style id="uagb-style-frontend-\d+">...</style>` block out of the raw cached `<head>` via regex. Wired
+  into `main()` via a new `extraStyleOut` field on the relevant `PAGES_BY_LANG` entries (`home` and
+  `contatti`/`contacts`, en/de only — IT entries have no such field, so IT's processing path is completely
+  unaffected). Output written to a new `EXTRA_STYLE_DIR` constant (`src/content/main/`, always flat
+  regardless of language, matching how `BaseLayout.astro` actually resolves `extraStyleFile`).
+- New generated files: `src/content/main/home-extra-style.en.css`, `home-extra-style.de.css`,
+  `contatti-extra-style.en.css`, `contatti-extra-style.de.css` — each containing that language's own
+  correctly-scoped CSS, extracted straight from its own live scrape.
+- `src/pages/en/index.astro`, `src/pages/de/index.astro`, `src/pages/en/contatti/index.astro`,
+  `src/pages/de/contacts/index.astro`: `extraStyleFile` updated to point at the new per-language file
+  instead of the shared IT one.
+
+## Files changed
+
+- `scripts/extract-main-content.mjs`
+- `src/pages/en/index.astro`, `src/pages/de/index.astro`, `src/pages/en/contatti/index.astro`,
+  `src/pages/de/contacts/index.astro`
+- New: `src/content/main/{home,contatti}-extra-style.{en,de}.css`
+
+No Italian file was touched (confirmed: `git status` showed zero changes under `src/pages/it/` or the
+unsuffixed `home-extra-style.css`/`contatti-extra-style.css`).
+
+## Testing and confirmations
+
+- `npm run check`: 0 errors. `npm run test:unit`: 42/42 passed. `npm run build`: succeeds.
+- `node scripts/route-smoke-test-curl.mjs` against `npm run preview`: all routes still pass, including the
+  root-routing and News-redirect checks.
+- Rendered-HTML verification (curl, since Playwright/Chromium still can't launch in this sandbox — same
+  pre-existing gap as Tasks 8/9): confirmed the new per-language CSS is present in each page's rendered
+  `<head>` and contains the `.uagb-team__desc`/`.uagb-team__prefix` and `elenco-categorie` block-ID
+  selectors — then cross-checked those exact block IDs also appear in that same rendered page's own markup
+  (`grep`-matched, not just present-but-disconnected), for both the contatti team blocks and the homepage
+  wine-list block, on both `/en/` and `/de/`. This is markup/CSS-level confirmation, not a pixel-level
+  visual screenshot — that still wasn't performed, per the same sandbox limitation as before.
+- Recurring gotcha (third time in this repo): re-running `extract-main-content.mjs` for `contatti`/
+  `contacts` regenerates raw scraped markup and silently reverts the manual Task 2 contact-form wiring
+  (`id="contact-form"`, `action="/api/contact/"`, honeypot field rename, Turnstile widget insertion) on
+  `en/contatti.html`/`de/contacts.html` every time. Reapplied it again after this run. Deliberately did
+  **not** re-run the script for `it` at all this time (no need to — the new logic is fully gated behind a
+  field only set on en/de entries), avoiding the exact same regression on the Italian file for the third
+  time. This manual-wiring fragility is a standing risk for any future re-run of this script and worth
+  automating at some point, but doing so wasn't authorized by Task 10's scope.
+
+## Confirmation
+
+No shop/ecommerce/News/contact-backend/root-routing code touched. No other EN/DE page (the-estate/
+unternehmen, winery/weinkeller, company-data/firmen-daten, privacy-policy, category/product pages)
+modified. No CSS values invented — the fix only wires up each language's own already-correct, already-live
+CSS that existed but was never extracted.

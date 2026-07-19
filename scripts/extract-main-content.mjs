@@ -21,6 +21,10 @@ const CACHE_DIR = path.join(__dirname, LANG === "it" ? ".cache/html" : `.cache/h
 const OUT_DIR = path.join(__dirname, LANG === "it" ? "../src/content/main" : `../src/content/main/${LANG}`);
 
 const DOMAIN = "https://rigonivittorino.com";
+// extraStyleFile is always resolved flat under src/content/main/ by BaseLayout.astro
+// (path.join(process.cwd(), "src/content/main", extraStyleFile)) regardless of
+// language — never under the per-language subdirectory.
+const EXTRA_STYLE_DIR = path.join(__dirname, "../src/content/main");
 
 // Task 9 note: privacy-policy is deliberately NOT in any language's PAGES list
 // here. Confirmed live: EN/DE /privacy-policy/ pages (like IT's before Task 6)
@@ -44,10 +48,10 @@ const PAGES_BY_LANG = {
     { name: "dati-societari", file: "dati-societari.html", fixTypo: true },
   ],
   en: [
-    { name: "home", file: "_home.html", stripRevslider: true },
+    { name: "home", file: "_home.html", stripRevslider: true, extraStyleOut: "home-extra-style" },
     { name: "the-estate", file: "the-estate.html" },
     { name: "winery", file: "winery.html" },
-    { name: "contatti", file: "contatti.html" },
+    { name: "contatti", file: "contatti.html", extraStyleOut: "contatti-extra-style" },
     // Confirmed live: the same "Az. Agr.." double-period typo Task 5 fixed for IT
     // is present here too, and the company-identity text is untranslated Italian
     // even on the EN page. Per "reproduce as-is" (the IT typo-fix was a narrow,
@@ -56,10 +60,10 @@ const PAGES_BY_LANG = {
     { name: "company-data", file: "company-data.html" },
   ],
   de: [
-    { name: "home", file: "_home.html", stripRevslider: true },
+    { name: "home", file: "_home.html", stripRevslider: true, extraStyleOut: "home-extra-style" },
     { name: "unternehmen", file: "unternehmen.html" },
     { name: "weinkeller", file: "weinkeller.html" },
-    { name: "contacts", file: "contacts.html" },
+    { name: "contacts", file: "contacts.html", extraStyleOut: "contatti-extra-style" },
     { name: "firmen-daten", file: "firmen-daten.html" },
   ],
 };
@@ -73,6 +77,21 @@ const TYPO_FIX = {
   from: "Az. Agr.. Rigoni Vittorino Società Agricola SNC",
   to: "Az. Agr. Rigoni Vittorino Società Agricola SNC",
 };
+
+// Task 10 bug fix: on the live site, some of a page's styling comes from a
+// page-specific inline <style id="uagb-style-frontend-{postId}"> block in that
+// exact page's own <head> — CSS scoped to that page's own auto-generated
+// Gutenberg/UAGB block IDs (e.g. team-profile description font-size, the
+// homepage wine-type list's grid layout). Task 1/2 captured this for the
+// Italian home/contatti pages into home-extra-style.css/contatti-extra-style.css
+// (see BaseLayout's `extraStyleFile` prop), but Task 9 reused those same
+// IT-specific files verbatim for /en/ and /de/ — whose block IDs are entirely
+// different, so none of that CSS ever matched. Fixed by extracting each
+// language's own correctly-scoped block from its own raw scrape instead.
+function extractPageStyleBlock(html) {
+  const match = html.match(/<style id="uagb-style-frontend-\d+">([\s\S]*?)<\/style>/);
+  return match ? match[1] : null;
+}
 
 function rewriteUrl(u) {
   if (!u) return u;
@@ -215,6 +234,16 @@ async function main() {
     if (p.fixTypo) out = out.replaceAll(TYPO_FIX.from, TYPO_FIX.to);
     await writeFile(path.join(OUT_DIR, `${p.name}.html`), out, "utf8");
     console.log(`Wrote ${p.name}.html (${out.length} bytes)`);
+
+    if (p.extraStyleOut) {
+      const styleBlock = extractPageStyleBlock(html);
+      if (!styleBlock) {
+        throw new Error(`No uagb-style-frontend block found in ${p.file} for lang=${LANG} — expected one`);
+      }
+      const styleFile = `${p.extraStyleOut}.${LANG}.css`;
+      await writeFile(path.join(EXTRA_STYLE_DIR, styleFile), styleBlock, "utf8");
+      console.log(`Wrote ${styleFile} (${styleBlock.length} bytes)`);
+    }
   }
 }
 
