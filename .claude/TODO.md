@@ -23,8 +23,9 @@ Completed or inactive work:
   merged to `main`.
 - Task 9: completed/inactive build of `/en/` and `/de/` website trees (mirroring the Italian architecture,
   filled with real live English/German content), a shared language-neutral `/news/` page (with `/it/news/`
-  kept as a 301 redirect), and country-based root `/` routing. Do not modify unless explicitly reactivated.
-  Not yet committed.
+  kept as a 301 redirect), and country-based root `/` routing, plus a follow-up fix for missing hero
+  captions and broken category-list links on the `/en/`/`/de/` landing pages. Do not modify unless
+  explicitly reactivated. Committed at `05d2bb3` (build) and `202972d` (bug fixes), merged to `main`.
 
 Preserved constraints from completed work:
 
@@ -92,7 +93,8 @@ been checked.
 
 ## Task 9 - Complete: English and German website versions, shared News, root language routing
 
-Status: complete, not yet committed. No task is currently active — confirm scope with the user before
+Status: complete. Committed at `05d2bb3` (build) and `202972d` (post-completion bug fixes), merged and
+pushed to `main`. No task is currently active — confirm scope with the user before
 starting new work.
 
 ### Summary
