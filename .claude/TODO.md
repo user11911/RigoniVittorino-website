@@ -2,6 +2,10 @@
 
 This file contains task-specific project work. `CLAUDE.md` contains permanent rules and must be followed for every task.
 
+Detailed implementation history for completed tasks lives in `IMPLEMENTATION_NOTES.md`, not here — this file
+stays focused on current/active work plus the compact status list below, per `CLAUDE.md`'s own "Discovery
+before editing" step 4.
+
 ## Completed / frozen project state
 
 The rebuilt Italian website is approved work. Do not reopen, refactor, redesign, or modify completed work unless the active task strictly requires it.
@@ -11,21 +15,21 @@ Completed or inactive work:
 - Task 1: Italian website remake for `/it/`, main Italian pages, wine category pages, and product pages.
 - Task 2: functional `/it/contatti/` backend/contact-form implementation with email, confirmation, captcha, and retained submissions.
 - Task 3: paused/inactive visual-parity bug-fix task. Do not work on it unless the user explicitly reactivates it.
-- Task 4: completed/inactive Italian News landing page at `/it/news/`. Do not extend News work unless the user explicitly asks.
+- Task 4: completed/inactive Italian News landing page at `/it/news/`. Superseded by Task 9's shared `/news/`.
 - Task 5: completed/inactive Italian Dati societari page at `/it/dati-societari/`. Do not modify unless explicitly reactivated.
 - Task 6: completed/inactive Cloudflare Web Analytics beacon + real `/it/privacy-policy/` page. Do not modify unless explicitly reactivated. Merged to `main` at commit `94209c1`.
 - Task 7: completed/inactive fix for `ShareButtons.astro` URL-encoding (all 6 links, including Stumbleupon)
   and contact-form server-side length validation. Do not modify unless explicitly reactivated. Committed at
-  `716b02a`, merged to `main`.
+  `716b02a`, merged to `main`. Detail: `IMPLEMENTATION_NOTES.md`.
 - Task 8: completed/inactive fix for missing `bodyClass="singular missing-post-thumbnail"` on `chi-siamo`,
-  `cantina`, and `contatti` (all three confirmed via `scripts/.cache/html/` to carry these classes live,
-  matching `dati-societari` exactly). Do not modify unless explicitly reactivated. Committed at `03a0459`,
-  merged to `main`.
+  `cantina`, and `contatti`. Do not modify unless explicitly reactivated. Committed at `03a0459`, merged to
+  `main`. Detail: `IMPLEMENTATION_NOTES.md`.
 - Task 9: completed/inactive build of `/en/` and `/de/` website trees (mirroring the Italian architecture,
   filled with real live English/German content), a shared language-neutral `/news/` page (with `/it/news/`
   kept as a 301 redirect), and country-based root `/` routing, plus a follow-up fix for missing hero
   captions and broken category-list links on the `/en/`/`/de/` landing pages. Do not modify unless
-  explicitly reactivated. Committed at `05d2bb3` (build) and `202972d` (bug fixes), merged to `main`.
+  explicitly reactivated. Committed at `05d2bb3` (build) and `202972d` (bug fixes), merged and pushed to
+  `main`. Detail: `IMPLEMENTATION_NOTES.md`.
 
 Preserved constraints from completed work:
 
@@ -46,222 +50,130 @@ Preserved constraints from completed work:
 - Do not work on Task 3 visual bugs or further News scope as part of this task.
 
 
-## Task 8 - Complete: fix missing `bodyClass` on chi-siamo, cantina, and contatti
+## Task 10 - Active: fix EN/DE profile font-size and landing-page wine-list formatting
 
-Status: complete. Committed at `03a0459`, merged to `main`. No task is currently active — confirm scope
-with the user before starting new work.
+Status: active.
 
-### Summary
+### User request
 
-`chi-siamo`, `cantina`, and `contatti` never got the `bodyClass="singular missing-post-thumbnail"`
-treatment Task 5 discovered and applied to `dati-societari`. Confirmed via `scripts/.cache/html/{chi-siamo,
-cantina,contatti}.html` that all three live pages' `<body>` carry exactly the same `singular
-missing-post-thumbnail` classes as `dati-societari` did — no per-page variation. Added the identical
-`bodyClass="singular missing-post-thumbnail"` prop to all three, following the exact pattern already used
-in `src/pages/it/dati-societari/index.astro`.
+Fix two visual regressions on the `/en/` and `/de/` sites built by Task 9:
 
-### Files changed
+1. On `/en/contatti/` and `/de/contacts/`, the team-profile "description" text renders at the same font
+   size and style as the "role" text above it, instead of visibly smaller/distinct — as it correctly does
+   on `/it/contatti/` and the live website.
+2. On the `/en/` and `/de/` landing pages, the "Our collection" wine-type list renders as a disorganized,
+   unformatted list instead of the properly arranged/styled list seen on `/it/` and the live website.
 
-- `src/pages/it/chi-siamo/index.astro`
-- `src/pages/it/cantina/index.astro`
-- `src/pages/it/contatti/index.astro`
+Also: if `.claude/rules/testing.md` doesn't require checking that `/en/`/`/de/` match their own live sites,
+add that. Also check the `.claude/` instruction files themselves for issues/redundancies.
 
-### Verification performed
+### Root cause (confirmed by direct investigation — not guesswork)
 
-- `npm run test:unit`: 37/37 passed. `npm run check`: 0 errors. `npm run build`: succeeded, all routes
-  prerendered.
-- Rendered-HTML diff (local preview, before vs. after) for all three routes confirms the *only* change is
-  the `<body>` class attribute gaining `singular missing-post-thumbnail` — no other markup, content, or
-  structure changed.
-- `git diff --stat` confirms only the three files above changed (plus this TODO.md entry).
-- Confirmed via `dist/client/.../parent-style.min.css` that the CSS rules described in the original
-  background section (`:not(.singular) main>article:first-of-type{padding:4rem 0 0}` and
-  `.reduced-spacing.missing-post-thumbnail .post-inner{padding-top:0}`) are present and now correctly gated
-  for these three pages, matching `dati-societari`.
+This project's static pages reuse verbatim-scraped WordPress markup. Some of that markup's styling comes
+from a **page-specific inline `<style id="uagb-style-frontend-{postId}">` block embedded in that exact
+page's own `<head>`** on the live site — containing CSS rules scoped to that page's own auto-generated
+Gutenberg/UAGB block IDs (e.g. `.uagb-block-2d6a9619 p.uagb-team__desc{font-size:15px}`). This is the
+*only* place `.uagb-team__desc`/`.uagb-team__prefix` font-size rules or the homepage `elenco-categorie`
+list's grid/flex layout rules exist anywhere in this project's self-hosted CSS — confirmed via
+`grep -rc "uagb-team__desc"` across every self-hosted CSS file: zero matches outside this per-page block.
 
-### Known limitation
+Task 1/Task 2 captured this block for the Italian pages into `src/content/main/home-extra-style.css` and
+`contatti-extra-style.css` (referenced via each page's `extraStyleFile` prop on `BaseLayout`). Task 9 built
+`/en/` and `/de/` equivalents but reused these same two **IT-specific** files verbatim
+(`extraStyleFile="home-extra-style.css"` / `"contatti-extra-style.css"` on the EN/DE pages too) — an
+oversight, not a deliberate choice. Since English and German pages are separate WordPress page instances,
+their block IDs are completely different from Italian's and from each other (confirmed by direct
+inspection of each language's own cached scrape):
 
-Playwright's Chromium can't launch in this sandboxed environment (missing system libs, e.g. `libnspr4.so`,
-and no passwordless `sudo` to install them) — visual-breakpoint screenshots and the Playwright-based route
-smoke test (`npm run test:routes`) could not be run. Substituted: `curl` confirmed HTTP 200 on all three
-routes, and the rendered-HTML diff gave markup-level proof no unintended change occurred. Pixel-level
-visual comparison at 375/768/1024/1440px was never actually performed. After this was reported, the user
-replied "treat everything as verified and completed" without further detail — recorded here as a directive
-to close out Task 8 on the verification already done, not as evidence the pixel-level check happened or
-was individually reviewed. If genuine visual parity at those breakpoints matters later, it still hasn't
-been checked.
+- Contatti team-profile blocks: IT `efaa6bd2`/`2d6a9619`/`72e6c065`, EN `0357eb0c`/`1f6735d2`/`2596b0a6`/
+  `3a5ba4de`/`bed9513f`, DE `17384929`/`6bdbf101`/`b8d8d3e7`/`c28081f7`/`f50a2397`.
+- Homepage `elenco-categorie` (wine-type list) block: IT `2c399198`, EN `a2dba6df`, DE `13e23b96`.
 
-## Task 9 - Complete: English and German website versions, shared News, root language routing
+So the IT-specific CSS selectors in the reused files never match EN/DE's markup, and neither bug has any
+fallback anywhere else — the font-size split and the list's layout formatting are entirely undefined for
+EN/DE, silently falling back to unstyled defaults. This exactly matches both reported symptoms.
 
-Status: complete. Committed at `05d2bb3` (build) and `202972d` (post-completion bug fixes), merged and
-pushed to `main`. No task is currently active — confirm scope with the user before
-starting new work.
+Each language's own raw cached scrape already contains its **own**, correctly-scoped
+`<style id="uagb-style-frontend-*">` block in `<head>` — confirmed present at
+`scripts/.cache/html/en/contatti.html`, `de/contacts.html`, `en/_home.html`, `de/_home.html`. It was simply
+never extracted for anything but Italian.
 
-### Summary
+### Scope authorization
 
-Built `/en/` and `/de/` route trees mirroring the current Italian architecture (data-driven wine
-category/product pages, transplanted-HTML static pages, shared `BaseLayout`), filled with real live
-English/German content captured directly from `rigonivittorino.com/en/` and `/de/` (never translated or
-invented). Moved the shared News landing page to a language-neutral `/news/`, with `/it/news/` kept as a
-301 redirect. Implemented country-based root `/` routing via the `CF-IPCountry` request header. Added a
-working language switcher (WPML-derived, now pointing at local routes for all 3 languages) via a token-
-substitution scheme in `BaseLayout`.
+This task authorizes touching the EN/DE equivalents of `home-extra-style.css`/`contatti-extra-style.css`
+and the scrape/extraction script(s) that generate them, and the EN/DE page files that reference them
+(`src/pages/en/index.astro`, `src/pages/de/index.astro`, `src/pages/en/contatti/index.astro`,
+`src/pages/de/contacts/index.astro`). It does not authorize touching the Italian equivalents of these
+files (`src/content/main/home-extra-style.css`, `contatti-extra-style.css`, `src/pages/it/index.astro`,
+`src/pages/it/contatti/index.astro`) — those are already correct and frozen.
 
-### Architecture decisions
+### Route/file scope
 
-- **Content pipeline**: `scripts/routes.mjs`/`fetch-pages.mjs`/`extract-wines.mjs`/`extract-chrome.mjs`/
-  `extract-main-content.mjs`/`extract-assets.mjs` all gained a `--lang=<it|en|de>` flag (default `it`,
-  verified byte-identical output for the zero-arg IT case after refactor — see Known issues below for one
-  exception). New `scripts/extract-categories.mjs` generates `categories.en.json`/`categories.de.json` from
-  each live category page's own `<h1 class="category-title">`.
-- **Shared News**: `src/pages/news/index.astro` (moved from `it/news/`, unchanged internals — same content
-  collection, `lang="it"` per user decision since its only real content today is Italian).
-  `src/pages/it/news/index.astro` is now a thin on-demand page (`Astro.redirect("/news/", 301)`), the same
-  on-demand pattern already used by `src/pages/api/contact.ts`. No `/en/news/`/`/de/news/` routes exist —
-  neither language had one locally before, so their nav links straight to `/news/`.
-- **Root routing**: `src/pages/index.astro`, on-demand, reads `Astro.request.headers.get("cf-ipcountry")`
-  (gated on `import.meta.env.PROD`, mirroring `BaseLayout`'s existing Analytics-beacon gating — this is what
-  makes local dev/preview fall back to `/en/` automatically). Decision logic extracted to
-  `src/lib/locale-routing.ts` (`resolveLocaleFromCountry`), unit-tested. 302 (not 301), plus explicit
-  `Cache-Control: no-store` — the target varies per visitor and must never be cached as permanent.
-- **`BaseLayout`**: new `lang` prop (default `"it"`, so every un-migrated call renders byte-identically) and
-  `otherLangUrls` prop, which substitutes `__SWITCHER_{EN,DE,IT}_URL__` tokens written into each language's
-  generated header/footer by `extract-chrome.mjs`, falling back to that language's homepage when a page
-  doesn't supply a specific equivalent.
-- **Cross-language route equivalence**: `src/data/locale-equivalents.json` for the ~6 static pages and 6
-  categories (their slugs are genuinely translated per language — confirmed via live sitemaps, so a real
-  map was unavoidable there). Wine products need no such map — slugs are confirmed byte-identical across
-  it/en/de — the equivalent URL is computed inline as `/${lang}/wines/${slug}/` (IT keeps `i-nostri-vini`).
-- **Category CSS class vs. route slug**: discovered during implementation (not assumed) that the WordPress
-  taxonomy slug driving `.wine-cat-background`/`.wine-detail` color CSS is a *different* string from the
-  category page's own route slug for 2 of 6 English categories (route `sparkling` vs. CSS class
-  `prosecco-and-sparkling-wines`; route `passiti` vs. CSS class `passiti-wines`). Fixed by reading the real
-  class directly off each live page (`categoryClass` in `wines.en/de.json`, `cssClass` in
-  `categories.en/de.json`) rather than assuming route slug == CSS class.
-- **DE News nav item**: live German nav has no News link at all (Italian/English both do) — per explicit
-  user decision, added one locally (`extract-chrome.mjs` inserts a new `<li>` matching the EN/IT structural
-  pattern), documented as new UI chrome, not scraped content.
-- **Contact form on EN/DE**: wired to the same shared, frozen `/api/contact` backend as IT (same manual
-  `id="contact-form"`/`action="/api/contact/"` edit Task 2 applied to IT — not automatable by the scrape
-  pipeline, since it's a one-time hand edit per `IMPLEMENTATION_NOTES.md`). The honeypot field's WPCF7-
-  generated name differs per form instance (IT `mail-9`, EN `mail-557`, DE `mail-2`) — renamed EN/DE's to
-  `mail-9` to match the frozen `contact-validation.ts`'s hardcoded field name (a non-visible, non-linguistic
-  attribute rename, not a translation). Field names `your-name`/`your-email`/`your-message`/`acceptance-698`
-  are already identical across languages. Per user decision: page-level success/failure status text (not
-  frozen — lives in each page's own inline script) is genuinely translated per language; the frozen
-  backend's field-level validation-tip strings stay Italian on all three languages' forms.
-- **Live mixed-language content preserved as-is** (not corrected): EN/DE `/contatti|contacts/` pages both
-  have an aria-label of `"Modulo di contatto"` (EN, Italian) / `"Contact form"` (DE, English); EN's contact
-  route is literally `/en/contatti/` (Italian word); DE's is `/de/contacts/` (English word); DE's shop link
-  points at `/en/` shop; both EN/DE company-data pages carry the exact same `"Az. Agr.."` double-period typo
-  Task 5 fixed for IT (left unfixed here — that was a narrow, IT-specific authorization, not a general one);
-  EN/DE homepages both contain a verbatim untranslated Italian paragraph about Amarone; both EN/DE contact
-  pages carry a legacy Google reCAPTCHA legal notice paragraph even though this project's actual spam
-  protection is Cloudflare Turnstile (an existing live-site inconsistency, reproduced not invented).
+Implement:
 
-### Files changed
+- A scripted extraction step (extend `scripts/extract-main-content.mjs` or add a small new script) that
+  pulls each page's own `<style id="uagb-style-frontend-*">` block(s) out of `<head>` in the raw cache, per
+  language, for the `home` and `contatti`/`contacts` pages only.
+- New per-language extra-style files: e.g. `home-extra-style.en.css`, `home-extra-style.de.css`,
+  `contatti-extra-style.en.css`, `contatti-extra-style.de.css` (exact naming is an implementation judgment
+  call — follow this project's existing naming conventions, e.g. the `wines.en.json`/`wines.de.json`
+  pattern already used elsewhere).
+- `src/pages/en/index.astro`, `src/pages/de/index.astro`, `src/pages/en/contatti/index.astro`,
+  `src/pages/de/contacts/index.astro` — update `extraStyleFile` to reference the new per-language file.
 
-Modified (all additive/narrow, no visual change to unmodified callers): `scripts/routes.mjs`,
-`fetch-pages.mjs`, `extract-wines.mjs`, `extract-chrome.mjs`, `extract-main-content.mjs`,
-`extract-assets.mjs`; `src/layouts/BaseLayout.astro`; `src/components/WineCard.astro`, `Hero.astro`;
-`src/content/chrome/header.html` (switcher tokens + News link, 3-line diff); 8 existing `/it/` page files
-(added `lang="it"` + `otherLangUrls` props only).
+Do not implement or modify:
 
-New: `scripts/extract-categories.mjs`, `route-smoke-test-curl.mjs`; `src/lib/locale-routing.ts` (+ test);
-`src/data/{wines,categories}.{en,de}.json`, `locale-equivalents.json`; `src/content/chrome/{en,de}/`,
-`src/content/main/{en,de}/`; `src/pages/index.astro`, `src/pages/news/index.astro`; full `src/pages/en/` and
-`src/pages/de/` trees (home, about/cantina/contact/company-data equivalents, `privacy-policy` (blank —
-see below), one `[category]` dynamic file generating 6 category pages each, one `wines/[slug]` dynamic file
-generating 30 product pages each). 167 new asset files in `public/` (mostly EN/DE PDF tech sheets — WPML
-shares one media library, so most images were already present from the IT scrape; `extract-assets.mjs` now
-skips anything already downloaded).
+- Any Italian page, layout, or content file.
+- Any other EN/DE page (the-estate/unternehmen, winery/weinkeller, company-data/firmen-daten,
+  privacy-policy, category/product pages) — this task is scoped to exactly the two affected page types.
+- The shop, News, contact-backend, or root-routing code.
 
-### Route inventories
+### Non-negotiable constraints
 
-- **EN implemented**: `/en/`, `/en/the-estate/`, `/en/winery/`, `/en/contatti/`, `/en/company-data/`,
-  `/en/privacy-policy/` (blank, see below), `/en/{sparkling,white-wines,red-wines,matured,fizzy-and-rose,
-  passiti}/` (6), `/en/wines/<slug>/` (30, identical slugs to IT). Legacy `/en/news/` (a real live WP page)
-  intentionally NOT implemented locally — News is shared at `/news/` instead, per the task's own instruction
-  not to replicate legacy routes that don't match the current architecture.
-- **DE implemented**: `/de/`, `/de/unternehmen/`, `/de/weinkeller/`, `/de/contacts/`, `/de/firmen-daten/`,
-  `/de/privacy-policy/` (blank), `/de/{schaumweine,weissweine,rotweine,gereift-im-eichenfass,
-  perlweine-und-roseweine,strohweine}/` (6), `/de/wines/<slug>/` (30). No local `/de/news/` — the live DE
-  site never had a News page or nav item at all.
-- **Shared**: `/news/` (canonical), `/it/news/` (301 redirect alias, only remaining language-specific News
-  URL).
-- **Root**: `/` (302, country-routed).
-- **Excluded/not implemented**: legacy WP `/en/news/` (superseded by shared News); anything not in the
-  current approved Italian architecture (no News archives/tags/detail pages for any language, unchanged).
+- This must be a scripted, reproducible extraction (survives re-running the scrape pipeline), not a one-off
+  hand-copy — matching this project's existing convention that generated content comes from scripts, not
+  manual edits to committed output.
+- No change to any other visual aspect of the affected pages — only the description/role font-size
+  differentiation and the wine-list formatting should change.
+- Do not invent CSS values — the fix is to correctly extract and wire up EN/DE's own already-live,
+  already-correct CSS, not to guess replacement values.
 
-### Known limitations / gaps (documented, not glossed over)
+### Discovery required before implementation
 
-- **No pixel-level visual comparison at 375/768/1024/1440px was performed.** Playwright's Chromium cannot
-  launch in this sandbox (missing `libnspr4.so`, no passwordless `sudo` — the identical, pre-existing
-  limitation hit on a prior task in this same repo). Substituted: full `curl`-based route smoke test
-  (`scripts/route-smoke-test-curl.mjs`, all it/en/de/news/root routes + redirects + country-routing
-  variants — all passing) and direct live-vs-local text/markup comparison for representative pages (EN home,
-  DE product page, EN tasting-note paragraph — confirmed byte-identical to live). Do not treat this as
-  pixel-level visual parity — it wasn't performed.
-- ~~Hero slider captions for `/en/`/`/de/` were initially omitted~~ — **fixed** (user-reported bug). Found
-  a reliable, no-browser-needed source: the WordPress REST API (e.g.
-  `https://rigonivittorino.com/en/wp-json/wp/v2/pages/178`) exposes each page's raw block content,
-  including the RevSlider `<rs-layer data-type="text">` blocks with the real caption text — sidesteps the
-  live-Playwright-render requirement entirely. Cross-checked against IT's own page this way: reproduces
-  `Hero.astro`'s existing hardcoded IT captions exactly, confirming the method. Real EN/DE captions are now
-  in `src/pages/en/index.astro` / `src/pages/de/index.astro`. The slide-dot `aria-label` remains in Italian
-  for all 3 languages (a screen-reader-only decorative label, not requested to be fixed, not re-verified via
-  this same method).
-- **`/en/privacy-policy/` and `/de/privacy-policy/` are genuinely blank**, matching the live pages exactly
-  (confirmed: both only load a client-side Iubenda widget, no real static text — the same state IT's page
-  was in before Task 6's explicit, separately-authorized legal-text drafting). Populating them with real
-  EN/DE legal text is out of scope here and would need the same kind of explicit authorization Task 6
-  required for IT.
-- Full one-by-one live verification of all ~30 products/6 categories was not performed beyond the sitemap-
-  based slug/count match — per explicit user decision, this was accepted as sufficient; no discrepancies
-  were found during the actual per-page scrape/build that followed.
+1. Read `CLAUDE.md`, then this `TODO.md`, confirm Task 10 is the only active task.
+2. Re-read `src/content/main/home-extra-style.css`, `contatti-extra-style.css`, and the EN/DE page files
+   named above in full.
+3. Confirm the exact `<style id="uagb-style-frontend-*">` block boundaries in each raw cached scrape
+   (`scripts/.cache/html/en/_home.html`, `de/_home.html`, `en/contatti.html`, `de/contacts.html`) before
+   writing extraction logic — there may be more than one such block per page (e.g. one for the team
+   block, one for the contact-form styler, one for the Google Map embed on the contatti page), and all of
+   them need to be captured together for the page to still work.
 
-### Post-completion fix: landing-page category-list links (user-reported bug)
+### Implementation requirements
 
-The homepage's `elenco-categorie` wine-type CTA list (6 links, e.g. "PROSECCO AND SPARKLING") had broken
-hrefs, confirmed by diffing the raw live scrape — genuinely broken on the live site itself, not something
-Task 9 introduced, but in 3 different ways per language:
+- Extraction logic outputs a valid CSS file per language per page, containing that page's own
+  `<style id="uagb-style-frontend-*">` content (concatenated if there are multiple blocks), unmodified
+  except for necessary CSS-syntax cleanup (e.g. stripping the `<style>` tag wrapper itself).
+- EN/DE page files reference their new per-language file instead of the shared IT one.
 
-- **IT**: missing the `/it/` prefix entirely (`href="/spumanti/"`) — a pre-existing Task 1 bug, found while
-  investigating the reported EN/DE issue; user confirmed in scope to fix too.
-- **EN**: 2 of 6 links used the WordPress *taxonomy* slug instead of the actual category *page* route slug
-  (`/en/prosecco-and-sparkling-wines/` instead of the real page `/en/sparkling/`; same for `passiti-wines`
-  vs. `passiti`) — confirmed these taxonomy-slug URLs are genuine 404s on the live site too. One link had a
-  stray double slash (`/en//fizzy-and-rose/`).
-- **DE**: one link (`schaumweine`) was missing its trailing slash.
+### Testing and validation
 
-Fixed generically (not just patched for the 2 known EN cases) in `scripts/extract-main-content.mjs`: a new
-`normalizeCategoryHref()` maps any recognized category route slug *or* taxonomy `cssClass` (already
-captured per-language in `categories.<lang>.json`) to the canonical `/<lang>/<slug>/` form, regardless of
-missing prefix/slash quirks. Regenerated `home.html` for all 3 languages — diff confirmed to touch *only*
-the 6 category hrefs per file, nothing else. All 18 links (6 × 3 languages) now curl-verified to return 200
-and land on the matching category page.
+- `npm run check`, `npm run test:unit`, `npm run build`.
+- Route smoke test (`scripts/route-smoke-test-curl.mjs`).
+- Since Playwright/Chromium cannot launch in this sandbox (confirmed, pre-existing, see
+  `IMPLEMENTATION_NOTES.md` Task 8/9), visual rendering cannot be screenshotted here. Substitute: curl the
+  rendered `/en/contatti/`/`/de/contacts/`/`/en/`/`/de/` HTML and confirm (a) the new per-language CSS file
+  is linked/inlined, (b) it contains the expected `.uagb-team__desc`/`.uagb-team__prefix`/
+  `.elenco-categorie`-related selectors matching that page's own block IDs. Do not claim pixel-level visual
+  confirmation that wasn't performed.
+- Diff each regenerated/changed file to confirm only the intended CSS-file-reference change occurred, no
+  unrelated regression (apply the same before/after diff discipline documented in `IMPLEMENTATION_NOTES.md`
+  Task 9, where a naive re-run of the extraction pipeline twice silently reverted an unrelated manual edit).
 
-### Testing and validation performed
+### Required Task 10 deliverables
 
-- `npm run check`: 0 errors (65 files). `npm run test:unit`: 42/42 passed (37 pre-existing + 5 new
-  `locale-routing.test.ts`). `npm run build`: succeeds, all it/en/de/news static routes prerendered, `/`
-  and `/it/news/` correctly on-demand.
-- `node scripts/route-smoke-test-curl.mjs` against `npm run preview`: every implemented it/en/de route (123
-  total) → 200; `/news/` → 200; `/it/news/` → 301 → `/news/`; `/` with `cf-ipcountry: IT|DE|US|<none>` → 302
-  to `/it/|/de/|/en/|/en/` respectively. All passing.
-- Confirmed no unintended regression: IT's `src/data/wines.json`/`categories.json` byte-identical after the
-  pipeline refactor (git diff empty); IT's `src/content/main/contatti.html` — accidentally regressed once by
-  a naive re-run of `extract-main-content.mjs` (silently reverting Task 2's manual contact-form wiring),
-  caught immediately via this same diff-check habit, and restored via `git checkout` before proceeding.
-  IT's `header.html`/`footer.html` show only the intended 3-line diff (switcher tokens + News link).
-- Manual content-parity spot checks: EN home, DE product page title, EN tasting-note paragraph, IT nav News
-  link — all confirmed matching live source exactly (or, for the shared News link, matching the new
-  intentional target).
-
-### Confirmation
-
-No shop/ecommerce/checkout code touched. No News detail/archive/tag pages implemented for any language. No
-Task 2 backend files reopened except the two already-frozen, explicitly-scoped touch points (contact-form
-wiring pattern replicated per-language, honeypot field renamed for backend compatibility — both non-content,
-non-visual, technically necessary). No invented content — every gap above is either omitted (captions) or
-left genuinely blank (privacy policy), never fabricated.
+- Summary of the fix and confirmation of the root cause.
+- Files changed.
+- Confirmation no unrelated files (Italian pages, other EN/DE pages) were touched.
+- Commands run and results.
+- Known limitations (expected: no pixel-level visual confirmation, per the Playwright gap above).

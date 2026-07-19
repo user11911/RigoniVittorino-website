@@ -10,8 +10,10 @@ Task-specific instructions belong in `TODO.md`. Before starting work, read this 
 
 ## Current project state
 
-- Task 1, the Italian website remake, is completed and frozen.
-- Task 2, the `/it/contatti/` backend/contact-form work, is completed and frozen unless `TODO.md` says otherwise.
+`TODO.md`'s "Completed / frozen project state" section is the single, authoritative, up-to-date list of
+completed tasks and preserved constraints — it is not duplicated here, so the two files can't drift out of
+sync. Read it before starting any work.
+
 - Treat the existing project as approved work.
 - Do not modify completed pages, backend code, shared layouts, shared styles, routing, assets, animations, or behavior unless the active task strictly requires it.
 - If a change could affect completed work outside the active task, first explain the need, list the affected files or folders, and obtain explicit user approval before making the change.
@@ -19,21 +21,26 @@ Task-specific instructions belong in `TODO.md`. Before starting work, read this 
 
 ## Source of truth
 
-- The live Italian website at `rigonivittorino.com/it` remains the source of truth for visible content, layout, images, animations, behavior, contact details, forms, and responsive appearance.
-- The rebuilt site must not look redesigned, simplified, approximated, or visibly different from the live Italian site.
-- Preserve visible Italian text exactly unless the active task explicitly requires new functional messages.
-- Do not translate, correct, modernize, summarize, or improve existing copy.
+- The live Italian website at `rigonivittorino.com/it` remains the source of truth for visible content, layout, images, animations, behavior, contact details, forms, and responsive appearance for the Italian pages.
+- Since Task 9, the live English (`rigonivittorino.com/en`) and German (`rigonivittorino.com/de`) sites are each the source of truth for their own visible language-specific content — never translate from Italian, and never backfill missing English/German content from Italian.
+- The rebuilt site must not look redesigned, simplified, approximated, or visibly different from each page's own live-language source.
+- Preserve visible text exactly as scraped, per language, unless the active task explicitly requires new functional messages.
+- Do not translate, correct, modernize, summarize, or improve existing copy in any language.
 - Do not change URLs, route structure, visible navigation, footer layout, typography, spacing, colors, image placement, hover states, scroll effects, or animation timing unless the active task strictly requires it and the user approves.
 
 ## Scope boundaries
 
-- Work only on the Italian website unless the active task explicitly says otherwise.
-- Do not rebuild or modify English or German pages.
+- Work only within the active task's named scope in `TODO.md` unless the user explicitly says otherwise.
+- `/en/` and `/de/` are implemented (Task 9, frozen) — do not rebuild, redesign, translate, or reopen them
+  beyond what the active task in `TODO.md` explicitly authorizes. See `TODO.md`'s preserved constraints for
+  the exact current boundary.
 - Do not rebuild or modify `rigonivittorinoshop.it`, its backend, ecommerce system, cart, checkout, accounts, products, or payments.
 - Preserve visible shop links and keep them pointing to `rigonivittorinoshop.it`.
-- Do not implement, route, migrate, or rebuild News pages, archives, tags, categories, detail pages, or CMS data unless the active task in `TODO.md` explicitly authorizes News work. When News work is authorized, touch only the News scope named in `TODO.md` and preserve all other completed Italian-site work.
-- `/it/privacy-policy/` was blank in earlier completed work; the user has given the explicit approval this rule required to populate it with a real, accurate privacy/cookie policy. This rule is superseded when the active task in `TODO.md` explicitly authorizes implementing it (see Task 6).
-- `/it/dati-societari/` was blank in earlier completed work, but this rule is superseded when the active task in `TODO.md` explicitly authorizes implementing or preserving the live Dati societari page.
+- News is implemented as a single shared `/news/` page across all languages (Task 9, frozen), with
+  `/it/news/` kept as a redirect alias. Do not implement News posts, detail pages, archives, tags,
+  categories, or CMS data unless the active task in `TODO.md` explicitly authorizes it.
+- `/it/privacy-policy/` and `/it/dati-societari/` are implemented and frozen (Tasks 6 and 5). `/en/privacy-policy/` and `/de/privacy-policy/` are intentionally blank, matching their live pages exactly (Task 9) — populating them with real content needs the same kind of explicit user authorization Task 6 required for the Italian page.
+
 ## Security and data handling
 
 - Never hardcode secrets, credentials, API keys, SMTP passwords, database passwords, private tokens, or sensitive configuration.
@@ -66,8 +73,9 @@ Before changing code for any task:
 ## Visual parity and regression control
 
 - Preserve the approved visual result from completed work except where the active task explicitly requires a correction.
-- For any page affected by the active task, compare before and after at these widths: 375px, 768px, 1024px, and 1440px.
-- Verify header, footer, navigation, typography, spacing, form layout, images, animations, hover states, scroll behavior, and responsive behavior.
+- Detailed visual-parity breakpoints and checklists live in `.claude/rules/testing.md` — follow that file's
+  requirements for any task touching visible pages, for every implemented language, rather than duplicating
+  the specifics here.
 - Use screenshots, recordings, or other repeatable evidence to prove that affected defects were fixed and unrelated pages were not visually changed.
 
 ## Testing requirements
