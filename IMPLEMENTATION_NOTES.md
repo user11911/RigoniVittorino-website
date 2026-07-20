@@ -1371,3 +1371,143 @@ No shop/ecommerce/News/contact-backend/root-routing code touched. No other EN/DE
 unternehmen, winery/weinkeller, company-data/firmen-daten, privacy-policy, category/product pages)
 modified. No CSS values invented — the fix only wires up each language's own already-correct, already-live
 CSS that existed but was never extracted.
+
+# Task 11 — Remove Shop Online links/buttons across the site
+
+User-requested removal of every link/button pointing at the external shop (`rigonivittorinoshop.it`),
+across all 3 languages, with the explicit constraint not to leave blank spaces that create asymmetries —
+except where the user separately, explicitly decided otherwise for one specific spot (see below).
+
+## What was found (confirmed via `grep -rl` across `src/`, no other location, 3 languages each)
+
+1. Desktop nav item + mobile menu item — `src/content/chrome/{header.html, en/header.html,
+   de/header.html}`, 2 occurrences of `rigonivittorinoshop` per file. Both are `<li class="menu-item">` in
+   flex/flow layouts (desktop `ul.primary-menu{justify-content:center}`, mobile a plain stacked list) — no
+   layout fix needed beyond removal.
+2. Footer shopping-cart icon — `src/content/chrome/{footer.html, en/footer.html, de/footer.html}`, 1
+   occurrence per file, a bare `<a>` inside `.footer-social-icons` (inline-flowing, centered via the
+   parent's `text-align:center`) — same, no layout fix needed.
+3. Wine product page "SHOP ONLINE" button (`.buy-wine`, paired with a decorative arrow button) —
+   `src/pages/it/i-nostri-vini/[slug]/index.astro`, `src/pages/en/wines/[slug]/index.astro`,
+   `src/pages/de/wines/[slug]/index.astro`. The only spot with a real layout consequence: `.specs-row`
+   (shared site-wide CSS, `public/wp-content/themes/geppa/style-custom.min.css`) is a 6-column grid with 3
+   spec icons in columns 1-3 and `.buy-wine{grid-column:4/7}` in columns 4-6. Confirmed the same CSS file
+   already collapses this row to 3 columns below 1024px (no gap there regardless).
+
+## User decision — keep the gap, don't reflow
+
+Two options were presented for the now-buttonless product-page row: reflow `.specs-row` to 3 columns
+(removes the empty space) vs. keep the 6-column grid as-is with the icons left in columns 1-3, leaving
+columns 4-6 empty at desktop widths. **The user explicitly chose to keep the 6-column grid** — this is a
+deliberate, known, accepted outcome, in tension with this same task's own "no blank-space asymmetry"
+instruction. Recorded here plainly, not silently reflowed and not silently left undocumented.
+
+## What was implemented
+
+- `scripts/extract-chrome.mjs`: new `removeShopLinks($, root)` — finds any `a[href*="rigonivittorinoshop"]`
+  and removes its closest `li.menu-item` ancestor if present (nav items), otherwise removes just the `<a>`
+  itself (the footer's bare icon link). Wired in before `rewriteLinks()` for header, the mobile menu modal,
+  and the footer. Re-ran for it/en/de — `git diff` confirmed each `header.html` changed on exactly 2 lines
+  (the desktop and mobile shop `<li>`) and each `footer.html` on exactly 1 line (the shop `<a>`), nothing
+  else.
+- `src/pages/it/i-nostri-vini/[slug]/index.astro`, `src/pages/en/wines/[slug]/index.astro`,
+  `src/pages/de/wines/[slug]/index.astro`: removed the `.buy-wine` div entirely (both buttons). Did **not**
+  touch `.specs-row`'s `grid-template-columns`, per the confirmed user decision. Added a frontmatter
+  (`//`-style) comment documenting the decision and why the gap is deliberate — **not** an HTML `<!-- -->`
+  template comment, since those are not stripped by Astro and were confirmed (by curling the rendered page)
+  to leak literally into the production page source; caught and fixed during this same task.
+
+## Files changed
+
+- `scripts/extract-chrome.mjs`
+- `src/content/chrome/{header,footer}.html`, `en/{header,footer}.html`, `de/{header,footer}.html` (6 files,
+  regenerated via the script, not hand-edited)
+- `src/pages/it/i-nostri-vini/[slug]/index.astro`, `src/pages/en/wines/[slug]/index.astro`,
+  `src/pages/de/wines/[slug]/index.astro`
+
+No other page, component, or script touched. `rigonivittorinoshop.it` itself and all other e-commerce/
+backend behavior untouched.
+
+## Testing and confirmations
+
+- `npm run check`: 0 errors. `npm run test:unit`: 42/42 passed. `npm run build`: succeeds.
+- `node scripts/route-smoke-test-curl.mjs` against `npm run preview`: all routes still pass.
+- Curl-confirmed zero occurrences of `rigonivittorinoshop` anywhere in rendered `/it/`, `/en/`, `/de/`
+  output (homepages and a sampled product page each).
+- Curl-confirmed `.specs-row` on a sampled product page (all 3 languages) contains exactly 3
+  `wine-detail`-classed elements and zero `buy-wine`/`SHOP ONLINE` occurrences — including catching and
+  fixing the HTML-comment leak mentioned above, which would otherwise have made a naive text-search for
+  "buy-wine" report a false positive.
+- No pixel-level visual confirmation performed — Playwright/Chromium still cannot launch in this sandbox
+  (same pre-existing gap as Tasks 8-10). The markup-level checks above are the substitute.
+
+## Confirmation
+
+Scope matched exactly what was authorized: shop nav item, footer icon, and product-page buy button, across
+all 3 languages, nothing else. The desktop product-page icon row now shows visible empty space in columns
+4-6 — a deliberate, user-confirmed outcome, not a bug.
+
+# Task 12 — Remove social-share counts and share links
+
+User-requested removal of every social-media share count and share link from the site, "especially" on
+wine product pages — the only place this feature actually existed.
+
+## What was found (confirmed via `grep -rln`, exhaustive)
+
+One component, `src/components/ShareButtons.astro`, used in exactly 3 places (`src/pages/it/
+i-nostri-vini/[slug]/index.astro`, `src/pages/en/wines/[slug]/index.astro`, `src/pages/de/wines/[slug]/
+index.astro`). Its markup was entirely: a `.total-share` "Total Share: 0" counter, 6 share-intent links
+(Email/mailto, Facebook, Twitter, Reddit, LinkedIn, Stumbleupon) each with a `.button-count` "0" badge, and
+a "More..." popup toggle whose only job was revealing the last 3 links. Removing "any share count" plus
+"all share links" together left nothing of this component worth keeping.
+
+Confirmed `<ShareButtons ... />` rendered as its own standalone block-level element, not sharing a CSS
+grid row with any sibling — unlike Task 11's `.buy-wine` case, removing it required **no layout fix**.
+
+Also found, in scope per the user's explicit "full removal" decision:
+- `src/layouts/BaseLayout.astro` unconditionally loaded `social_share_button_style.min.css` on every page
+  of the site, with no other consumer anywhere in the codebase.
+- Each product page template computed a `pageUrl` const used only for `<ShareButtons url={pageUrl} />`.
+
+## What was implemented
+
+- Removed the `<ShareButtons .../>` call, its import, and the now-unused `pageUrl` const from all 3
+  product page templates.
+- Deleted `src/components/ShareButtons.astro` entirely.
+- Removed the `social_share_button_style.min.css` `<link rel="stylesheet">` from `BaseLayout.astro`.
+- Left the physical asset file at `public/wp-content/plugins/social-share-button/...` in place (optional
+  cleanup per the task's own notes, not required — an unreferenced static file is harmless).
+
+## Files changed
+
+- `src/pages/it/i-nostri-vini/[slug]/index.astro`, `src/pages/en/wines/[slug]/index.astro`,
+  `src/pages/de/wines/[slug]/index.astro`
+- `src/components/ShareButtons.astro` (deleted)
+- `src/layouts/BaseLayout.astro`
+
+## Testing and confirmations
+
+- `npm run check`: 0 errors (64 files, one fewer than before — the deleted component). `npm run test:unit`:
+  42/42 passed. `npm run build`: succeeds.
+- Curl-confirmed zero occurrences of `total-share`/`button-count`/`wp-share-button`/`social-share-button`
+  on sampled product pages (all 3 languages) **and** on non-product pages (home, `/news/`, all 3
+  languages) — confirming the `BaseLayout` stylesheet removal took effect sitewide, not just on product
+  pages.
+- `node scripts/route-smoke-test-curl.mjs`: every implemented route passes (200/301 as expected).
+- No pixel-level visual confirmation — Playwright/Chromium still cannot launch in this sandbox (same
+  pre-existing gap as Tasks 8-11).
+
+### Unrelated pre-existing issue found during verification (not caused by, or fixed by, this task)
+
+The route smoke test's root `/` country-routing checks (`cf-ipcountry: IT` → `/it/`, `cf-ipcountry: DE` →
+`/de/`) failed in this verification pass, always redirecting to `/en/` regardless of the header sent.
+Investigated before assuming it was a Task 12 regression: reproduced the identical failure after
+`git stash`-ing every Task 12 change and rebuilding the exact last-committed state (`67da275`, Task 11) —
+so this is a pre-existing environmental issue, not something Task 12 touched or introduced (Task 12 never
+modified `src/pages/index.astro` or `src/lib/locale-routing.ts`). Not investigated further or fixed, since
+it's outside Task 12's authorized scope — flagged here for whoever picks up root-routing work next.
+
+## Confirmation
+
+No other page, component, layout prop, or script touched. Nothing shop-related (Task 11, frozen) or any
+other frozen work modified.

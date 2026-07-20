@@ -56,6 +56,28 @@ function rewriteUrl(u) {
   return u;
 }
 
+// Task 11: remove any link/button pointing at the external shop
+// (rigonivittorinoshop.it) — user-requested removal, not a scrape-fidelity
+// concern. Removes the whole `<li class="menu-item">` for nav items (desktop
+// and mobile), or just the bare `<a>` for the footer's shopping-cart icon
+// (which isn't wrapped in an `<li>`) — whichever applies. Both the desktop nav
+// and the footer icon row are flex/inline-flowing (confirmed in
+// public/wp-content/themes/geppa/style-custom.min.css: `ul.primary-menu` is a
+// centered flexbox, `.footer-social-icons` is plain inline-flowing centered
+// text), so removing an item needs no further layout fix — the rest
+// re-center/re-flow on their own.
+function removeShopLinks($, root) {
+  root.find('a[href*="rigonivittorinoshop"]').each((i, el) => {
+    const $el = $(el);
+    const menuItem = $el.closest("li.menu-item");
+    if (menuItem.length) {
+      menuItem.remove();
+    } else {
+      $el.remove();
+    }
+  });
+}
+
 function rewriteLinks($, root) {
   root.find("a").each((i, el) => {
     const $el = $(el);
@@ -150,6 +172,8 @@ async function main() {
     template.after(newsLi);
   }
 
+  removeShopLinks($, header);
+  removeShopLinks($, menuModal);
   rewriteLinks($, header);
   rewriteLinks($, menuModal);
   const combined = header.prop("outerHTML") + "\n" + menuModal.prop("outerHTML");
@@ -158,6 +182,7 @@ async function main() {
   const footer = $("#site-footer").first();
   const footerNewsLink = footer.find('a[href*="/news/"]');
   footerNewsLink.attr("href", "/news/");
+  removeShopLinks($, footer);
   rewriteLinks($, footer);
   await writeFile(path.join(OUT_DIR, "footer.html"), footer.prop("outerHTML"), "utf8");
 

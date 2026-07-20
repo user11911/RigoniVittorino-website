@@ -25,7 +25,9 @@ Before final delivery, verify, for every implemented language (`/it/`, `/en/`, `
 * Every visible image appears in the same place as the original.
 * Header labels and destinations, including the language switcher, match each language's own live site.
 * Footer content and visual layout match each language's own live site.
-* Shop links point to `rigonivittorinoshop.it`.
+* Shop links, if any remain in the active task's scope, point to `rigonivittorinoshop.it`. Since Task 11,
+  this site intentionally has no shop links or buttons at all (nav, footer, or product pages) — confirm
+  their absence leaves no empty/asymmetric gap, rather than confirming a link that no longer exists.
 * Contact page visually matches its own language's live page even if backend submission is not
   implemented — including that the team-profile "description" text renders visibly smaller/distinct from
   the "role" text above it, not the same size (a regression found and fixed on `/en/`/`/de/` in Task 10 —
@@ -67,7 +69,8 @@ At completion, provide:
 * Commands run and results.
 * Known differences, if any.
 * Notes on any unavailable third-party scripts, assets, PDFs, forms, or behavior.
-* Confirmation that shop links remain external.
+* Confirmation that shop links remain external, if any remain in scope; since Task 11, confirmation that no
+  shop links/buttons exist anywhere on the site and that their removal left no layout gap or asymmetry.
 * Confirmation that News routing matches the active task scope, including any shared News route, redirects, aliases, or exclusions.
 
 For each scoped page type, compare the rewritten site against that page's own language's current live site
