@@ -34,8 +34,8 @@ sync. Read it before starting any work.
 - `/en/` and `/de/` are implemented (Task 9, frozen) — do not rebuild, redesign, translate, or reopen them
   beyond what the active task in `TODO.md` explicitly authorizes. See `TODO.md`'s preserved constraints for
   the exact current boundary.
-- Do not rebuild or modify `rigonivittorinoshop.it`, its backend, ecommerce system, cart, checkout, accounts, products, or payments.
-- Preserve visible shop links and keep them pointing to `rigonivittorinoshop.it`.
+- Do not rebuild or modify `rigonivittorinoshop.it`, its backend, ecommerce system, cart, checkout, accounts, products, or payments — this always applies, even when this site's own links *to* it are being changed.
+- This site intentionally has no links or buttons pointing to `rigonivittorinoshop.it` anywhere (Task 11, frozen) — do not re-add any, and do not "fix" the resulting layout gap on wine product pages, unless the active task in `TODO.md` explicitly and narrowly reauthorizes it.
 - News is implemented as a single shared `/news/` page across all languages (Task 9, frozen), with
   `/it/news/` kept as a redirect alias. Do not implement News posts, detail pages, archives, tags,
   categories, or CMS data unless the active task in `TODO.md` explicitly authorizes it.
