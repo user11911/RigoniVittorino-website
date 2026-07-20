@@ -1,7 +1,6 @@
 ---
 export const prerender = true;
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
-import ShareButtons from "../../../../components/ShareButtons.astro";
 import wines from "../../../../data/wines.json";
 
 export function getStaticPaths() {
@@ -12,7 +11,6 @@ export function getStaticPaths() {
 }
 
 const { wine } = Astro.props;
-const pageUrl = `https://rigonivittorino.com/it/i-nostri-vini/${wine.slug}/`;
 // Confirmed live: product slugs are identical across it/en/de.
 const otherLangUrls = { en: `/en/wines/${wine.slug}/`, de: `/de/wines/${wine.slug}/` };
 // Task 11: the "SHOP ONLINE" button (.buy-wine) was removed by explicit user request.
@@ -69,8 +67,6 @@ const otherLangUrls = { en: `/en/wines/${wine.slug}/`, de: `/de/wines/${wine.slu
             </a>
           </div>
         </div>
-
-        <ShareButtons postId={wine.slug} title={wine.title} url={pageUrl} />
       </div>
     </div>
 

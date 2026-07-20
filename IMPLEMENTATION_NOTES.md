@@ -1446,3 +1446,68 @@ backend behavior untouched.
 Scope matched exactly what was authorized: shop nav item, footer icon, and product-page buy button, across
 all 3 languages, nothing else. The desktop product-page icon row now shows visible empty space in columns
 4-6 — a deliberate, user-confirmed outcome, not a bug.
+
+# Task 12 — Remove social-share counts and share links
+
+User-requested removal of every social-media share count and share link from the site, "especially" on
+wine product pages — the only place this feature actually existed.
+
+## What was found (confirmed via `grep -rln`, exhaustive)
+
+One component, `src/components/ShareButtons.astro`, used in exactly 3 places (`src/pages/it/
+i-nostri-vini/[slug]/index.astro`, `src/pages/en/wines/[slug]/index.astro`, `src/pages/de/wines/[slug]/
+index.astro`). Its markup was entirely: a `.total-share` "Total Share: 0" counter, 6 share-intent links
+(Email/mailto, Facebook, Twitter, Reddit, LinkedIn, Stumbleupon) each with a `.button-count` "0" badge, and
+a "More..." popup toggle whose only job was revealing the last 3 links. Removing "any share count" plus
+"all share links" together left nothing of this component worth keeping.
+
+Confirmed `<ShareButtons ... />` rendered as its own standalone block-level element, not sharing a CSS
+grid row with any sibling — unlike Task 11's `.buy-wine` case, removing it required **no layout fix**.
+
+Also found, in scope per the user's explicit "full removal" decision:
+- `src/layouts/BaseLayout.astro` unconditionally loaded `social_share_button_style.min.css` on every page
+  of the site, with no other consumer anywhere in the codebase.
+- Each product page template computed a `pageUrl` const used only for `<ShareButtons url={pageUrl} />`.
+
+## What was implemented
+
+- Removed the `<ShareButtons .../>` call, its import, and the now-unused `pageUrl` const from all 3
+  product page templates.
+- Deleted `src/components/ShareButtons.astro` entirely.
+- Removed the `social_share_button_style.min.css` `<link rel="stylesheet">` from `BaseLayout.astro`.
+- Left the physical asset file at `public/wp-content/plugins/social-share-button/...` in place (optional
+  cleanup per the task's own notes, not required — an unreferenced static file is harmless).
+
+## Files changed
+
+- `src/pages/it/i-nostri-vini/[slug]/index.astro`, `src/pages/en/wines/[slug]/index.astro`,
+  `src/pages/de/wines/[slug]/index.astro`
+- `src/components/ShareButtons.astro` (deleted)
+- `src/layouts/BaseLayout.astro`
+
+## Testing and confirmations
+
+- `npm run check`: 0 errors (64 files, one fewer than before — the deleted component). `npm run test:unit`:
+  42/42 passed. `npm run build`: succeeds.
+- Curl-confirmed zero occurrences of `total-share`/`button-count`/`wp-share-button`/`social-share-button`
+  on sampled product pages (all 3 languages) **and** on non-product pages (home, `/news/`, all 3
+  languages) — confirming the `BaseLayout` stylesheet removal took effect sitewide, not just on product
+  pages.
+- `node scripts/route-smoke-test-curl.mjs`: every implemented route passes (200/301 as expected).
+- No pixel-level visual confirmation — Playwright/Chromium still cannot launch in this sandbox (same
+  pre-existing gap as Tasks 8-11).
+
+### Unrelated pre-existing issue found during verification (not caused by, or fixed by, this task)
+
+The route smoke test's root `/` country-routing checks (`cf-ipcountry: IT` → `/it/`, `cf-ipcountry: DE` →
+`/de/`) failed in this verification pass, always redirecting to `/en/` regardless of the header sent.
+Investigated before assuming it was a Task 12 regression: reproduced the identical failure after
+`git stash`-ing every Task 12 change and rebuilding the exact last-committed state (`67da275`, Task 11) —
+so this is a pre-existing environmental issue, not something Task 12 touched or introduced (Task 12 never
+modified `src/pages/index.astro` or `src/lib/locale-routing.ts`). Not investigated further or fixed, since
+it's outside Task 12's authorized scope — flagged here for whoever picks up root-routing work next.
+
+## Confirmation
+
+No other page, component, layout prop, or script touched. Nothing shop-related (Task 11, frozen) or any
+other frozen work modified.

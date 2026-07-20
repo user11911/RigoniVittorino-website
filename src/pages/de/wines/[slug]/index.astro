@@ -1,7 +1,6 @@
 ---
 export const prerender = true;
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
-import ShareButtons from "../../../../components/ShareButtons.astro";
 import wines from "../../../../data/wines.de.json";
 import localeEquivalents from "../../../../data/locale-equivalents.json";
 
@@ -13,7 +12,6 @@ export function getStaticPaths() {
 }
 
 const { wine } = Astro.props;
-const pageUrl = `https://rigonivittorino.com/de/wines/${wine.slug}/`;
 // Confirmed live: product slugs are identical across it/en/de.
 const otherLangUrls = { it: `/it/i-nostri-vini/${wine.slug}/`, en: `/en/wines/${wine.slug}/` };
 const categoryHref = (localeEquivalents.categories as Record<string, { it: string; en: string; de: string }>)[wine.category].de;
@@ -71,8 +69,6 @@ const categoryHref = (localeEquivalents.categories as Record<string, { it: strin
             </a>
           </div>
         </div>
-
-        <ShareButtons postId={wine.slug} title={wine.title} url={pageUrl} />
       </div>
     </div>
 

@@ -19,8 +19,9 @@ Completed or inactive work:
 - Task 5: completed/inactive Italian Dati societari page at `/it/dati-societari/`. Do not modify unless explicitly reactivated.
 - Task 6: completed/inactive Cloudflare Web Analytics beacon + real `/it/privacy-policy/` page. Do not modify unless explicitly reactivated. Merged to `main` at commit `94209c1`.
 - Task 7: completed/inactive fix for `ShareButtons.astro` URL-encoding (all 6 links, including Stumbleupon)
-  and contact-form server-side length validation. Do not modify unless explicitly reactivated. Committed at
-  `716b02a`, merged to `main`. Detail: `IMPLEMENTATION_NOTES.md`.
+  and contact-form server-side length validation. Committed at `716b02a`, merged to `main`. Note:
+  `ShareButtons.astro` itself was later deleted entirely by Task 12 — this entry is historical. Detail:
+  `IMPLEMENTATION_NOTES.md`.
 - Task 8: completed/inactive fix for missing `bodyClass="singular missing-post-thumbnail"` on `chi-siamo`,
   `cantina`, and `contatti`. Do not modify unless explicitly reactivated. Committed at `03a0459`, merged to
   `main`. Detail: `IMPLEMENTATION_NOTES.md`.
@@ -38,8 +39,20 @@ Completed or inactive work:
 - Task 11: completed/inactive removal of every Shop Online link/button (desktop nav, mobile menu, footer
   icon, product-page buy button) across all 3 languages. Per explicit user decision, the product page's
   6-column icon-row grid was deliberately left unchanged, leaving visible empty space in columns 4-6 at
-  desktop widths — a known, accepted outcome, not a bug. Do not modify unless explicitly reactivated. Not
-  yet committed. Detail: `IMPLEMENTATION_NOTES.md`.
+  desktop widths — a known, accepted outcome, not a bug. Do not modify unless explicitly reactivated.
+  Committed at `67da275`, pushed to `origin/shop-online` (not yet merged to `main`). Detail:
+  `IMPLEMENTATION_NOTES.md`.
+- Task 12: completed/inactive removal of all social-share counts and share links (the entire
+  `ShareButtons.astro` component, used only on the 3 wine product pages) — including deleting the now-
+  orphaned component file and the sitewide `BaseLayout.astro` stylesheet link it alone required. No layout
+  fix was needed (unlike Task 11). Do not modify unless explicitly reactivated. Not yet committed. Detail:
+  `IMPLEMENTATION_NOTES.md`.
+
+**Known open issue (found during Task 12 verification, pre-existing, not caused by Task 12, not yet
+fixed):** root `/` country-based routing (Task 9) always redirects to `/en/` in this sandbox's local
+`astro preview`, regardless of the `cf-ipcountry` header sent — reproduced on the clean last-committed
+state before Task 12 too, so it predates Task 12. Not investigated further since no active task has
+authorized touching root-routing code. See `IMPLEMENTATION_NOTES.md` Task 12 for how this was confirmed.
 
 Preserved constraints from completed work:
 
