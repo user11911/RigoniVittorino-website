@@ -10,6 +10,10 @@ before editing" step 4.
 
 The rebuilt Italian website is approved work. Do not reopen, refactor, redesign, or modify completed work unless the active task strictly requires it.
 
+As of this task, the project has entered **Phase 2: the improvement phase** — see `CLAUDE.md` for the
+updated rules governing intentional, approved divergence from the original live site. The frozen-work list
+below still applies unchanged; Phase 2 tasks build on top of it.
+
 Completed or inactive work:
 
 - Task 1: Italian website remake for `/it/`, main Italian pages, wine category pages, and product pages.
