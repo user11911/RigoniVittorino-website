@@ -4,9 +4,20 @@
 
 ## Purpose
 
-This file contains permanent project rules for work on the rebuilt Italian website for `rigonivittorino.com/it`.
+This file contains permanent project rules for work on `rigonivittorino.com`'s rebuilt website (Italian,
+English, German).
 
 Task-specific instructions belong in `TODO.md`. Before starting work, read this file, then read `TODO.md`, identify the active task, and work only on that active task unless the user explicitly says otherwise.
+
+## Project phases
+
+- **Phase 1 (Tasks 1-12, complete):** a faithful rebuild of the original WordPress site, reaching visual
+  and content parity with the live `rigonivittorino.com` for `/it/`, `/en/`, `/de/`. The live site was the
+  source of truth throughout.
+- **Phase 2 (current):** the improvement phase. The site may now intentionally diverge from the original
+  live WordPress site — that divergence is the point, not a defect. Phase 1's frozen-work list in
+  `TODO.md` still applies (see "Frozen work" below); Phase 2 tasks build on top of it rather than replacing
+  it wholesale.
 
 ## Current project state
 
@@ -14,32 +25,66 @@ Task-specific instructions belong in `TODO.md`. Before starting work, read this 
 completed tasks and preserved constraints — it is not duplicated here, so the two files can't drift out of
 sync. Read it before starting any work.
 
-- Treat the existing project as approved work.
+- Treat completed work as the approved, current state — not as something to reconcile against the old live
+  site anymore.
 - Do not modify completed pages, backend code, shared layouts, shared styles, routing, assets, animations, or behavior unless the active task strictly requires it.
 - If a change could affect completed work outside the active task, first explain the need, list the affected files or folders, and obtain explicit user approval before making the change.
 - Any folder not evidently related to the active task requires a written reason before it is touched.
 
 ## Source of truth
 
-- The live Italian website at `rigonivittorino.com/it` remains the source of truth for visible content, layout, images, animations, behavior, contact details, forms, and responsive appearance for the Italian pages.
-- Since Task 9, the live English (`rigonivittorino.com/en`) and German (`rigonivittorino.com/de`) sites are each the source of truth for their own visible language-specific content — never translate from Italian, and never backfill missing English/German content from Italian.
-- The rebuilt site must not look redesigned, simplified, approximated, or visibly different from each page's own live-language source.
-- Preserve visible text exactly as scraped, per language, unless the active task explicitly requires new functional messages.
-- Do not translate, correct, modernize, summarize, or improve existing copy in any language.
-- Do not change URLs, route structure, visible navigation, footer layout, typography, spacing, colors, image placement, hover states, scroll effects, or animation timing unless the active task strictly requires it and the user approves.
+- The **current rebuilt site** (the state of `main`) is now the baseline every task works from — not the
+  original live WordPress site. Do not "correct" a page back toward the old live site's design; that would
+  itself be an unapproved, out-of-scope change.
+- The original live site remains a useful *factual* reference — for wine specifications, company/contact
+  details, legal text — since accuracy of real-world facts still matters even as presentation changes. It
+  is no longer a *visual or structural* reference.
+- Preserve visible text/content accuracy per language unless the active task explicitly changes copy. Do
+  not translate between languages, invent facts, or silently rewrite copy outside the active task's scope.
+- Do not make unscoped "drive-by" improvements. An active task authorizes its own named scope only —
+  noticing something else that could be nicer is worth mentioning to the user, not fixing unasked.
+
+## Design decisions require explicit approval before implementation
+
+This is the central rule of Phase 2, and it exists for two reasons: (1) with no live site to match, visual
+and UX choices are now genuinely subjective — only the user can decide taste; (2) Playwright/Chromium
+cannot launch in this sandbox (confirmed, permanent limitation), so there is no way to self-verify a visual
+change actually looks right before the user sees it.
+
+- For any change that affects layout, styling, color, typography, imagery, animation, spacing, or new UI
+  patterns: propose the change (what will change, why, and how — described precisely, with a text mock,
+  markup/CSS sketch, or reference to something concrete when useful) and get explicit user approval before
+  writing implementation code.
+- Do not implement first and ask forgiveness after. If the active task's `TODO.md` entry already contains
+  an approved, specific design decision, that counts as approval — re-confirm only if the entry is
+  ambiguous or if you want to deviate from it.
+- Exception: fixing a bug in an already-approved design (e.g., a CSS specificity issue breaking an intended
+  layout) does not need re-approval — only *new* design decisions do.
+- Purely functional/technical changes with no visible effect (performance, non-visible accessibility
+  attributes, code cleanup, refactors) do not require this approval step, but still follow the normal scope
+  and regression rules below.
+
+## Frozen work
+
+Phase 1's completed tasks (see `TODO.md`) remain the frozen baseline in Phase 2 too:
+
+- Do not reopen, restyle, or functionally change frozen work unless the active task explicitly names it.
+- Reopening one frozen area for restyling does not imply permission to touch any other frozen area.
+- Functional/backend behavior of frozen features (contact form backend, D1 storage, captcha, rate
+  limiting) must not change unless a task explicitly targets it — even if the task is restyling that page's
+  visible appearance.
+- The absence of shop links (Task 11) and social-share counts/links (Task 12) remains in force; do not
+  re-add either unless a future task explicitly reverses that decision.
 
 ## Scope boundaries
 
 - Work only within the active task's named scope in `TODO.md` unless the user explicitly says otherwise.
-- `/en/` and `/de/` are implemented (Task 9, frozen) — do not rebuild, redesign, translate, or reopen them
-  beyond what the active task in `TODO.md` explicitly authorizes. See `TODO.md`'s preserved constraints for
-  the exact current boundary.
-- Do not rebuild or modify `rigonivittorinoshop.it`, its backend, ecommerce system, cart, checkout, accounts, products, or payments — this always applies, even when this site's own links *to* it are being changed.
-- This site intentionally has no links or buttons pointing to `rigonivittorinoshop.it` anywhere (Task 11, frozen) — do not re-add any, and do not "fix" the resulting layout gap on wine product pages, unless the active task in `TODO.md` explicitly and narrowly reauthorizes it.
-- News is implemented as a single shared `/news/` page across all languages (Task 9, frozen), with
-  `/it/news/` kept as a redirect alias. Do not implement News posts, detail pages, archives, tags,
-  categories, or CMS data unless the active task in `TODO.md` explicitly authorizes it.
-- `/it/privacy-policy/` and `/it/dati-societari/` are implemented and frozen (Tasks 6 and 5). `/en/privacy-policy/` and `/de/privacy-policy/` are intentionally blank, matching their live pages exactly (Task 9) — populating them with real content needs the same kind of explicit user authorization Task 6 required for the Italian page.
+- Do not rebuild or modify `rigonivittorinoshop.it`, its backend, ecommerce system, cart, checkout, accounts, products, or payments — this always applies, regardless of what this site's own presentation looks like.
+- `/it/privacy-policy/` and `/it/dati-societari/` are implemented (Tasks 5-6); their legal/factual content
+  must not change without explicit authorization, even under a general "restyle the site" task — restyling
+  their presentation is fine if scoped, rewriting their factual/legal content is not.
+- News remains a single shared `/news/` page across languages (Task 9) unless a task explicitly changes
+  that architecture.
 
 ## Security and data handling
 
@@ -65,22 +110,30 @@ sync. Read it before starting any work.
 Before changing code for any task:
 
 1. Inspect the repository structure, package manager, framework, routing, styling system, build scripts, tests, and existing documentation.
-2. Inspect the relevant live Italian pages and current local implementation.
+2. Inspect the current implementation of every page the active task touches, plus any reference the user
+   supplied (a description, mockup, inspiration link, or explicit design decision already recorded in
+   `TODO.md`).
 3. Identify the smallest safe set of files and folders needed for the active task.
 4. Record material findings, assumptions, risks, and any uncertainty in `IMPLEMENTATION_NOTES.md` or the closest existing project notes file.
-5. Do not begin broad changes until the active task scope and affected files are clear.
+5. Do not begin broad changes until the active task scope, affected files, and (for visible changes) the
+   approved design decision are all clear.
 
-## Visual parity and regression control
+## Visual regression control
 
-- Preserve the approved visual result from completed work except where the active task explicitly requires a correction.
-- Detailed visual-parity breakpoints and checklists live in `.claude/rules/testing.md` — follow that file's
+- "Regression" in Phase 2 means an unintended change to something outside the active task's scope — not
+  divergence from the old live site, which is now expected wherever a task intends it.
+- Preserve the current, approved appearance and behavior of everything not named in the active task.
+- Since Playwright/Chromium cannot launch in this sandbox, non-trivial visible changes cannot be
+  self-verified with a screenshot here. Substitute markup/CSS diffs precise enough to review, and say so
+  plainly rather than claiming a visual confirmation that wasn't actually performed. Encourage the user to
+  check the change locally (`npm run dev`/`preview`) or on a deployed preview before merging.
+- Detailed regression and testing requirements live in `.claude/rules/testing.md` — follow that file's
   requirements for any task touching visible pages, for every implemented language, rather than duplicating
   the specifics here.
-- Use screenshots, recordings, or other repeatable evidence to prove that affected defects were fixed and unrelated pages were not visually changed.
 
 ## Testing requirements
 
-Run the relevant checks available in the repository, such as install, lint, typecheck, unit tests, integration tests, production build, preview, route smoke tests, and browser tests.
+Run the relevant checks available in the repository, such as install, lint, typecheck, unit tests, integration tests, production build, preview, and route smoke tests.
 
 If a command is unavailable, document that it is unavailable rather than inventing a result.
 
@@ -90,11 +143,12 @@ For backend tasks, test both success and failure cases, including validation, sp
 
 At completion, report:
 
-- Summary of what changed.
+- Summary of what changed and why (referencing the approved design decision, when the task was visible).
 - Files changed.
 - Files or folders touched that were not obviously task-related, with reasons.
 - Backend or integration choices, environment variables, and setup steps, if the active task touched backend or integrations.
 - Tests and commands run, with results.
-- Visual parity evidence for affected pages and defects.
-- Confirmation that completed work was not modified except where strictly necessary for the active task.
+- For visible changes: a precise enough description of the result for the user to review and approve,
+  since automated screenshot verification is unavailable here.
+- Confirmation that work outside the active task's scope, and all frozen work, was not modified.
 - Known limitations, risks, or unresolved configuration items.

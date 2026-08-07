@@ -1,41 +1,38 @@
 # testing.md
 
-## Visual parity requirements
+## Regression requirements
 
-Test at these viewport widths:
+Test at these viewport widths, for every page the active task's change could plausibly affect:
 
 * 375px mobile
 * 768px tablet
 * 1024px small desktop
 * 1440px desktop
 
-## Content parity requirements
+The comparison target is the site's own current state (before the active task's change), not the original
+live WordPress site — Phase 2 tasks are expected to diverge from that. Confirm:
 
-Before final delivery, verify, for every implemented language (`/it/`, `/en/`, `/de/`):
+* The scoped change matches what was proposed and approved (see `CLAUDE.md`'s "Design decisions require
+  explicit approval" rule) — not a guess at what might look nice.
+* Nothing outside the active task's scope changed. If a shared layout, component, or stylesheet was
+  touched, check every page that includes it, not just the page the task was aimed at.
+* Nothing in the frozen-work list (`TODO.md`) was altered, unless the active task explicitly names it.
 
-* Every scoped route renders.
-* `/it/privacy-policy/` renders the real privacy/cookie policy page (see TODO.md Task 6) — no longer blank.
-  `/en/privacy-policy/` and `/de/privacy-policy/` are intentionally blank (Task 9), matching their live
-  pages exactly — confirm they still match that live blank state, not that they show content.
-* `/it/dati-societari/`, `/en/company-data/`, and `/de/firmen-daten/` render correctly.
-* Every wine category page contains the same wines in the same order as that language's own live category
-  page.
-* Every wine product page contains the exact same visible text and values as that language's own live
-  product page — do not compare English/German text against the Italian source, or vice versa.
-* Every visible image appears in the same place as the original.
-* Header labels and destinations, including the language switcher, match each language's own live site.
-* Footer content and visual layout match each language's own live site.
-* Shop links, if any remain in the active task's scope, point to `rigonivittorinoshop.it`. Since Task 11,
-  this site intentionally has no shop links or buttons at all (nav, footer, or product pages) — confirm
-  their absence leaves no empty/asymmetric gap, rather than confirming a link that no longer exists.
-* Contact page visually matches its own language's live page even if backend submission is not
-  implemented — including that the team-profile "description" text renders visibly smaller/distinct from
-  the "role" text above it, not the same size (a regression found and fixed on `/en/`/`/de/` in Task 10 —
-  verify it doesn't recur).
-* The wine-type list on the `/en/`/`/de/` landing pages ("Our collection") renders as a properly formatted,
-  arranged list — not disorganized/unstyled (the other half of Task 10's fix).
-* News renders identically at the shared `/news/` route regardless of which language's nav linked to it;
-  `/it/news/` redirects there rather than rendering its own copy.
+## Content and functional accuracy requirements
+
+Before final delivery, verify, for every implemented language (`/it/`, `/en/`, `/de/`) touched by the
+active task:
+
+* Every scoped route still renders.
+* Real-world facts (wine specifications, company/contact details, legal text) are unchanged unless the
+  active task explicitly authorized changing them — restyling a page must not alter what it says.
+* Frozen functional behavior is unchanged: contact form submission/validation/spam-protection, the absence
+  of shop links (Task 11) and social-share counts/links (Task 12), and shared News routing (`/news/`,
+  `/it/news/` redirect), unless the active task explicitly targets one of these.
+* `/it/privacy-policy/` and `/it/dati-societari/` still render their real content (only restyled if that was
+  the scoped task); `/en/privacy-policy/` and `/de/privacy-policy/` remain intentionally blank unless a
+  task explicitly authorizes populating them.
+* The language switcher and navigation still point to the correct equivalent page in each language.
 
 ## Testing and validation
 
@@ -51,30 +48,25 @@ Run all relevant available commands in the repository, such as:
 
 If commands are unavailable, document that they are unavailable.
 
-Also create or run a route smoke test covering every scoped route. Each scoped route must return a valid page without console errors. News is a single shared route (`/news/`, with `/it/news/` redirecting to it, since Task 9) reachable from every language — include it in the smoke test; do not test per-language News duplicates, since none exist. Do not extend News scope (posts, archives, tags, detail pages) beyond what's already implemented unless the active task explicitly authorizes it.
+Also run the route smoke test covering every scoped route. Each scoped route must return a valid page
+without console errors.
 
 ## Required final deliverables
 
 At completion, provide:
 
-* Summary of framework/architecture used.
+* Summary of the change and the design decision it implements (referencing where it was approved).
 * List of files changed.
-* List of pages implemented.
-* List of pages intentionally blank.
-* List of pages/systems excluded.
-* Asset inventory with original source URLs and local paths.
-* Wine route inventory.
-* Page-by-page parity checklist.
-* Before/after screenshots for representative pages and responsive breakpoints.
+* Confirmation that pages/areas outside the active task's scope are unchanged.
+* Confirmation that frozen work (`TODO.md`) is unchanged, unless explicitly reauthorized.
 * Commands run and results.
-* Known differences, if any.
-* Notes on any unavailable third-party scripts, assets, PDFs, forms, or behavior.
-* Confirmation that shop links remain external, if any remain in scope; since Task 11, confirmation that no
-  shop links/buttons exist anywhere on the site and that their removal left no layout gap or asymmetry.
-* Confirmation that News routing matches the active task scope, including any shared News route, redirects, aliases, or exclusions.
+* For visible changes: a description precise enough for the user to review and approve, or a link to a
+  local/deployed preview — since Playwright/screenshot verification is unavailable in this sandbox. Be
+  explicit that this substitutes for, and does not equal, actual pixel-level visual confirmation.
+* Known differences or limitations, if any.
 
-For each scoped page type, compare the rewritten site against that page's own language's current live site
-(never cross-compare English/German against the Italian source, or vice versa):
+For each page type touched by the active task, confirm (against the site's own prior state, not the
+original live site):
 
 * Header
 * Desktop navigation
@@ -94,5 +86,3 @@ For each scoped page type, compare the rewritten site against that page's own la
 * Animations
 * Transitions
 * Responsive behavior
-
-The final delivery must include a page-by-page parity checklist with before/after screenshots. These should be used to confirm work quality before submitting
