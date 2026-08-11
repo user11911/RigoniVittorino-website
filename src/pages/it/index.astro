@@ -19,6 +19,7 @@ const contentHtml = await readFile(
   bodyClass="home"
   lang="it"
   otherLangUrls={localeEquivalents.pages.home}
+  showLoadingScreen
 >
   <Hero />
   <Fragment set:html={contentHtml} />
