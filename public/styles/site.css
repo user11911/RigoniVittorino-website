@@ -208,3 +208,65 @@
  * faithful reproduction, so it's removed outright — the image is static, matching
  * neither a fabricated effect nor a disproportionate jQuery-plugin reimplementation.
  */
+
+/* --- Loading screen (Task 13, new — no original-site equivalent, homepage only) ---
+ * A single full-viewport black panel, scaled from the horizontal center via
+ * `transform: scaleX()`. Growing 0 -> 1 reads as "white to black, sliding from the
+ * center to both sides" (the entry); shrinking back 1 -> 0 on reveal is the exact
+ * reverse, per the user's confirmed design decision (see .claude/TODO.md Task 13).
+ * The logo is a separate element with its own opacity transition so the panel's
+ * scaleX never stretches/squishes it.
+ * `.loading-screen` itself carries the opaque white background (not just the black
+ * panel): the panel starts at scaleX(0) — zero width, covering nothing — so without
+ * this, the real page underneath would show through until the panel grows, making
+ * the entry read as "website to black" instead of "white to black". This background
+ * is plain CSS present from first paint (no JS delay), so there's never a flash of
+ * real content. It's switched to transparent the instant `.is-hiding` is added (see
+ * below) — invisible at that moment since the panel is still at full black coverage
+ * — so the reveal exposes the real page, not another white layer, as it recedes. */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+.loading-screen.is-hiding {
+  background: transparent;
+}
+.loading-screen__panel {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 600ms ease-in-out;
+}
+.loading-screen__logo {
+  position: relative;
+  z-index: 1;
+  width: min(45vw, 220px);
+  height: auto;
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+.loading-screen.is-active .loading-screen__panel {
+  transform: scaleX(1);
+}
+.loading-screen.is-active .loading-screen__logo {
+  opacity: 1;
+  transition-delay: 250ms;
+}
+/* Reveal: intentionally slower/more deliberate than the entry, per explicit request —
+ * `.is-hiding` is added alongside removing `.is-active` (see LoadingScreen.astro),
+ * overriding just the duration for that transform change back to scaleX(0). */
+.loading-screen.is-hiding .loading-screen__panel {
+  transition-duration: 1200ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-screen {
+    display: none;
+  }
+}

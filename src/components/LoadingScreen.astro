@@ -1,0 +1,173 @@
+---
+// Task 13: homepage-only loading screen. See .claude/TODO.md Task 13 for the confirmed
+// design decisions this implements (reveal direction, logo asset, scope, load trigger).
+// Rendered by BaseLayout.astro as the very first child of <body>, before the header, so
+// it visually covers the whole page and not just the content area.
+---
+
+<div id="loading-screen" class="loading-screen" aria-hidden="true">
+  <div class="loading-screen__panel"></div>
+  <img
+    class="loading-screen__logo"
+    src="/wp-content/uploads/2021/01/rigoni-vittorino-white.png"
+    alt="Rigoni Vittorino"
+    width="220"
+    height="103"
+  />
+</div>
+
+<script>
+  const SESSION_FLAG = "rv-loading-screen-seen";
+
+  function hasSeenThisSession(): boolean {
+    try {
+      return sessionStorage.getItem(SESSION_FLAG) === "true";
+    } catch {
+      // Storage blocked (e.g. some strict privacy-mode configurations) — fail open
+      // so the loading screen just plays every time for this visitor rather than
+      // the script erroring.
+      return false;
+    }
+  }
+
+  function markSeenThisSession(): void {
+    try {
+      sessionStorage.setItem(SESSION_FLAG, "true");
+    } catch {
+      // Ignore — see hasSeenThisSession above.
+    }
+  }
+
+  function initLoadingScreen(overlay: HTMLElement) {
+    // Only ever play once per browser session (the first homepage load, in any
+    // language, of that session) — not on every landing-page load. sessionStorage
+    // is scoped to the origin, not the path, so seeing it on one language's
+    // homepage correctly skips it on the others afterward too, and it resets when
+    // the tab/window is closed (unlike localStorage, which would be permanent).
+    if (hasSeenThisSession()) {
+      overlay.remove();
+      return;
+    }
+    markSeenThisSession();
+
+    const panel = overlay.querySelector<HTMLElement>(".loading-screen__panel");
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      // Skip the theatrics entirely — nothing to hide or block for these visitors.
+      overlay.remove();
+      return;
+    }
+
+    // ENTRY_DURATION_MS matches .loading-screen__panel's default (entry) CSS
+    // transition duration — the time the panel takes to finish growing to fully
+    // black. MIN_BLACK_MS is the minimum time the screen must stay fully black (logo
+    // visible, static) once that entry finishes, even if the real page load completes
+    // sooner. MIN_DISPLAY_MS is the resulting floor measured from script start (used
+    // below against `elapsed`). EXIT_DURATION_MS matches the slower transition-duration
+    // set on `.loading-screen.is-hiding .loading-screen__panel` in site.css — the
+    // reveal is intentionally slower/more deliberate than the entry.
+    const ENTRY_DURATION_MS = 600;
+    const MIN_BLACK_MS = 1000;
+    const MIN_DISPLAY_MS = ENTRY_DURATION_MS + MIN_BLACK_MS;
+    const EXIT_DURATION_MS = 1200;
+    // Safety net if `load` never fires — kept comfortably above MIN_DISPLAY_MS so it
+    // never preempts the black-screen guarantee, while still leaving real margin to
+    // actually wait for a slow load rather than firing right after it.
+    const MAX_WAIT_MS = MIN_DISPLAY_MS + 5000;
+
+    // Everything else on the page: hidden from assistive tech and unreachable by
+    // keyboard while the screen is up, restored on reveal.
+    const hiddenRegions = ["site-header", "site-content", "site-footer"]
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+    hiddenRegions.forEach((el) => {
+      el.setAttribute("aria-hidden", "true");
+      el.setAttribute("inert", "");
+    });
+    document.body.style.overflow = "hidden";
+
+    // Must start from the CSS's initial scaleX(0)/opacity:0 state for the entry
+    // transition to actually animate — the class is added later, not present in the
+    // server-rendered markup. A *single* requestAnimationFrame isn't reliably enough
+    // of a gap on a freshly-loaded page: the browser can coalesce the initial style
+    // and that first rAF callback into the same frame, so the "before" state is never
+    // actually painted and the transition snaps straight to the end state instead of
+    // sliding (this is what made the entry look like it jumped). Forcing a synchronous
+    // reflow, then nesting a second rAF, guarantees at least one full frame has
+    // rendered the initial state first.
+    overlay.getBoundingClientRect();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        overlay.classList.add("is-active");
+      });
+    });
+
+    const start = performance.now();
+    let revealed = false;
+
+    function reveal() {
+      if (revealed) return;
+      revealed = true;
+      // Same reasoning as the entry above, applied to the reveal's own state change.
+      overlay.getBoundingClientRect();
+      overlay.classList.remove("is-active");
+      overlay.classList.add("is-hiding");
+      hiddenRegions.forEach((el) => {
+        el.removeAttribute("aria-hidden");
+        el.removeAttribute("inert");
+      });
+      document.body.style.overflow = "";
+
+      let removed = false;
+      const remove = () => {
+        if (removed) return;
+        removed = true;
+        overlay.remove();
+      };
+      // Listen on the panel itself, not the outer overlay: the logo has its own,
+      // much shorter opacity transition (400ms) that finishes well before the
+      // panel's 1200ms transform does. transitionend bubbles, so a listener on
+      // `overlay` was catching the logo's faster transitionend first and removing
+      // the whole screen mid-transform — cutting the panel's own slide off before
+      // it actually finished instead of letting it complete.
+      if (panel) {
+        panel.addEventListener(
+          "transitionend",
+          (event) => {
+            if (event.propertyName === "transform") remove();
+          },
+          { once: true },
+        );
+      } else {
+        remove();
+      }
+      setTimeout(remove, EXIT_DURATION_MS + 300); // safety net if transitionend never fires
+    }
+
+    function onLoaded() {
+      const elapsed = performance.now() - start;
+      setTimeout(reveal, Math.max(0, MIN_DISPLAY_MS - elapsed));
+    }
+
+    if (document.readyState === "complete") {
+      onLoaded();
+    } else {
+      window.addEventListener("load", onLoaded, { once: true });
+    }
+
+    // Safety net: never trap a visitor behind the screen if `load` is delayed.
+    setTimeout(reveal, MAX_WAIT_MS);
+  }
+
+  // Guards against this script's top-level code ever running more than once for the
+  // same overlay (observed in local dev testing — the entry animation visibly played
+  // twice on first load). The flag lives on the DOM element itself rather than a
+  // module-scoped variable so it survives even if the module is evaluated more than
+  // once, whatever the cause; a second evaluation sees the flag already set and does
+  // nothing, instead of restarting the whole sequence.
+  const loadingScreenEl = document.getElementById("loading-screen");
+  if (loadingScreenEl && !loadingScreenEl.dataset.initialized) {
+    loadingScreenEl.dataset.initialized = "true";
+    initLoadingScreen(loadingScreenEl);
+  }
+</script>

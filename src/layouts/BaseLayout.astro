@@ -1,6 +1,7 @@
 ---
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import LoadingScreen from "../components/LoadingScreen.astro";
 
 export interface Props {
   title: string;
@@ -19,6 +20,9 @@ export interface Props {
   // Falls back to each language's homepage when a value isn't supplied — the
   // "nearest valid landing page" allowance for pages with no direct equivalent.
   otherLangUrls?: { it?: string; en?: string; de?: string };
+  // Task 13: opt-in per-page loading screen. Defaults to false so every existing
+  // caller (all of which omit this prop) renders byte-identically to before this task.
+  showLoadingScreen?: boolean;
 }
 
 const {
@@ -30,6 +34,7 @@ const {
   mainClass = "",
   lang = "it",
   otherLangUrls = {},
+  showLoadingScreen = false,
 } = Astro.props;
 
 const chromeDir = lang === "it" ? "src/content/chrome" : `src/content/chrome/${lang}`;
@@ -119,6 +124,7 @@ const canonical = new URL(Astro.url.pathname, "https://rigonivittorino.com").toS
     )}
   </head>
   <body class={`custom-background wp-custom-logo wp-theme-twentytwenty wp-child-theme-geppa reduced-spacing ${bodyClass}`}>
+    {showLoadingScreen && <LoadingScreen />}
     <Fragment set:html={headerHtml} />
     <main id="site-content" class={`site-content ${mainClass}`.trim()}>
       <slot />
