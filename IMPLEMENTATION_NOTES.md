@@ -1511,3 +1511,165 @@ it's outside Task 12's authorized scope — flagged here for whoever picks up ro
 
 No other page, component, layout prop, or script touched. Nothing shop-related (Task 11, frozen) or any
 other frozen work modified.
+
+# Task 13 — Homepage loading screen (white → black → landing page reveal)
+
+## What was built
+
+A new opt-in loading screen shown on the homepage (`/it/`, `/en/`, `/de/`) only, once per browser session:
+a full-viewport black panel grows from the horizontal center outward (`transform: scaleX()`, `transform-
+origin: center`) to cover the page — the "white to black" entry — holds briefly with the Rigoni Vittorino
+wordmark centered on top, then shrinks back to the center to reveal the real page underneath — the exact
+reverse of the entry, per the user's explicit design decision.
+
+## Files
+
+- `src/components/LoadingScreen.astro` (new) — markup + all script behavior.
+- `src/layouts/BaseLayout.astro` — new optional `showLoadingScreen` prop (default `false`); renders
+  `<LoadingScreen />` as the very first child of `<body>`, before the header, when true.
+- `src/pages/it/index.astro`, `src/pages/en/index.astro`, `src/pages/de/index.astro` — pass
+  `showLoadingScreen`.
+- `public/styles/site.css` — new `.loading-screen*` rules, including the outer container's own opaque white
+  background (see "Bugs found and fixed" below) and the `.is-hiding` slower-exit override.
+- `public/wp-content/uploads/2021/01/rigoni-vittorino.png` — replaced with a higher-resolution version (the
+  user's own update, unrelated to this task's code, included in the same commit at the user's request).
+- `public/wp-content/uploads/2021/01/rigoni-vittorino-white.png` (new) — white/reversed wordmark asset the
+  user supplied for use on the black screen (the dark original is illegible there).
+
+## Design decisions (confirmed via `AskUserQuestion` before implementation, per `CLAUDE.md`'s Phase 2 rule)
+
+1. Reveal direction: black shrinks back inward (exact reverse of the entry), not outward/off-screen.
+2. Logo on black: user-supplied white/reversed asset — no CSS filter invert, no white plate/card behind the
+   original dark logo (both explicitly declined).
+3. Scope: homepage only. **Revised after initial implementation** (separate follow-up request): originally
+   "every time the homepage loads"; changed to play only once per browser session via a `sessionStorage`
+   flag (`rv-loading-screen-seen`), scoped to the origin so it's shared across all 3 languages. Wrapped in
+   try/catch to fail open (show every time) if storage is blocked.
+4. Load trigger: real `window` `load` event plus a minimum floor so the screen never reads as a flash.
+   **Revised twice** after initial implementation: minimum black-hold time went from 3000ms → 1000ms; the
+   reveal's own transition duration was separately slowed from 600ms → 1200ms (intentionally slower/more
+   deliberate than the entry, per explicit request) — implemented via a dedicated `.is-hiding` class
+   overriding just `transition-duration` on the panel.
+
+## Bugs found and fixed during iteration (each confirmed via rebuilt/compiled output, not a live browser —
+see "Known limitations" below)
+
+- **Real page flashing through before black covered it** ("website to black to website" instead of "white
+  to black to website"): the outer `.loading-screen` container had no background of its own — only the
+  child panel did, and it starts at `scaleX(0)` (zero width, covering nothing). Fixed by giving
+  `.loading-screen` itself an opaque `background: #fff`, present from first CSS-driven paint (no JS
+  delay), switched to `transparent` the instant `.is-hiding` is added (invisible at that moment since the
+  panel is still at full black coverage) so the reveal exposes the real page, not another white layer.
+- **Entry and reveal snapping instead of animating smoothly**: a single `requestAnimationFrame` before
+  toggling the transition-triggering class isn't reliably enough of a gap on a freshly-loaded page — the
+  browser can coalesce the initial style and that first rAF callback into the same frame, skipping the
+  transition. Fixed with a forced synchronous reflow (`overlay.getBoundingClientRect()`) plus a nested
+  double `requestAnimationFrame`, applied before both the entry and the reveal's own class changes.
+- **Reveal cutting off partway through its 1200ms transition**: the completion listener was attached to the
+  outer `overlay` and reacted to *any* bubbled `transitionend` — including the logo's own, much shorter
+  (400ms) opacity transition, which fired first and removed the whole screen before the panel's slower
+  transform had actually finished. Fixed by attaching the listener directly to the panel element and
+  filtering on `event.propertyName === "transform"`.
+- **Entry animation appearing to run twice on first load**: root cause not fully confirmed (no browser
+  available to observe directly), but strong circumstantial evidence points to `astro dev`'s Vite/HMR
+  module-loading pipeline (the script is served as a separate fetched module in dev, fully inlined in
+  production) rather than the animation logic itself — confirmed the production build (`npm run preview`)
+  has exactly one `#loading-screen` element and one script instance. Defensively fixed regardless of cause:
+  a `data-initialized` flag set on the DOM element itself (not a module-scoped variable, so it survives even
+  a genuine duplicate module evaluation) makes any second invocation a no-op.
+- **Testing artifact, not a code bug**: mid-debugging, a `npm run preview` command silently failed to bind
+  to the expected port (already occupied by the user's own `astro dev` server) and fell back to a different
+  port without immediate notice — several rounds of "verification" were actually re-hitting the live dev
+  server, not the production build. Resolved by explicitly checking for already-running `astro dev`/
+  `preview` processes before starting a new one, and confirming which port a server actually bound to
+  before curling it.
+
+## Testing and confirmations
+
+- `npm run check`: 0 errors. `npm run test:unit`: 42/42 passed. `npm run build`: succeeds, throughout every
+  iteration.
+- Compiled build output inspected directly after each change (extracting the actual inlined `<script
+  type="module">` content from the built HTML) to confirm each fix's exact code — e.g. `Math.max(0,1600-e)`
+  for the timing floor, `transitionend` filtered by `propertyName==="transform"` on the panel specifically,
+  `t.dataset.initialized` guard present.
+- `node scripts/route-smoke-test-curl.mjs`: all routes pass.
+- Curl-confirmed the loading-screen markup appears only on the 3 homepages, nowhere else.
+- No pixel-level visual/animation-timing confirmation possible — Playwright/Chromium still cannot launch in
+  this sandbox (same permanent gap as every prior task). Every fix in this task was verified structurally
+  (compiled markup/script/CSS) and iteratively corrected based on the user's own live testing feedback in
+  their browser, not by Claude directly observing the animation.
+
+## Confirmation
+
+No other page, component, or frozen work touched. Homepage-only scope respected throughout.
+
+# Task 14 — Remove homepage carousel captions and cantina/winery/weinkeller citation overlay
+
+## What was removed
+
+1. **Homepage hero carousel captions** (full removal, matching the Task 11/12 precedent): the per-slide
+   caption text overlaid on the hero image carousel (e.g. "Questo è il segno di Vittorino") — the caption
+   strings, the `caption` field of `Hero.astro`'s `Props` type, the `{slide.caption && <div
+   class="hero-slider__caption">...}` rendering line, and all now-orphaned CSS (the `.hero-slider__caption`
+   rule, the `hero-caption-in` entrance `@keyframes`, its trigger rule, its `prefers-reduced-motion`
+   override, and its declarations inside the `@media (max-width: 768px)` block).
+2. **Cantina / Winery / Weinkeller citation**: the Luis Sepúlveda quote + attribution overlaying the picture
+   immediately before the photo gallery, on all 3 language versions of that page.
+
+## Files
+
+- `src/components/Hero.astro` — `Props` type and default IT `slides` array lose `caption`; caption `<div>`
+  rendering removed; header comment trimmed of now-inaccurate caption-animation description.
+- `src/pages/en/index.astro`, `src/pages/de/index.astro` — `caption` field removed from each `slides`
+  array's 4 objects; stale comments describing the caption-fetch method removed.
+- `public/styles/site.css` — `.hero-slider__caption`, `@keyframes hero-caption-in`, its trigger rule, its
+  reduced-motion override, and its mobile-breakpoint overrides all deleted; `.hero-slider`'s own height
+  rule in the `@media (max-width: 768px)` block kept.
+- `src/content/main/cantina.html`, `src/content/main/en/winery.html`, `src/content/main/de/weinkeller.html`
+  — the specific `<div class="grids-area" style="--_ga-column:7/10;--_ga-row:3/5;--_ga-m-desktop:-200px 0 0
+  0; ...">` block containing the citation `<p>` removed from each, via a precise Python script (these files
+  are single-line minified HTML with very long inline `style` attributes — hand-editing risked a
+  transcription error, so the block was located and removed programmatically: found the unique
+  `--_ga-row:3/5;--_ga-m-desktop:-200px 0 0 0;` marker — confirmed exactly one match per file first — then
+  removed from that div's opening tag to its first `</div>` closing tag, since the citation div contains no
+  nested divs).
+
+## Design decision (confirmed via `AskUserQuestion` before implementation, per `CLAUDE.md`'s Phase 2 rule)
+
+Full removal chosen for the homepage captions (not just stop-rendering), matching the precedent already set
+by Tasks 11/12.
+
+## Layout-gap assessment (both removals — no fix needed, confirmed by direct reasoning before implementing)
+
+- The caption was `position: absolute` (a bottom-left overlay with a semi-transparent background), not a
+  flow/grid layout participant — its removal doesn't affect the slide photo, the `.hero-slider__v-logo`
+  watermark, or the dot pagination.
+- The citation `<div class="grids-area">` was a CSS-grid sibling of the picture's own grid-area within the
+  same `grids-section` (a `-200px` negative top margin was what visually pulled it up to overlay the
+  picture) — removing it entirely doesn't affect the picture's own grid placement, since CSS grid items are
+  positioned independently, not via document flow.
+- Both assessments confirmed after the fact: rebuilt output shows the picture, gallery, hero images, v-logo
+  watermark, and dot pagination all still present and unchanged around each removal.
+
+## Testing and confirmations
+
+- `npm run check`: 0 errors. `npm run test:unit`: 42/42 passed. `npm run build`: succeeds.
+- Curl/grep-confirmed zero `hero-slider__caption` occurrences in any built homepage (all 3 languages) and
+  zero "Sep" (Sepúlveda) occurrences in any built cantina/winery/weinkeller page.
+- Curl/grep-confirmed the hero images, `.hero-slider__v-logo`, and dot pagination (4 buttons + wrapper)
+  still render on the homepage, and the `chi-siamo-gallery` section with all its images still renders
+  immediately after the removed citation on cantina/winery/weinkeller.
+- Inspected the exact seam left by the citation removal (via direct string extraction around the
+  `chi-siamo-gallery` marker) to confirm no orphaned/unbalanced tags — the picture's `<figure>` closes
+  correctly, followed by its own containing grid `<div>`s, straight into the gallery section.
+- `node scripts/route-smoke-test-curl.mjs`: all routes pass.
+- No pixel-level visual confirmation — Playwright/Chromium still cannot launch in this sandbox (same
+  pre-existing, permanent gap as every prior task). The "no layout gap" conclusion rests on the CSS
+  reasoning above, not a screenshot.
+
+## Confirmation
+
+No other page, component, or frozen work touched (shop links, share buttons, contact-form backend,
+privacy/dati-societari pages, News, Task 13's loading screen all left untouched). The featured-wines image
+slider further down the homepage (a different carousel) was not touched — out of scope, not "at the start
+of the page".
