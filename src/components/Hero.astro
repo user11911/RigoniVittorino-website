@@ -16,6 +16,15 @@
 //
 // Task 14: the per-slide caption text (and its entrance animation) that used to
 // render here was removed by explicit user request — see .claude/TODO.md Task 14.
+//
+// Task 17: `.hero-fixed-wrapper` reserves real document-flow height equal to the
+// viewport minus the header's own rendered height, while `.hero-slider` itself
+// becomes `position: fixed`, pinned to start exactly below the header (never
+// overlapping it — no z-index reasoning needed for that specific guarantee) and
+// fill the rest of the screen. Below 769px, and under prefers-reduced-motion,
+// none of that applies — the hero behaves exactly as it did before this task
+// (normal block-flow height). See .claude/TODO.md Task 17 for the full design and
+// IMPLEMENTATION_NOTES.md for why this replaces the discarded prior attempt.
 export interface Props {
   slides?: { image: string }[];
 }
@@ -27,23 +36,23 @@ const { slides = [
 ] } = Astro.props;
 ---
 
-<div class="hero-slider" data-hero-slider>
-  {
-    slides.map((slide, i) => (
-      <div
-        class={`hero-slider__slide${i === 0 ? " is-active" : ""}`}
-        style={`background-image:url(${slide.image})`}
-        data-index={i}
-      >
-        <img class="hero-slider__v-logo" src="/wp-content/uploads/2021/01/v-rigoni-b-g.png" alt="" />
-      </div>
-    ))
-  }
-  <div class="hero-slider__dots">
-    {/* aria-label kept in Italian for every language: same un-fetchable-without-a-browser
-        limitation the original scrape had for this slider's text — not translated to
-        avoid inventing text. */}
-    {slides.map((_, i) => <button class={`hero-slider__dot${i === 0 ? " is-active" : ""}`} data-goto={i} aria-label={`Vai alla slide ${i + 1}`} />)}
+<div class="hero-fixed-wrapper" data-hero-fixed-wrapper>
+  <div class="hero-slider" data-hero-slider>
+    {
+      slides.map((slide, i) => (
+        <div
+          class={`hero-slider__slide${i === 0 ? " is-active" : ""}`}
+          style={`background-image:url(${slide.image})`}
+          data-index={i}
+        />
+      ))
+    }
+    <div class="hero-slider__dots">
+      {/* aria-label kept in Italian for every language: same un-fetchable-without-a-browser
+          limitation the original scrape had for this slider's text — not translated to
+          avoid inventing text. */}
+      {slides.map((_, i) => <button class={`hero-slider__dot${i === 0 ? " is-active" : ""}`} data-goto={i} aria-label={`Vai alla slide ${i + 1}`} />)}
+    </div>
   </div>
 </div>
 
@@ -76,4 +85,214 @@ const { slides = [
 
     restartAutoplay();
   });
+
+  // Task 17: sets `--header-height` (consumed by .hero-fixed-wrapper/.hero-slider
+  // in public/styles/site.css to keep the fixed hero starting exactly below the
+  // header) and toggles `is-hero-faded` on <html> once the user has scrolled past
+  // a fixed point just before ".home-philosophy-title" ("Dalla campagna al
+  // bicchiere") would enter the viewport from the bottom. See .claude/TODO.md
+  // Task 17 for the full design.
+  //
+  // Deliberately a fixed scroll-position threshold, not an IntersectionObserver on
+  // the title itself: the fade must persist for the rest of the page (it must NOT
+  // revert once the title scrolls back out of view further down), and is
+  // reversible only by scrolling back above the threshold. A plain isIntersecting
+  // toggle on the title would flip back to false as soon as the title scrolls
+  // above the viewport too, which is wrong — comparing current scrollY against a
+  // fixed threshold computed once (and on resize) gets the one-sided-until-
+  // scrolled-back-up behavior actually needed. Same pattern already validated in
+  // Task 16's bug-fix round (see IMPLEMENTATION_NOTES.md).
+  (function initHeroFullViewport() {
+    const header = document.querySelector<HTMLElement>("#site-header");
+    const titleEl = document.querySelector<HTMLElement>(".home-philosophy-title");
+    if (!header || !titleEl) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const desktopQuery = window.matchMedia("(min-width: 769px)");
+    // The title sits only ~40-70px of real content after the hero's reserved
+    // space (confirmed by measuring the actual page — see .claude/TODO.md Task
+    // 17), so the buffer must be small and floor-guarded: a larger buffer here is
+    // exactly the arithmetic bug that broke Task 16 (it made the threshold go
+    // negative, so the fade was active from first paint on every load).
+    const TRIGGER_BUFFER_PX = 20;
+    const MIN_TRIGGER_SCROLL_PX = 30;
+
+    let active = false;
+    let triggerY = 0;
+
+    function docTop(el: HTMLElement) {
+      return el.getBoundingClientRect().top + window.scrollY;
+    }
+
+    function measure() {
+      active = desktopQuery.matches;
+      if (!active) {
+        document.documentElement.style.removeProperty("--header-height");
+        return;
+      }
+      document.documentElement.style.setProperty(
+        "--header-height",
+        `${header!.getBoundingClientRect().height}px`,
+      );
+      triggerY = Math.max(
+        MIN_TRIGGER_SCROLL_PX,
+        docTop(titleEl!) - window.innerHeight - TRIGGER_BUFFER_PX,
+      );
+    }
+
+    function update() {
+      if (!active) {
+        document.documentElement.classList.remove("is-hero-faded");
+        return;
+      }
+      document.documentElement.classList.toggle("is-hero-faded", window.scrollY >= triggerY);
+    }
+
+    let ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        update();
+        ticking = false;
+      });
+    }
+
+    function onResize() {
+      measure();
+      update();
+    }
+
+    measure();
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+    desktopQuery.addEventListener("change", onResize);
+  })();
+
+  // Task 18: "brakes" the scroll as the user scrolls down into
+  // ".home-philosophy-section" ("Dalla campagna al bicchiere") — the section
+  // captures the scroll and animates to a centered rest position before
+  // releasing control back to the user, rather than letting them scroll freely
+  // past it. See .claude/TODO.md Task 18.
+  //
+  // This is the standard "scroll-jacking" technique: capture wheel/touch input
+  // with preventDefault() while animating window.scrollTo() programmatically,
+  // then release the capture once the animated scroll arrives. It replaces two
+  // earlier attempts at this same effect: a pure-CSS scroll-snap attempt
+  // (removed entirely — see IMPLEMENTATION_NOTES.md for why root-level
+  // scroll-snap turned out to be an unreliable technique in practice, not a
+  // tuning problem) and a passive JS version that only nudged the scroll into
+  // place *after* it had already come to rest — reported as unsatisfying
+  // precisely because it was passive: free scroll, then a corrective jump,
+  // rather than an active brake felt during the scroll itself.
+  //
+  // Only engages once, on the way down, per approach: it doesn't fire scrolling
+  // upward (matching "before going over it" — this is specifically about not
+  // being able to scroll past on the way down), and the guard resets once the
+  // section is well out of view so scrolling down to it again later re-triggers
+  // it, same reversible convention as every other scroll effect on this page.
+  //
+  // The slide itself is driven manually frame-by-frame (requestAnimationFrame +
+  // a fixed duration/easing curve), not window.scrollTo({behavior:'smooth'})
+  // released on the `scrollend` event — an earlier version did that and was
+  // reported as "brakes but doesn't slide, feels groggy". The likely cause:
+  // `scrollend` doesn't clearly distinguish the wheel-driven scroll that
+  // triggered the brake from the programmatic one meant to animate it, so the
+  // two could race and the native smooth-scroll could get interrupted or barely
+  // start before release fired. Manually driving every frame removes that
+  // ambiguity entirely — the brake has full, deterministic control over when
+  // the slide starts, how long it takes, and when it ends.
+  //
+  // Desktop/tablet only (>=769px): capturing touch input this way is
+  // meaningfully more disruptive to touch-scroll physics than to a mouse wheel,
+  // and this page's other scroll-driven effects (Task 17) share that same
+  // device scope already.
+  (function initPhilosophySectionBrake() {
+    const header = document.querySelector<HTMLElement>("#site-header");
+    const section = document.querySelector<HTMLElement>(".home-philosophy-section");
+    if (!header || !section) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const desktopQuery = window.matchMedia("(min-width: 769px)");
+    const SLIDE_DURATION_MS = 600;
+
+    let active = desktopQuery.matches;
+    let isBraking = false;
+    let hasBraked = false;
+    let lastScrollY = window.scrollY;
+
+    function preventScroll(e: Event) {
+      e.preventDefault();
+    }
+
+    function targetScrollY() {
+      const headerHeight = header!.getBoundingClientRect().height;
+      const rect = section!.getBoundingClientRect();
+      const sectionCenter = rect.top + window.scrollY + rect.height / 2;
+      const viewportCenter = headerHeight + (window.innerHeight - headerHeight) / 2;
+      return sectionCenter - viewportCenter;
+    }
+
+    // Ease-in-out: gentle start (feels like a brake catching, not a jerk),
+    // gentle finish (settles into place rather than stopping abruptly).
+    function easeInOutQuad(t: number) {
+      return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+    }
+
+    function engageBrake() {
+      isBraking = true;
+      hasBraked = true;
+      window.addEventListener("wheel", preventScroll, { passive: false });
+      window.addEventListener("touchmove", preventScroll, { passive: false });
+
+      const startY = window.scrollY;
+      const endY = targetScrollY();
+      const startTime = performance.now();
+
+      function step(now: number) {
+        const progress = Math.min(1, (now - startTime) / SLIDE_DURATION_MS);
+        window.scrollTo(0, startY + (endY - startY) * easeInOutQuad(progress));
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          release();
+        }
+      }
+      requestAnimationFrame(step);
+
+      function release() {
+        isBraking = false;
+        window.removeEventListener("wheel", preventScroll);
+        window.removeEventListener("touchmove", preventScroll);
+      }
+    }
+
+    function onScroll() {
+      const currentY = window.scrollY;
+      const scrollingDown = currentY > lastScrollY;
+      lastScrollY = currentY;
+
+      if (!active || isBraking) return;
+
+      const rect = section!.getBoundingClientRect();
+      const inApproachZone = rect.top < window.innerHeight && rect.bottom > 0;
+
+      if (scrollingDown && inApproachZone && !hasBraked) {
+        engageBrake();
+      } else if (rect.bottom < -200 || rect.top > window.innerHeight + 200) {
+        hasBraked = false;
+      }
+    }
+
+    function onResize() {
+      active = desktopQuery.matches;
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+    desktopQuery.addEventListener("change", onResize);
+  })();
 </script>

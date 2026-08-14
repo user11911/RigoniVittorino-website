@@ -31,5 +31,7 @@ const slides = [
   showLoadingScreen
 >
   <Hero slides={slides} />
-  <Fragment set:html={contentHtml} />
+  <div class="home-content">
+    <Fragment set:html={contentHtml} />
+  </div>
 </BaseLayout>

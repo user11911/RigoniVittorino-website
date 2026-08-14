@@ -64,7 +64,31 @@ Completed or inactive work:
   `public/scripts/site.js`) plus its unlinked vendor CSS file, and the Phase 1 live-site parity-screenshot
   infrastructure (`docs/parity/`, `scripts/screenshot-baseline.mjs`, `scripts/screenshot-compare.mjs`, and
   their now-dangling `package.json` script entries) — all deleted. Do not modify unless explicitly
-  reactivated. Not yet committed. Detail: `IMPLEMENTATION_NOTES.md`.
+  reactivated. Committed at `a653155`, pushed to `origin/new-landing-page-2` (not yet merged to `main`).
+  Detail: `IMPLEMENTATION_NOTES.md`.
+- Task 16: completed/inactive header fix — the header ("up menu") no longer changes size on scroll. Per
+  explicit user decision, it now always shows its compact/"scrolled" appearance (50px logo, language-
+  switcher/social-icons pre-header bar hidden) at every scroll position and screen width; only its
+  `position: fixed` pinning while scrolling is unchanged. Site-wide (`public/styles/site.css`), not
+  homepage-only. Do not modify unless explicitly reactivated. Not yet committed. Detail:
+  `IMPLEMENTATION_NOTES.md`.
+- Task 17: completed/inactive full-viewport hero with a fully-opaque, reversible white fade — **confirmed
+  working live by the user.** The hero now fills the viewport below the header (never overlapping it) and
+  turns fully white right before "Dalla campagna al bicchiere" would appear, reversible by scrolling back
+  up. Replaced the fully-discarded prior landing-page-redesign attempt at the same effect. Homepage only,
+  desktop/tablet only (≥769px). Do not modify unless explicitly reactivated. Not yet committed. Detail:
+  `IMPLEMENTATION_NOTES.md`.
+- Task 18: completed/inactive scroll-jacking brake into "Dalla campagna al bicchiere" — **confirmed working
+  live by the user** after 5 attempts (3 CSS scroll-snap variants failed on an unreliable-in-practice
+  technique; a passive JS nudge-after-settle worked but felt disconnected; the final active scroll-jacking
+  version, self-animated via `requestAnimationFrame` rather than delegated to the browser, is what shipped).
+  Scrolling down into the section captures input and animates it to centered before releasing control back —
+  a deliberately assertive interaction, by explicit request. Homepage, desktop/tablet only (≥769px). Do not
+  modify unless explicitly reactivated. Not yet committed. Detail: `IMPLEMENTATION_NOTES.md`.
+- Task 19: completed/inactive follow-up polish — increased the pre-philosophy-section scroll spacing
+  (Task 18's `margin-top` refinement) from 150px to 280px, and removed the hero's `v-rigoni-b-g.png`
+  watermark logo (`.hero-slider__v-logo`) entirely, from every slide across all 3 languages. Do not modify
+  unless explicitly reactivated. Not yet committed. Detail: `IMPLEMENTATION_NOTES.md`.
 
 **Known open issue (found during Task 12 verification, pre-existing, not caused by Task 12, not yet
 fixed):** root `/` country-based routing (Task 9) always redirects to `/en/` in this sandbox's local

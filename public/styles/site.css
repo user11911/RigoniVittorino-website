@@ -5,6 +5,26 @@
  * self-hosted original CSS files loaded in BaseLayout.
  */
 
+/* --- Header: fixed size on scroll (site-wide, every page/language) ---
+ * public/scripts/site.js's stickyHeader() still toggles `.sticky` on #site-header
+ * purely to control position:fixed pinning (unchanged, still scroll-driven) — but
+ * the vendor theme (twentytwenty-style.min.css) also used that same class to
+ * shrink the logo (130px/80px mobile -> 50px) and hide `.pre-header-inner` (the
+ * language-switcher/social-icons bar) once scrolled. Per explicit user decision,
+ * the header now keeps its scrolled/compact appearance permanently, at every
+ * screen size, whether or not `.sticky` is present: logo always 50px, pre-header
+ * bar always hidden. `!important` is used deliberately, not defensively — this is
+ * an intentional, permanent override of the vendor default, and this exact header
+ * area already had one real specificity-tie bug in this project (see Task 15's
+ * `#site-header.sticky` fix in IMPLEMENTATION_NOTES.md), so an unambiguous win is
+ * preferred over relying on selector-specificity/load-order alone. */
+header#site-header .header-inner .site-logo img {
+  max-height: 50px !important;
+}
+header#site-header .pre-header-inner {
+  display: none !important;
+}
+
 /* --- Hero (replaces RevSlider) --- */
 .hero-slider {
   position: relative;
@@ -23,16 +43,6 @@
 .hero-slider__slide.is-active {
   opacity: 1;
   z-index: 1;
-}
-.hero-slider__v-logo {
-  position: absolute;
-  right: 8%;
-  bottom: 0;
-  height: 85%;
-  width: auto;
-  z-index: 1;
-  opacity: 0.9;
-  pointer-events: none;
 }
 .hero-slider__dots {
   position: absolute;
@@ -58,6 +68,109 @@
 @media (max-width: 768px) {
   .hero-slider {
     height: 420px;
+  }
+}
+
+/* --- Task 17: full-viewport hero + fully-opaque, reversible white fade. See
+ * .claude/TODO.md Task 17 for the full design; IMPLEMENTATION_NOTES.md for why
+ * this replaces a fully-discarded prior attempt at the same effect.
+ *
+ * `--header-height` is set by Hero.astro's script from the header's own real
+ * rendered height (not assumed) — `.hero-fixed-wrapper` reserves exactly that
+ * much less than 100dvh of normal document-flow space, and `.hero-slider` (the
+ * actual fixed, visible image) starts exactly `top: var(--header-height)`, so it
+ * geometrically never overlaps the header at any screen size — no z-index
+ * reasoning needed for that specific guarantee.
+ *
+ * `.home-content` (wraps everything after the hero, homepage only) uses its own
+ * `background-color`, not a separate overlay element competing via z-index — an
+ * element's own background is guaranteed by the CSS box model to always paint
+ * behind its own content, which a separate overlay could never guarantee. That
+ * pattern failed twice in the discarded prior attempt; this one hasn't.
+ *
+ * `body.home #site-footer` needs its own explicit position+z-index for a
+ * different, easy-to-miss reason: `.hero-slider` is `position: fixed` with an
+ * explicit (non-auto) z-index, and by the CSS2.1 painting order, *any* positioned
+ * element with a specified z-index paints above *any* non-positioned in-flow
+ * content — regardless of DOM order. Without this, the footer (which has an
+ * opaque background but no position/z-index of its own) would render behind the
+ * still-fixed hero once scrolled into that same screen region, hiding it
+ * entirely. Scoped to `body.home` since the fixed hero only exists there. --- */
+@media (min-width: 769px) {
+  .hero-fixed-wrapper {
+    position: relative;
+    height: calc(100dvh - var(--header-height, 0px));
+  }
+  .hero-slider {
+    position: fixed;
+    top: var(--header-height, 0px);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    height: auto;
+  }
+  .home-content {
+    position: relative;
+    z-index: 500;
+    background-color: transparent;
+    transition: background-color 500ms ease;
+  }
+  html.is-hero-faded .home-content {
+    background-color: #fff;
+  }
+  body.home #site-footer {
+    position: relative;
+    z-index: 500;
+  }
+}
+/* Deliberately combined with min-width:769px, not a standalone
+ * prefers-reduced-motion query: everything here only needs to undo what the
+ * min-width:769px block above did, and nothing else in this file behaves
+ * differently under reduced motion at narrow widths. A standalone
+ * `@media (prefers-reduced-motion: reduce)` block setting `.hero-slider`'s height
+ * back to 520px would incorrectly win a cascade tie against the max-width:768px
+ * mobile rule above (420px) for narrow-screen reduced-motion users, since it
+ * would come later in source order at equal specificity — this combined query
+ * only ever matches at >=769px, where that mobile rule was never in play. */
+@media (min-width: 769px) and (prefers-reduced-motion: reduce) {
+  .hero-fixed-wrapper {
+    height: auto;
+  }
+  .hero-slider {
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    height: 520px;
+  }
+  .home-content {
+    position: static;
+    background-color: transparent;
+  }
+}
+
+/* --- Task 18 refinement: extra breathing room before "Dalla campagna al
+ * bicchiere", so the scroll-jacking brake (see Hero.astro) has more runway
+ * before engaging instead of triggering almost immediately after leaving the
+ * hero. The section's own scraped inline styles resolve its top margin to 0
+ * (--_gs-m-desktop's top value), so this simply gives it one instead.
+ * `!important` for the same reason as the header-size fix in Task 16: a
+ * deliberate, permanent override of the vendor default, not a defensive
+ * measure against a specificity tie that could go either way — site.css loads
+ * after the vendor grids CSS regardless.
+ *
+ * Both the brake's approach-zone check and Task 17's fade-trigger threshold
+ * measure this section's live rendered position at runtime
+ * (getBoundingClientRect()), not a hardcoded distance — so this one CSS change
+ * is sufficient on its own; both effects automatically shift later to match,
+ * with no JS changes needed. Desktop/tablet only, matching every other part of
+ * this scroll experience — mobile has no fixed hero or brake effect to give
+ * more runway to. */
+@media (min-width: 769px) {
+  .home-philosophy-section {
+    margin-top: 280px !important;
   }
 }
 

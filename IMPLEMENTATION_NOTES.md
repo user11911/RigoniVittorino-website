@@ -1814,3 +1814,468 @@ page in the first place (that's what made it Tier 2 findings 1-3), and findings/
 and its scripts) never rendered on any live page at all — it was dev tooling, not site output.
 
 Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+# Task 16 — Header: fixed size on scroll (no longer shrinks)
+
+## Request and design decision
+
+User reported the header ("up menu") changes size as you scroll. Investigation: `public/scripts/site.js`'s
+`stickyHeader()` adds a `.sticky` class to `#site-header` once `scrollY > 0`; the vendor theme
+(`twentytwenty-style.min.css`) uses that same class for two purposes at once — pinning the header
+(`position: fixed`, kept as-is) and shrinking it (`.site-logo img` max-height 130px/80px-mobile → 50px,
+`.pre-header-inner`, the language-switcher/social-icons bar, `display: none`).
+
+Asked the user which size should become the permanent one — always full-size (top-of-page look) or always
+compact (scrolled look). **Confirmed: always compact.** The header now looks the same at every scroll
+position and every screen width; only the `position: fixed` pinning still responds to scroll, unchanged.
+
+## Implementation
+
+`public/styles/site.css` (site-wide — the header partial is shared across every page/language, unlike
+Task 15's home-only `extraStyleFile` pattern) — two new rules, unconditional on `.sticky`:
+```css
+header#site-header .header-inner .site-logo img { max-height: 50px !important; }
+header#site-header .pre-header-inner { display: none !important; }
+```
+`!important` is deliberate, not defensive: this is an intentional, permanent override of the vendor
+default, in the same header area that already had one real specificity-tie bug in this project (Task 15's
+`#site-header.sticky` fix) — an unambiguous win was preferred over relying on selector-specificity or
+stylesheet load order alone. No JS changes — `stickyHeader()` still toggles `.sticky` exactly as before,
+now driving only the `position: fixed` pinning, which the user didn't ask to change.
+
+## Verification
+
+- `npm run check`: 0 errors, 1 hint (the pre-existing documented `locale` false positive, unrelated).
+  `npm run test:unit`: 42/42. `npm run build`: succeeds.
+- Confirmed the two new rules compiled correctly into `dist/client/styles/site.css`.
+- Started a fresh `npm run preview` and curl-fetched the header markup/CSS on `/it/`, `/en/`, `/de/` —
+  `#site-header` and `/styles/site.css` present and correct on all three.
+- Ran the full `scripts/route-smoke-test-curl.mjs` suite against that server: all routes pass, including
+  root `/` country routing and the shared `/news/` redirect.
+- **Housekeeping note**: an earlier preview server from a prior verification pass in this same session had
+  been left running (the `kill` issued for it silently failed) and was still bound to port 4321, serving a
+  stale in-memory build. The first smoke-test run in this task hit that stale server by mistake (wrong env
+  var name) and reported spurious 500s unrelated to this change — re-run against the correct, freshly
+  started server confirmed all routes pass. Both preview processes were stopped cleanly at the end of this
+  task via `pkill -f "astro preview"`, confirmed via `ps aux`.
+
+No pixel-level visual confirmation — Playwright/Chromium still cannot launch in this sandbox. The user
+should confirm live via `npm run dev`/`preview` that the header now looks the same whether scrolled or not.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+# Task 17 — Full-viewport hero with a fully-opaque, reversible white fade
+
+## Design decisions and the corrected understanding this attempt is built on
+
+This replaces the entirely-discarded prior attempt at the same effect ("It is all wrong"). Before writing
+any code, the user explicitly corrected the framing: the header/menu was never the source of the repeated
+past failures — it was "always visible" and worked. The actual repeat failures (2 of Task 15's 3 bug-fix
+rounds, plus Task 16's regression) were all about the content sitting *below* the hero: washed out too
+early (a checkpoint-math bug), invisible entirely (the fade was on an element that hadn't scrolled into
+view yet), or active from first paint (a trigger-threshold arithmetic bug — assumed ~2 viewport-heights of
+room before the next section when the real page has ~1). This attempt puts its verification rigor into that
+content-visibility mechanism and the trigger math, not into header theorizing.
+
+Confirmed design decisions: white end state fully opaque (`#fff`); reversible, tied to current scroll
+position; trigger = right before "Dalla campagna al bicchiere" would enter the viewport from the bottom;
+hero must not be hidden by the header when unscrolled — it starts below the header, filling the remaining
+viewport.
+
+## Implementation
+
+- **`src/components/Hero.astro`**: markup wraps `.hero-slider` in a new `.hero-fixed-wrapper`. Script adds
+  `initHeroFullViewport()`: measures `#site-header`'s real rendered height via `getBoundingClientRect()`
+  (not a hardcoded guess) into a `--header-height` custom property on `<html>`, and computes the fade
+  trigger the same validated way as Task 16's bug fix — `Math.max(30, docTop(titleEl) - innerHeight - 20)`
+  — toggling `is-hero-faded` from a plain `scrollY >= triggerY` comparison (not `IntersectionObserver`, for
+  the same reason documented in Task 16: a plain `isIntersecting` toggle would revert once the title itself
+  scrolls out of view further down, breaking "stays white for the rest of the page").
+- **`public/styles/site.css`**: `.hero-fixed-wrapper` reserves `calc(100dvh - var(--header-height, 0px))` of
+  real document-flow space; `.hero-slider` becomes `position: fixed; top: var(--header-height, 0px)`,
+  filling to the viewport's edges — geometrically never overlapping the header, no z-index reasoning needed
+  for that guarantee. `.home-content`'s own `background-color` transitions to fully opaque `#fff` under
+  `is-hero-faded` — the mechanism proven safe in Task 15 round 3 (an element's own background is guaranteed
+  by the CSS box model to paint behind its own content); no separate overlay element, which has now failed
+  twice. `@media (min-width: 769px) and (prefers-reduced-motion: reduce)` — deliberately combined, not a
+  standalone reduced-motion query — undoes exactly what the min-width block did; a standalone reduced-motion
+  block resetting `.hero-slider` to `height: 520px` would have incorrectly won a cascade tie against the
+  existing `max-width: 768px` mobile rule (`height: 420px`) for narrow-screen reduced-motion users, since it
+  would come later in source order at equal specificity — caught and fixed before verification, not after.
+- **`body.home #site-footer { position: relative; z-index: 500; }`** — a correctness fix not explicitly
+  listed in the task's file-scope bullets, but necessary for the mechanism to work at all: `.hero-slider` is
+  `position: fixed` with an explicit (non-auto) z-index, and per CSS2.1's painting order, *any* positioned
+  element with a specified z-index paints above *any* non-positioned in-flow content, regardless of DOM
+  order. Confirmed via the actual vendor CSS that `#site-footer` has an opaque background but no
+  `position`/`z-index` of its own — without this fix, the footer would render *behind* the still-fixed hero
+  once scrolled into that screen region (which happens on every page load, since the hero stays pinned for
+  the whole scroll), hiding it entirely. Scoped to `body.home` since the fixed hero only exists there.
+- **`src/pages/it/index.astro`, `en/index.astro`, `de/index.astro`**: re-added the `<div class="home-content">`
+  wrapper around the content `Fragment` (removed when the prior attempt was discarded).
+- **`src/content/main/home.html`, `en/home.html`, `de/home.html`**: re-added the `home-philosophy-title`
+  class to the "Dalla campagna al bicchiere" heading (the JS trigger's target selector).
+
+**Real measured geometry** (confirmed unchanged from Task 16's investigation, since only
+`Hero.astro`/`site.css`/`home-extra-style*.css` were reverted, not the content files): the spacer section
+right after the hero has zero margin/padding on itself — one empty `.grids-area` with `padding-bottom: 40px`
+and no content; the philosophy section and its heading's `.grids-area` both have zero top margin/padding —
+the heading sits flush at that section's top. ~40-70px of real distance between the hero's reserved space
+ending and the title's natural entry point, hence the small buffer + floor in the trigger math.
+
+## Verification
+
+- `npm run check`: 0 errors, 0 warnings, 1 hint (the pre-existing documented `locale` false positive,
+  unrelated). `npm run test:unit`: 42/42. `npm run build`: succeeds.
+- Confirmed in `dist/client/{it,en,de}/index.html`: `.hero-fixed-wrapper` present once per page,
+  `.home-content` present once, `home-philosophy-title` present (class + JS selector), the minified script
+  contains `--header-height` and the `Math.max(30, ...)` threshold expression.
+- Confirmed in `dist/client/styles/site.css`: `.hero-fixed-wrapper`, `.hero-slider`'s `top: var(--header-
+  height, ...)`, `html.is-hero-faded .home-content`, and `body.home #site-footer` all present as authored.
+- Started a fresh `npm run preview`, confirmed no leftover process from a prior task this time (`ps aux`
+  checked before starting). Ran the full `route-smoke-test-curl.mjs` suite: all routes pass.
+- Curl-confirmed DOM order on the live homepage: `<header id="site-header">` → `<main id="site-content">`
+  (containing `.hero-fixed-wrapper` then `.home-content`) → `<footer id="site-footer">` — matches the
+  design's assumption that the header is a normal-flow sibling, not a child, of `#site-content`.
+- Curl-confirmed `body.home` is present on the homepage and absent on a non-home page (`/it/chi-siamo/`),
+  confirming the footer fix is correctly scoped to only the homepage.
+- Stopped the preview server cleanly at the end (`pkill -f "astro preview"`, confirmed empty via `ps aux`).
+
+**Known, explicitly-flagged risk** (cannot be resolved without an actual browser): the trigger fires only
+~30-70px into the scroll, at which point `.home-content`'s box has only just begun entering the viewport
+from the bottom — most of the screen is still showing the raw, un-faded hero image at that exact moment.
+Whether this reads as a smooth, cohesive transition (as the user continues scrolling and `.home-content`'s
+coverage grows to catch up with the completed fade) or as a visible seam between a still-raw upper portion
+of the screen and an already-white lower portion depends on actual rendered timing that cannot be verified
+here. This is exactly the kind of thing `CLAUDE.md`'s verification-rigor rule asks to flag plainly rather
+than claim confidence in — the user should check specifically for this when reviewing live.
+
+No pixel-level visual confirmation — Playwright/Chromium still cannot launch in this sandbox. Per
+`CLAUDE.md`'s verification-rigor rule, this task stays **active**, not completed/frozen, in `TODO.md` until
+the user confirms it works correctly live — this exact feature has a history of passing every static check
+while still being wrong in ways only visible in a real browser.
+
+**Confirmed working live by the user.** The flagged seam risk above did not materialize as a problem — noted
+here for the record since it was an open, explicitly-unresolved question at delivery time, not something
+verified before being reported. Moved to `TODO.md`'s completed/frozen list.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+# Task 18 — Scroll-snap centering on "Dalla campagna al bicchiere"
+
+## Request and design decision
+
+User asked for a "premium effect": center the viewport on the "Dalla campagna al bicchiere" layout group as
+the user scrolls near it, while flagging they weren't describing it precisely and inviting simpler
+alternatives if the literal ask seemed complex. Two real options exist: native CSS scroll-snap (no JS), or a
+JS-driven `IntersectionObserver` + `scrollIntoView({block: 'center'})` approach that actively animates the
+scroll position. Presented both with their tradeoffs — the JS approach is more forceful/precise but adds
+complexity to a page that already has non-trivial scroll-driven behavior (Task 17's hero fade) and risks
+fighting the user's own scrolling. **User chose CSS scroll-snap.**
+
+## Implementation
+
+- `src/content/main/home.html`, `en/home.html`, `de/home.html`: added a `home-philosophy-section` class to
+  the `.grids-section` containing the whole "Dalla campagna al bicchiere" layout group (image + heading +
+  text + button) — the actual snap target, not just the heading (which already has its own, differently-
+  purposed `home-philosophy-title` class from Task 17's fade trigger).
+- `public/styles/site.css`: `html { scroll-snap-type: y proximity; scroll-padding-top: var(--header-height,
+  0px); }` and `.home-philosophy-section { scroll-snap-align: center; }`. `proximity`, not `mandatory` — only
+  pulls the section into place when the scroll is already close by, rather than forcing a stop on every
+  scroll gesture (matches what was actually proposed and approved). `scroll-padding-top` reuses Task 17's
+  `--header-height` custom property so the centering math accounts for the header's own space at desktop
+  widths, where that variable is measured; it falls back to `0px` below 769px, where the header doesn't get
+  that same live measurement — a minor, accepted imprecision there rather than expanding Task 17's
+  device-scoped measurement just to serve this unrelated feature.
+- **Not gated to desktop only**, unlike Task 17: this doesn't depend on the fixed-hero mechanism at all, and
+  CSS scroll-snap works natively on mobile touch scrolling. Applied at every screen size — a default choice,
+  not something explicitly reconfirmed with the user; flagged here in case a mobile-only exclusion turns out
+  to be wanted after all.
+- `html`'s `scroll-snap-type` is set globally (not scoped to `body.home`) since it's inert without any
+  matching `scroll-snap-align` target on the page — simpler than a `:has()`-based scoping rule, and
+  correctness doesn't depend on which is used, so the simpler option was chosen for maintainability.
+
+## Verification
+
+- `npm run check`: 0 errors, 0 warnings, 1 hint (the pre-existing documented `locale` false positive,
+  unrelated). `npm run test:unit`: 42/42. `npm run build`: succeeds.
+- Confirmed in `dist/client/{it,en,de}/index.html`: `home-philosophy-section` present exactly once per page.
+  Confirmed in `dist/client/styles/site.css`: both new rules present as authored.
+- Started a fresh preview server (port 4321 was still occupied by a leftover process from earlier in this
+  session despite an empty `ps aux` check moments before — used the actual reported port, 4322, for the
+  test instead of assuming). Ran the full route smoke test: all routes pass. Curl-confirmed
+  `home-philosophy-section` present on `/it/` and absent on `/it/chi-siamo/` (a non-home page, confirming
+  no unintended cross-page effect). This time, cleaned up with `pkill -9` and confirmed via a follow-up
+  `ps aux` check that returned genuinely empty (unlike the milder `pkill` used earlier in this session,
+  which had left a process behind at least once).
+
+No pixel-level visual confirmation — Playwright/Chromium still cannot launch in this sandbox. The actual
+"how strong does the snap feel" experience needs the user's own live check, same as every visual change in
+this project.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Bug fix: `proximity` had no perceptible effect, switched to `mandatory`
+
+Reported live: "as if this was not implemented at all." Checked for a competing CSS rule (overflow/scroll-
+behavior/scroll-snap on `html`/`body` anywhere else in the project) before changing anything — found none,
+ruling out a conflict. This matches a well-known, widely-reported real-world weakness of `scroll-snap-type:
+proximity`: browsers apply it with very loose, inconsistent heuristics, and it commonly has no visible
+effect under plain mouse-wheel scrolling specifically, since that input has no momentum/"coast to a stop"
+for the browser to nudge against — unlike touch scrolling, where proximity is more likely to be noticeable.
+
+Fixed by switching to `scroll-snap-type: y mandatory` (`public/styles/site.css`), which reliably forces the
+snap after every scroll gesture, regardless of input method.
+
+**Known, explicitly-flagged tradeoff**: only one snap-align target exists on the page
+(`.home-philosophy-section`). `mandatory` requires the scroll to come to rest on a snap point whenever one
+is reachable within the current scroll gesture — with only one target on an otherwise long-scrolling page,
+this could make scrolling through the area immediately around that section feel "sticky" (repeatedly pulled
+back to center rather than passing through smoothly), which `proximity` would have avoided by design. This
+could not be evaluated without an actual browser; if it feels too aggressive live, options include adding
+more snap points elsewhere on the page (making `mandatory` feel natural throughout, not just at one spot)
+or reconsidering `proximity` with different tuning. Flagging this now rather than waiting for another
+"doesn't feel right" report to explain it.
+
+Verified: `npm run check`/`build` unaffected (CSS-only change, no logic to test). Confirmed
+`scroll-snap-type: y mandatory` compiled into `dist/client/styles/site.css`.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Second bug report: `mandatory` also had zero effect — real root cause found
+
+`mandatory` was reported as having no perceptible effect either — the same symptom as `proximity`, not an
+improvement. Per `CLAUDE.md`'s circuit-breaker rule (two live failures on the same feature), this was not
+treated as "try a third scroll-snap-type value" — instead, checked the actual DOM ancestor chain and vendor
+CSS between `html` (where `scroll-snap-type` was set) and `.home-philosophy-section` (the snap target) for
+anything that could structurally prevent them from being associated at all.
+
+**Found**: `#site-content { overflow: hidden }`, present in both `twentytwenty-style.min.css` and
+`parent-style.min.css` (the vendor theme's own CSS, not anything added by this project). Per the CSS
+Overflow spec, *any* non-`visible` overflow value establishes a "scroll container" — `hidden` included, and
+regardless of whether the element actually has content that overflows it. `#site-content` sits directly
+between `html` and `.home-philosophy-section` in the DOM, so it — not `html` — was the nearest ancestor
+scroll container for scroll-snap purposes. That silently intercepted the `scroll-snap-align` target away
+from `html`'s `scroll-snap-type` entirely. And since `#site-content` has no explicit height of its own (it
+auto-sizes to its content), it has no real scrollable distance to snap within either way. This fully
+explains why *neither* `proximity` nor `mandatory` ever did anything: the strictness value was never the
+variable that mattered, because the rule was never structurally reaching its target at all. Also checked
+every other ancestor between `#site-content` and the target (`.home-content`, `article`, `.post-inner`,
+`.entry-content`, `.grids-section`, `.grids-s-w_i`, `.grids-area`) for the same issue — none found.
+
+**Fix**: `body.home #site-content { overflow-y: visible; }` in `public/styles/site.css`, placed before the
+scroll-snap rules. Un-captures `#site-content` as a Y-axis scroll container, restoring `html` as the nearest
+one for `.home-philosophy-section`. Deliberately only `overflow-y`, not the full `overflow` shorthand —
+`overflow-x: hidden` is left untouched, since it's very likely there to clip stray horizontal overflow from
+full-bleed WordPress blocks (a common theme pattern), and touching that wasn't necessary to fix this bug.
+Scoped to `body.home` since `#site-content`'s `overflow: hidden` is a sitewide vendor rule; every other page
+keeps it exactly as before.
+
+Verified: `npm run check`/`build` pass; confirmed `body.home #site-content { overflow-y: visible; }`
+compiled into `dist/client/styles/site.css`, correctly scoped (absent from the rule for any non-home page).
+
+**Honesty note, explicitly**: this is a real, verified structural finding (confirmed by reading the actual
+vendor CSS twice, not inferred) that fully explains the *complete inertness* observed both times — a much
+stronger basis than the `proximity`→`mandatory` change, which was a reasonable but ultimately unconfirmed
+theory. Still cannot be verified live without a browser. If this still doesn't work, the next step should
+be reconsidering whether native CSS scroll-snap is even the right tool here at all, rather than a fourth
+CSS-only patch attempt — per the same circuit-breaker principle.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Third bug report: architectural pivot from CSS scroll-snap to JS-driven centering
+
+The overflow fix was also reported as having no effect — the third live failure in a row, with the *same*
+symptom (complete inertness) despite three substantively different underlying changes (a strictness value
+change, then a genuine, verified structural CSS fix). That pattern — identical symptom across different
+fixes — was itself the signal that something more fundamental than any single bug was at play, not that the
+diagnoses were wrong individually.
+
+Per `CLAUDE.md`'s circuit-breaker rule, did not attempt a fourth CSS patch. Instead researched CSS
+scroll-snap externally (the user's own suggestion), which surfaced a real, previously-unknown factor:
+multiple independent sources note that `scroll-snap-type` applied to the document root (`html`/`body`) is
+known to be unreliable in real-world browser practice, and that the standard, dependable implementation
+pattern uses a dedicated scrollable container with its own explicit `height`/`overflow-y` — not the native
+page scroll. That's a materially different architecture, not a tuning problem — and adopting it here would
+have meant restructuring how the whole page scrolls, with real risk of conflicting with Task 17's fixed-hero
+mechanism (`position: fixed` is relative to the viewport, not to an arbitrary scroll container).
+
+Presented this finding plainly and asked the user to choose between (a) one more small CSS attempt
+(`overflow-y: auto` explicitly on the root, a known practical workaround) or (b) switching to a JS-driven
+approach that avoids the whole unreliable-technique category. **User chose the JS-driven approach.**
+
+## Implementation: JS-driven auto-center
+
+- Removed all Task 18 CSS entirely from `public/styles/site.css` — the `scroll-snap-type`/`scroll-snap-
+  align` rules and the `body.home #site-content { overflow-y: visible }` fix (which existed only to support
+  scroll-snap targeting and has no purpose once scroll-snap itself is gone; keeping it would have been
+  unnecessary, unexplained deviation from the vendor CSS).
+- Added `initPhilosophySectionAutoCenter()` to `src/components/Hero.astro`'s existing script block, next to
+  Task 17's fade-trigger IIFE — keeping this page's scroll-driven JS together in one place rather than
+  scattering it, since `.home-philosophy-section` is part of the same homepage scroll experience.
+- `IntersectionObserver` detects when the section is anywhere in view; a scroll-settle debounce (150ms after
+  the last scroll event) avoids fighting active scrolling — auto-centering *during* a scroll gesture was the
+  exact risk flagged when the JS approach was first proposed as an alternative. `window.scrollTo({top,
+  behavior: 'smooth'})` does the actual centering, with the target computed manually (not via
+  `scrollIntoView`) so it correctly accounts for the header's real height, reusing the same
+  `getBoundingClientRect()` measurement pattern as Task 17.
+- A `hasCentered` guard prevents re-triggering while already centered, resetting once the section leaves the
+  viewport — reversible, matching this page's other scroll effects (Task 17's fade), not a one-time action.
+- **Gated to desktop/tablet only (>=769px)** — a deliberate change from Task 18's original CSS attempt,
+  which was left unrestricted since native scroll-snap integrates smoothly with touch physics. A JS-driven
+  `scrollTo()` interrupting an in-progress touch gesture is a materially different, more jarring risk that
+  didn't apply to the CSS approach; narrowing scope here reflects that the technique itself changed, not
+  just a copy-paste of the old decision.
+- Respects `prefers-reduced-motion`, matching every other animated effect on this page.
+
+## Verification
+
+- `npm run check`: 0 errors, 0 warnings, 1 hint (documented `locale` false positive, unrelated).
+  `npm run test:unit`: 42/42. `npm run build`: succeeds.
+- Confirmed `scroll-snap` no longer appears anywhere in `dist/client/styles/site.css` (fully removed, not
+  just unused). Confirmed `IntersectionObserver` and the `scrollTo({top: ...})` centering call present in
+  the compiled homepage script for all 3 languages.
+- Started a fresh preview server (found and killed a leftover process from earlier verification in this
+  same task first — `pkill -9`, confirmed via `ps aux`). Ran the full route smoke test: all routes pass.
+  Stopped the server cleanly afterward, confirmed via a follow-up `ps aux` check.
+
+**Honesty note**: this sidesteps a documented category of browser unreliability, and the underlying
+centering math/trigger logic follows well-established patterns (debounced scroll-settle detection, guarded
+re-triggering) — but it is still new code that has not been seen running in an actual browser. The
+IntersectionObserver + debounce + `scrollTo` interaction is exactly the kind of thing that "compiles and
+looks right" without guaranteeing it *feels* right — smoothness, timing, and whether 150ms is the right
+debounce all need the user's own live judgment.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Fourth attempt: from passive nudge to active scroll-jacking
+
+The passive JS version worked technically (confirmed live) but was reported as unsatisfying: "it slides
+freely until the sliding stops, and after it stops it slides up." That's an accurate description of exactly
+how it was built — settle-then-correct is inherently a two-step feel, not a single continuous one. The user
+asked for something different in kind, not degree: a "brake" that engages *during* the downward scroll, so
+the section can't be scrolled past in one motion. Confirmed this is a real, named technique
+("scroll-jacking") before implementing, and named the honest tradeoff plainly: this is a meaningfully more
+assertive interaction than anything else on this page, since it briefly takes scroll control away from the
+user by design — that's the point of what was asked for, not an accidental side effect.
+
+**Implementation** (`initPhilosophySectionBrake()` in `src/components/Hero.astro`, replacing
+`initPhilosophySectionAutoCenter()` entirely — same file/location, rewritten internals):
+- A plain `scroll` listener tracks direction (`currentY > lastScrollY`) and whether the section has entered
+  an "approach zone" (`rect.top < innerHeight && rect.bottom > 0`, i.e. any part of it is on screen).
+- The brake engages **only scrolling down**, matching "before going over it" — this is specifically about
+  not being able to scroll past on the way down, not about symmetric behavior in both directions.
+- On engage: `wheel` and `touchmove` listeners are added with `{ passive: false }` specifically so
+  `preventDefault()` can block user-driven scrolling, while `window.scrollTo({ top, behavior: 'smooth' })`
+  animates the page to the same centered target computed in the prior attempt (still accounting for the
+  real header height). This is the standard scroll-jacking pattern: capture input, drive the scroll
+  programmatically, release when done.
+- Release is driven by the `scrollend` event (fires when a scroll operation — including a `behavior:
+  'smooth'` one — actually finishes), not a fixed guessed duration, so control returns the instant the
+  animated scroll arrives rather than an arbitrary timer. A 1200ms timeout is a safety-net fallback in case
+  `scrollend` doesn't fire in some edge case, so the page can never get stuck with scrolling permanently
+  blocked.
+- `hasBraked` guards against re-engaging while already captured or already braked for this approach; it
+  resets once the section is well out of view in either direction (`rect.bottom < -200 || rect.top >
+  innerHeight + 200`), so scrolling down to it again later re-triggers the brake — reversible, matching
+  every other scroll effect on this page.
+- Desktop/tablet only (>=769px) and respects `prefers-reduced-motion`, both carried forward unchanged from
+  the prior attempt and consistent with this page's other scroll-driven effects (Task 17).
+
+## Verification
+
+- `npm run check`: 0 errors, 0 warnings, 1 hint (documented `locale` false positive, unrelated).
+  `npm run test:unit`: 42/42. `npm run build`: succeeds.
+- Confirmed `preventDefault` and `scrollend` both present in the compiled homepage script for all 3
+  languages.
+- Started a fresh preview server (checked for and found no leftover process this time). Ran the full route
+  smoke test: all routes pass. Stopped the server cleanly afterward, confirmed via `ps aux`.
+
+**Honesty note**: `scrollend` is a comparatively newer DOM event; the 1200ms timeout fallback exists
+specifically because this could not be verified to fire reliably in every browser from here. More
+fundamentally, the entire *feel* of a scroll-jacking interaction — whether the brake timing reads as premium
+or as fighting the user, whether preventDefault() on wheel/touchmove has any unwanted interaction with
+trackpad momentum scrolling specifically — is exactly the kind of thing that cannot be judged without an
+actual browser and actual scrolling. This is the fourth attempt at this one feature; if the feel still isn't
+right, the next step should be discussing specific timing/threshold adjustments against what was actually
+felt, not another structural rewrite.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Fifth attempt: the brake engaged but didn't slide — replaced `scrollend`-based animation with a self-driven one
+
+Reported live: "it kind of works, but it does not slide to move the group to the center: it just brakes
+before it, which feels groggy." The capture/brake itself was working (confirmed — the user felt it stop
+them), but the `window.scrollTo({behavior: 'smooth'})` animation toward the centered target wasn't visibly
+completing.
+
+**Likely cause**: `engageBrake()` was triggered from inside a `scroll` event handler responding to a
+wheel-driven scroll that was *already in progress*. Calling `scrollTo({behavior:'smooth'})` immediately
+after, then waiting for the `scrollend` event to release the brake, created ambiguity about which scroll
+operation `scrollend` was actually reporting the end of — the wheel-driven one that triggered the brake, or
+the programmatic one meant to animate it. If the browser fired `scrollend` for the former, `release()` would
+run almost immediately, removing the `preventDefault()` blocking while the *intended* animation had barely
+started — allowing the user's continued wheel input to interrupt or race against it. This matches the
+symptom precisely: a brake that engages (stops the free scroll) without a visible slide to follow.
+
+**Fix**: replaced the browser-delegated smooth scroll with a self-driven `requestAnimationFrame` loop —
+`engageBrake()` now computes `startY`/`endY` once, then calls plain `window.scrollTo(0, y)` (the
+non-smooth, instant-jump signature) on every animation frame for a fixed 600ms duration with an ease-in-out
+curve, releasing the brake only when its own loop reaches `progress >= 1`. This removes the `scrollend`
+dependency and the race entirely — the brake now has full, deterministic control over exactly when the
+slide starts, how long it takes, and when it ends, independent of any ambiguity in native scroll-completion
+signaling. This is the same fundamental pattern established scroll-jacking libraries (e.g. fullPage.js) use,
+for the same reason.
+
+Verified: `npm run check`/`test:unit`/`build` pass. Confirmed `requestAnimationFrame` present (2 instances —
+this new one plus Task 17's existing rAF-throttled scroll handler) and `scrollend` no longer referenced
+anywhere in the compiled homepage script, across all 3 languages. Full route smoke test passes against a
+freshly started, cleanly stopped preview server.
+
+**Honesty note**: this fixes a specific, plausible mechanism that matches the reported symptom exactly, and
+removes a genuine source of ambiguity (relying on `scrollend` semantics that don't cleanly distinguish
+concurrent scroll operations) in favor of a fully self-contained, deterministic animation — a stronger
+design on its own merits, not just a guess. Still unverified live. The 600ms duration and ease-in-out curve
+are reasonable defaults, not something that can be tuned without the user's own feel for it.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+**Confirmed working live by the user.** Moved to `TODO.md`'s completed/frozen list.
+
+# Task 19 — More scroll runway before the philosophy section, and remove the hero's V-logo watermark
+
+Two small, independent follow-ups requested together.
+
+**1. More spacing before "Dalla campagna al bicchiere"**: `public/styles/site.css`'s
+`.home-philosophy-section { margin-top: ... }` (added in Task 18's refinement) increased from `150px` to
+`280px`. Same rule, same scoping (`@media (min-width: 769px)`, `!important` for the same reason as before —
+a deliberate override of the vendor default, not defensive against a specificity tie). No JS touched: both
+the brake's approach-zone check and Task 17's fade trigger measure the section's live position at runtime,
+so they automatically shifted to match.
+
+**2. Removed the hero's V-logo watermark**: the semi-transparent `v-rigoni-b-g.png` image
+(`.hero-slider__v-logo`) that sat bottom-right on every hero slide at 90% opacity.
+- `src/components/Hero.astro`: removed the `<img class="hero-slider__v-logo" .../>` from the per-slide
+  markup (was inside the `.map()` producing all 4 slides, so removing it once removes it from all of them —
+  confirmed no per-slide special-casing existed).
+- `public/styles/site.css`: removed the now-orphaned `.hero-slider__v-logo` rule.
+- Confirmed via grep that `v-rigoni-b-g` had no other references anywhere in `src/`, `public/styles/`, or
+  `public/scripts/` before removing — no dangling reference left behind. Did not delete the underlying image
+  file itself (`public/wp-content/uploads/2021/01/v-rigoni-b-g.png`) — an unreferenced static asset causes
+  no runtime effect, unlike unused code, and deleting original asset files wasn't asked for.
+
+## Verification
+
+- `npm run check`: 0 errors, 0 warnings, 1 hint (documented `locale` false positive, unrelated).
+  `npm run test:unit`: 42/42. `npm run build`: succeeds.
+- Confirmed in `dist/client/{it,en,de}/index.html`: zero occurrences of `v-logo`/`v-rigoni-b-g` (all 3
+  languages, since `slides` defaults identically across them per Task 9). Confirmed in
+  `dist/client/styles/site.css`: `.hero-slider__v-logo` rule gone, `margin-top: 280px` present.
+- Started a fresh preview server, confirmed responding, ran the full route smoke test (all pass), and
+  curl-confirmed zero V-logo references on the live-served homepage across all 3 languages. Stopped the
+  server cleanly afterward.
+
+No pixel-level visual confirmation — Playwright/Chromium still cannot launch in this sandbox. Both changes
+are small and low-risk (a single CSS value change; removing one decorative image with no other references),
+but the user's own live check remains the actual confirmation, per this project's standing convention.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
