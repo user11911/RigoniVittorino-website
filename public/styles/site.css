@@ -103,61 +103,6 @@
   right: 10px;
 }
 
-/* --- Share button pills (the plugin generates this styling via runtime JS from
-   admin settings rather than a static stylesheet, so it's rebuilt here to match the
-   visible pill/badge appearance seen on the live site) --- */
-.wp-share-button {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.wp-share-button .share-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border: 1px solid #e2e2e2;
-  border-radius: 3px;
-  font-size: 0.85rem;
-  color: #333;
-  text-decoration: none;
-  white-space: nowrap;
-}
-.wp-share-button .share-button-more {
-  display: inline-flex;
-  padding: 6px 10px;
-  border: 1px solid #e2e2e2;
-  border-radius: 3px;
-  color: #333;
-}
-.wp-share-button .button-count {
-  color: #999;
-}
-
-/* --- Share button "more" popup (replaces social-share-button plugin JS) --- */
-.wp-share-button-popup {
-  display: none;
-  position: absolute;
-  z-index: 10;
-  background: #fff;
-  border: 1px solid #eee;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 10px;
-}
-.wp-share-button-popup.is-open {
-  display: block;
-}
-.wp-share-button-popup .popup-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.wp-share-button-popup .close {
-  cursor: pointer;
-  align-self: flex-end;
-}
-
 /* Task 1 originally replaced wp-image-zoooom (the live site's real behavior is a
  * cursor-following magnifier lens via .zoomContainer/.zoomTint, confirmed by
  * inspecting the live product page) with a simple hover-scale transform. Per

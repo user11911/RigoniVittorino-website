@@ -67,23 +67,6 @@
   });
 })();
 
-// "More..." share popup toggle (was social-share-button plugin JS; the share links
-// themselves are plain static URLs needing no plugin runtime at all).
-(function shareButtonPopups() {
-  document.querySelectorAll(".share-button-more").forEach((moreLink) => {
-    moreLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      const popup = moreLink.parentElement.querySelector(".wp-share-button-popup");
-      if (popup) popup.classList.toggle("is-open");
-    });
-  });
-  document.querySelectorAll(".wp-share-button-popup .close").forEach((closeBtn) => {
-    closeBtn.addEventListener("click", () => {
-      closeBtn.closest(".wp-share-button-popup")?.classList.remove("is-open");
-    });
-  });
-})();
-
 (function markActiveNav() {
   const path = window.location.pathname.replace(/\/$/, "") || "/";
   document.querySelectorAll(".primary-menu a, .modal-menu a").forEach((a) => {

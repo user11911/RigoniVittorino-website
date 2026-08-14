@@ -64,6 +64,38 @@ change actually looks right before the user sees it.
   attributes, code cleanup, refactors) do not require this approval step, but still follow the normal scope
   and regression rules below.
 
+## Verification rigor for behavior that can't be screenshot-tested
+
+This project has repeatedly shipped scroll/animation/stacking code that looked correct on paper and turned
+out not to work only after the user tested it live (see `IMPLEMENTATION_NOTES.md`'s hero-fade history for
+the concrete case this section is drawn from). Playwright/Chromium cannot launch in this sandbox — that
+limitation is permanent and no rule here changes it — but these practices catch more of that class of bug
+before it ships, rather than after a live bug report:
+
+- **Prefer correct-by-construction over correct-if-reasoning-holds.** When two implementations achieve the
+  same visible result, prefer the one whose correctness follows from a structural guarantee (e.g. an
+  element's own background always painting behind its own content) over one that depends on winning a
+  z-index/stacking-context/specificity contest against another element. If the correct-by-construction
+  option is rejected for a specific reason, state that reason.
+- **Measure, don't assume, for any position-derived number.** A numeric threshold, buffer, or timing value
+  computed from the real structure of the page (element positions, heights, distances between sections)
+  must be derived from the actual content files being modified, not a plausible-sounding round number —
+  state the real measurements used in the response, so the derivation can be sanity-checked without running
+  a browser.
+- **Use a fixed status vocabulary and mean it**: "Implemented — logic/output verified [how], not yet
+  confirmed live" vs. "Confirmed working (user-verified)." Never mark a visible/behavioral change as
+  done/completed/frozen in `TODO.md` on the strength of static checks alone — it stays in the first state
+  until the user confirms it live, or explicitly accepts it without confirming.
+- **Circuit breaker after repeated live failures.** If the same feature has been live-tested and reported
+  broken twice in a row, don't make a third incremental patch to the same architecture. Lay out 2-3
+  genuinely different approaches, or ask targeted diagnostic questions, before touching code again.
+- **Flag pattern reuse explicitly.** If a new fix structurally resembles an approach that already failed
+  live for the same feature, say so directly and state why this attempt is expected to avoid the same
+  failure, rather than silently reintroducing something similar to what didn't work.
+
+This applies to the same category of change as "Design decisions require explicit approval" above —
+layout, styling, animation, scroll/interaction behavior — not to backend or content-only work.
+
 ## Frozen work
 
 Phase 1's completed tasks (see `TODO.md`) remain the frozen baseline in Phase 2 too:

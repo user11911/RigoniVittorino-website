@@ -67,7 +67,7 @@ function rewriteUrl(u) {
 // text), so removing an item needs no further layout fix — the rest
 // re-center/re-flow on their own.
 function removeShopLinks($, root) {
-  root.find('a[href*="rigonivittorinoshop"]').each((i, el) => {
+  root.find('a[href*="rigonivittorinoshop"]').each((_i, el) => {
     const $el = $(el);
     const menuItem = $el.closest("li.menu-item");
     if (menuItem.length) {
@@ -79,7 +79,7 @@ function removeShopLinks($, root) {
 }
 
 function rewriteLinks($, root) {
-  root.find("a").each((i, el) => {
+  root.find("a").each((_i, el) => {
     const $el = $(el);
     const href = $el.attr("href");
     if (!href) return;
@@ -98,7 +98,7 @@ function rewriteLinks($, root) {
     const withSlash = rel.endsWith("/") ? rel : `${rel}/`;
     $el.attr("href", withSlash);
   });
-  root.find("img").each((i, el) => {
+  root.find("img").each((_i, el) => {
     const $el = $(el);
     const src = $el.attr("src");
     if (src) $el.attr("src", rewriteUrl(src));
@@ -155,7 +155,7 @@ async function main() {
   // live) — user decision: add one, matching EN/IT's structural pattern, since
   // this is new local UI chrome (not scraped content) rather than a translated
   // live string.
-  const newsLink = header.find('a[href*="/news/"]').filter((i, el) => {
+  const newsLink = header.find('a[href*="/news/"]').filter((_i, el) => {
     const href = $(el).attr("href") ?? "";
     return href.endsWith("/news/") || href.endsWith("/news");
   });

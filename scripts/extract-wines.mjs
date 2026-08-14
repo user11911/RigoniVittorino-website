@@ -60,7 +60,7 @@ function categoryForSlug(slug) {
 }
 
 function fieldText($, strongLabel) {
-  const span = $(".tipologia-row .wine-specs").filter((i, el) => {
+  const span = $(".tipologia-row .wine-specs").filter((_i, el) => {
     return $(el).find("strong").text().trim() === strongLabel;
   });
   if (!span.length) return null;
@@ -81,7 +81,7 @@ async function buildCardImageIndex() {
   for (const cat of categoryPaths) {
     const html = await readFile(path.join(CACHE_DIR, cacheFileFor(cat)), "utf8");
     const $ = cheerio.load(html);
-    $(".single-wine-container").each((i, el) => {
+    $(".single-wine-container").each((_i, el) => {
       const $el = $(el);
       const href = $el.find(".wine-image a").attr("href") ?? "";
       const slugMatch = href.match(hrefRe);
@@ -127,7 +127,7 @@ async function main() {
     const categoryLinkText = $(".tipologia-row a.category-link").first().text().trim();
     const categoryLinkHref = $(".tipologia-row a.category-link").first().attr("href");
     const tastingNoteParas = $(".wine-description-text p")
-      .map((i, el) => $(el).text().trim())
+      .map((_i, el) => $(el).text().trim())
       .get()
       .filter(Boolean);
 
@@ -173,7 +173,7 @@ async function main() {
     };
 
     // Sanity check: every field must be present, nothing silently missing/null.
-    const missing = Object.entries(record).filter(([k, v]) => v == null || v === "");
+    const missing = Object.entries(record).filter(([_k, v]) => v == null || v === "");
     if (missing.length) {
       console.warn(`WARNING: ${slug} missing fields:`, missing.map(([k]) => k));
     }

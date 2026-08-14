@@ -58,6 +58,13 @@ Completed or inactive work:
   removal, including orphaned CSS) and the Luis Sepúlveda citation overlay on
   `/it/cantina/`, `/en/winery/`, `/de/weinkeller/`. Do not modify unless explicitly reactivated. Not yet
   committed. Detail: `IMPLEMENTATION_NOTES.md`.
+- Task 15: completed/inactive dead-code/complexity audit. Tier 1 (typechecker-flagged unused params) fixed
+  directly. Tier 2 findings were all reviewed and approved by the user for removal: orphaned share-button
+  CSS/JS left behind by Task 12's `ShareButtons.astro` removal (`public/styles/site.css`,
+  `public/scripts/site.js`) plus its unlinked vendor CSS file, and the Phase 1 live-site parity-screenshot
+  infrastructure (`docs/parity/`, `scripts/screenshot-baseline.mjs`, `scripts/screenshot-compare.mjs`, and
+  their now-dangling `package.json` script entries) — all deleted. Do not modify unless explicitly
+  reactivated. Not yet committed. Detail: `IMPLEMENTATION_NOTES.md`.
 
 **Known open issue (found during Task 12 verification, pre-existing, not caused by Task 12, not yet
 fixed):** root `/` country-based routing (Task 9) always redirects to `/en/` in this sandbox's local
