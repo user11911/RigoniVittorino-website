@@ -3,6 +3,14 @@
 // design decisions this implements (reveal direction, logo asset, scope, load trigger).
 // Rendered by BaseLayout.astro as the very first child of <body>, before the header, so
 // it visually covers the whole page and not just the content area.
+//
+// Task 30: the reveal's actual motion (panel shrink-to-center -> vertical slide-up,
+// "scroll down" look) is a CSS-only change in site.css's .loading-screen__panel/
+// __logo/__spinner rules; no JS timing logic here changed. The spinner's ring markup
+// was split into an outer `.loading-screen__spinner` (position/opacity/reveal-slide)
+// wrapping an inner `.loading-screen__spinner-ring` (the rotating border-ring) — see
+// site.css's comment above `.loading-screen` for why a CSS `animation` and `transition`
+// can't both drive the same element's `transform` at once.
 ---
 
 <div id="loading-screen" class="loading-screen" aria-hidden="true">
@@ -14,6 +22,7 @@
     width="220"
     height="103"
   />
+  <div class="loading-screen__spinner"><div class="loading-screen__spinner-ring"></div></div>
 </div>
 
 <script>
@@ -65,11 +74,14 @@
     // sooner. MIN_DISPLAY_MS is the resulting floor measured from script start (used
     // below against `elapsed`). EXIT_DURATION_MS matches the slower transition-duration
     // set on `.loading-screen.is-hiding .loading-screen__panel` in site.css — the
-    // reveal is intentionally slower/more deliberate than the entry.
-    const ENTRY_DURATION_MS = 600;
+    // reveal is intentionally slower/more deliberate than the entry. Both durations
+    // halved from their original 600ms/1200ms per an explicit "speed up the sliding
+    // animations" request — kept in sync with the matching CSS transition-duration
+    // values, not just the JS timers.
+    const ENTRY_DURATION_MS = 350;
     const MIN_BLACK_MS = 1000;
     const MIN_DISPLAY_MS = ENTRY_DURATION_MS + MIN_BLACK_MS;
-    const EXIT_DURATION_MS = 1200;
+    const EXIT_DURATION_MS = 650;
     // Safety net if `load` never fires — kept comfortably above MIN_DISPLAY_MS so it
     // never preempts the black-screen guarantee, while still leaving real margin to
     // actually wait for a slow load rather than firing right after it.

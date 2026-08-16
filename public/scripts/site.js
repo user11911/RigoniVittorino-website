@@ -16,57 +16,6 @@
   update();
 })();
 
-// Progressively enhances the verbatim-preserved "featured wines" Getwid
-// images-slider markup on the homepage into a working one-at-a-time carousel with
-// prev/next arrows, reading its autoplay/loop config straight from the original
-// data-* attributes. Replaces Getwid's own jQuery+Slick-based runtime (see
-// IMPLEMENTATION_NOTES.md) with a small vanilla implementation.
-(function enhanceImageSliders() {
-  document.querySelectorAll(".wp-block-getwid-images-slider__wrapper").forEach((wrapper) => {
-    const items = Array.from(wrapper.querySelectorAll(":scope > .wp-block-getwid-images-slider__item"));
-    if (items.length < 2) return;
-
-    wrapper.setAttribute("data-enhanced", "true");
-    let current = 0;
-    items[0].classList.add("is-active");
-
-    const prev = document.createElement("button");
-    prev.className = "getwid-slider-arrow prev";
-    prev.setAttribute("aria-label", "Precedente");
-    prev.innerHTML = "&#8249;";
-    const next = document.createElement("button");
-    next.className = "getwid-slider-arrow next";
-    next.setAttribute("aria-label", "Successivo");
-    next.innerHTML = "&#8250;";
-    wrapper.append(prev, next);
-
-    function show(index) {
-      items[current].classList.remove("is-active");
-      current = (index + items.length) % items.length;
-      items[current].classList.add("is-active");
-    }
-
-    prev.addEventListener("click", () => {
-      show(current - 1);
-      restartAutoplay();
-    });
-    next.addEventListener("click", () => {
-      show(current + 1);
-      restartAutoplay();
-    });
-
-    const autoplay = wrapper.dataset.autoplay === "true";
-    const speed = Number(wrapper.dataset.autoplaySpeed) || 6000;
-    let timer;
-    function restartAutoplay() {
-      if (!autoplay) return;
-      clearInterval(timer);
-      timer = setInterval(() => show(current + 1), speed);
-    }
-    restartAutoplay();
-  });
-})();
-
 (function markActiveNav() {
   const path = window.location.pathname.replace(/\/$/, "") || "/";
   document.querySelectorAll(".primary-menu a, .modal-menu a").forEach((a) => {

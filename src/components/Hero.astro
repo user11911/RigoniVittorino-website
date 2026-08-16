@@ -191,19 +191,33 @@ const { slides = [
   // Only engages once, on the way down, per approach: it doesn't fire scrolling
   // upward (matching "before going over it" — this is specifically about not
   // being able to scroll past on the way down), and the guard resets once the
-  // section is well out of view so scrolling down to it again later re-triggers
-  // it, same reversible convention as every other scroll effect on this page.
+  // user has scrolled back up near the very top of the page, so scrolling down
+  // again later re-triggers it — same reversible convention as every other
+  // scroll effect on this page.
+  //
+  // Triggers as soon as the user starts scrolling down past a small threshold
+  // (TRIGGER_SCROLL_THRESHOLD_PX) from the top of the page — not once the
+  // section's own position is already nearly in view. Reported live that
+  // requiring a long ordinary scroll through the hero before anything happened
+  // undercut the "premium" feel this was built for; triggering right as the
+  // user leaves the hero makes the whole hero-to-section transition read as one
+  // deliberate motion. Because the animation can now cover a much longer
+  // distance (from just past the hero all the way to centering the section,
+  // rather than a short final approach), its duration scales with that
+  // distance — SLIDE_MS_PER_PX added on top of a floor, capped at
+  // SLIDE_DURATION_MAX_MS — so a short trigger-to-target distance still feels
+  // snappy and a long one doesn't turn into an instant, blurry jump.
   //
   // The slide itself is driven manually frame-by-frame (requestAnimationFrame +
-  // a fixed duration/easing curve), not window.scrollTo({behavior:'smooth'})
-  // released on the `scrollend` event — an earlier version did that and was
-  // reported as "brakes but doesn't slide, feels groggy". The likely cause:
-  // `scrollend` doesn't clearly distinguish the wheel-driven scroll that
-  // triggered the brake from the programmatic one meant to animate it, so the
-  // two could race and the native smooth-scroll could get interrupted or barely
-  // start before release fired. Manually driving every frame removes that
-  // ambiguity entirely — the brake has full, deterministic control over when
-  // the slide starts, how long it takes, and when it ends.
+  // duration/easing), not window.scrollTo({behavior:'smooth'}) released on the
+  // `scrollend` event — an earlier version did that and was reported as
+  // "brakes but doesn't slide, feels groggy". The likely cause: `scrollend`
+  // doesn't clearly distinguish the wheel-driven scroll that triggered the
+  // brake from the programmatic one meant to animate it, so the two could race
+  // and the native smooth-scroll could get interrupted or barely start before
+  // release fired. Manually driving every frame removes that ambiguity
+  // entirely — the brake has full, deterministic control over when the slide
+  // starts, how long it takes, and when it ends.
   //
   // Desktop/tablet only (>=769px): capturing touch input this way is
   // meaningfully more disruptive to touch-scroll physics than to a mouse wheel,
@@ -217,7 +231,10 @@ const { slides = [
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const desktopQuery = window.matchMedia("(min-width: 769px)");
-    const SLIDE_DURATION_MS = 600;
+    const TRIGGER_SCROLL_THRESHOLD_PX = 30;
+    const SLIDE_DURATION_FLOOR_MS = 400;
+    const SLIDE_DURATION_MAX_MS = 1200;
+    const SLIDE_MS_PER_PX = 0.3;
 
     let active = desktopQuery.matches;
     let isBraking = false;
@@ -250,11 +267,23 @@ const { slides = [
 
       const startY = window.scrollY;
       const endY = targetScrollY();
+      const distance = Math.abs(endY - startY);
+      const duration = Math.min(SLIDE_DURATION_MAX_MS, SLIDE_DURATION_FLOOR_MS + distance * SLIDE_MS_PER_PX);
       const startTime = performance.now();
 
       function step(now: number) {
-        const progress = Math.min(1, (now - startTime) / SLIDE_DURATION_MS);
-        window.scrollTo(0, startY + (endY - startY) * easeInOutQuad(progress));
+        const progress = Math.min(1, (now - startTime) / duration);
+        // Explicit object form + behavior:"auto" (not the 2-arg
+        // window.scrollTo(x, y) form) so this stays immune to the site-wide
+        // `scroll-behavior: smooth` in site.css — the 2-arg form is subject
+        // to that CSS property, and letting the browser layer its own smooth
+        // animation on top of a value already being manually eased every
+        // frame would fight this animation rather than complement it.
+        window.scrollTo({
+          top: startY + (endY - startY) * easeInOutQuad(progress),
+          left: 0,
+          behavior: "auto",
+        });
         if (progress < 1) {
           requestAnimationFrame(step);
         } else {
@@ -277,12 +306,9 @@ const { slides = [
 
       if (!active || isBraking) return;
 
-      const rect = section!.getBoundingClientRect();
-      const inApproachZone = rect.top < window.innerHeight && rect.bottom > 0;
-
-      if (scrollingDown && inApproachZone && !hasBraked) {
+      if (scrollingDown && currentY > TRIGGER_SCROLL_THRESHOLD_PX && !hasBraked) {
         engageBrake();
-      } else if (rect.bottom < -200 || rect.top > window.innerHeight + 200) {
+      } else if (currentY <= TRIGGER_SCROLL_THRESHOLD_PX) {
         hasBraked = false;
       }
     }
@@ -294,5 +320,49 @@ const { slides = [
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
     desktopQuery.addEventListener("change", onResize);
+  })();
+
+  // Task 21 follow-up: fills the gap between the closing "Un vino che esalta i
+  // sensi..." section and the footer. Two earlier attempts (a flat
+  // `min-height: 70vh` guess, then a JS-measured min-height on
+  // `.grids-s-w_i`) both grew the section's own box and were both reported
+  // live as still leaving a gap. Likely cause: `#site-content` (the shared
+  // wrapper around the whole page body, every page) has `overflow: hidden`
+  // set on it in the theme CSS — growing something deep inside that via
+  // min-height doesn't reliably repaint, a different failure class than "the
+  // number was too small". See site.css's Task 21 comment for the full
+  // reasoning.
+  //
+  // This measures the same real gap (between the section and #site-footer),
+  // but instead of growing the section, it sets a `--closing-gap-fill` custom
+  // property on #site-footer itself — #site-footer is a *sibling* of
+  // #site-content, not a descendant, so it isn't subject to that clipping.
+  // site.css's `#site-footer::before` rule uses that property to extend the
+  // footer's own black background upward by exactly the gap amount.
+  //
+  // Re-measures on resize and via a ResizeObserver on <body> (covers content
+  // height changes after the initial run, e.g. late web-font swaps shifting
+  // text line height) — reset-then-remeasure on each run converges to a
+  // stable value rather than growing indefinitely, since re-applying the same
+  // computed value doesn't itself change the observed size again.
+  (function initClosingSectionFill() {
+    const section = document.querySelector<HTMLElement>(".home-closing-section .grids-s-w_i");
+    const footer = document.querySelector<HTMLElement>("#site-footer");
+    if (!section || !footer) return;
+
+    function fill() {
+      footer!.style.setProperty("--closing-gap-fill", "0px");
+      const gap = footer!.getBoundingClientRect().top - section!.getBoundingClientRect().bottom;
+      if (gap > 0) {
+        footer!.style.setProperty("--closing-gap-fill", `${gap}px`);
+      }
+    }
+
+    fill();
+    window.addEventListener("resize", fill);
+    window.addEventListener("load", fill);
+    if (typeof ResizeObserver !== "undefined") {
+      new ResizeObserver(fill).observe(document.body);
+    }
   })();
 </script>
