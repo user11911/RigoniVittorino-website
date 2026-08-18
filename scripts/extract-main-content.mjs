@@ -154,7 +154,7 @@ function inScopePrefixesFor(lang) {
 }
 
 function rewriteAssetsIn($, root, lang, categoryHrefMap) {
-  root.find("img, source").each((i, el) => {
+  root.find("img, source").each((_i, el) => {
     const $el = $(el);
     for (const attr of ["src", "data-src"]) {
       const v = $el.attr(attr);
@@ -172,7 +172,7 @@ function rewriteAssetsIn($, root, lang, categoryHrefMap) {
       $el.attr("srcset", rewritten);
     }
   });
-  root.find("a").each((i, el) => {
+  root.find("a").each((_i, el) => {
     const $el = $(el);
     const href = $el.attr("href");
     if (!href) return;

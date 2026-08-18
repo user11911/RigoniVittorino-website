@@ -10,15 +10,6 @@ const contentHtml = await readFile(
   path.join(process.cwd(), "src/content/main/en/home.html"),
   "utf8",
 );
-// Same 4 images as /it/ (confirmed language-neutral). Task 14: the per-slide
-// caption text this array used to carry was removed by explicit user request —
-// see .claude/TODO.md Task 14.
-const slides = [
-  { image: "/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s3-vigneti.jpg" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s4-famiglia.jpg" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s5-cantina.jpg" },
-];
 ---
 
 <BaseLayout
@@ -30,6 +21,8 @@ const slides = [
   otherLangUrls={localeEquivalents.pages.home}
   showLoadingScreen
 >
-  <Hero slides={slides} />
-  <Fragment set:html={contentHtml} />
+  <Hero />
+  <div class="home-content">
+    <Fragment set:html={contentHtml} />
+  </div>
 </BaseLayout>

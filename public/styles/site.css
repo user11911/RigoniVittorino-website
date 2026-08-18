@@ -5,6 +5,156 @@
  * self-hosted original CSS files loaded in BaseLayout.
  */
 
+/* --- Task 32: site-wide (every page, every language) — page content sat with a
+ * ~20px gap from the true left/right viewport edges everywhere except the header
+ * and footer, reported as making the site "look less clean." Root cause, found by
+ * reading the theme cascade rather than guessing a container/padding value to
+ * override: the vendor theme (twentytwenty/parent-style.min.css) gives every
+ * *direct child* of `.entry-content` that isn't a WP "wide"/"full"-aligned block
+ * `margin-left:auto;margin-right:auto` plus `width:calc(100% - 4rem)` — a
+ * deliberate 40px (`4rem`, and `1rem=10px` under this theme's own
+ * `html{font-size:62.5%}`) reservation that's a standard WordPress block-editor
+ * convention (regular content gets breathing room; only explicitly "wide"/"full"
+ * blocks reach the edges). The child theme (geppa/twentytwenty-style.min.css)
+ * already overrides this rule's `max-width` to `unset`, but keeps that same
+ * `width: calc(100% - 4rem)` — so the 40px reservation (auto-centered, i.e. ~20px
+ * each side) survived into this rebuild untouched.
+ *
+ * Every page in this rebuild renders its content as `.entry-content`'s direct
+ * child (`.grids-section` on the 4 main Grids-plugin pages and their EN/DE
+ * equivalents; `.wines-row-container` on the wine category listing pages) — none
+ * of these carry an `alignwide`/`alignfull`/`is-style-wide` class, so *all* of
+ * them were caught by this rule, while `#site-header`/`#site-footer` (siblings of
+ * `#site-content`, not descendants of `.entry-content` at all — see
+ * `BaseLayout.astro`) were never subject to it, matching exactly the reported
+ * "every page except header/footer" pattern. (Wine product detail pages use their
+ * own `.wine-container`, not `.entry-content`, so they were never affected
+ * either — confirmed by reading that page template, not assumed.)
+ *
+ * Fixed by overriding just the `width` this rule sets, back to the child's full
+ * available `100%` — removing the reserved 40px rather than changing how it's
+ * distributed. The selector below is a verbatim copy of the child theme's own
+ * (`:root body .entry-content>*:not(...)`), which guarantees this wins: identical
+ * specificity, and `site.css` loads last of all stylesheets (`BaseLayout.astro`).
+ * Known side effect: `/it/privacy-policy/`'s one placeholder callout box (the
+ * "Nota per il titolare del sito" warning, Task 6) is also a direct
+ * `.entry-content` child with no alignment class, so its bordered box now spans
+ * the full column width too instead of stopping 40px short — a presentational
+ * width change only, its own text/border/background and all legal content are
+ * untouched, so this doesn't need separate authorization under the frozen-legal-
+ * content rule (which covers factual/legal text, not a generic sitewide spacing
+ * fix that happens to reach this page too). --- */
+:root
+  body
+  .entry-content
+  > *:not(.alignwide):not(.alignfull):not(.alignleft):not(.alignright):not(
+    .is-style-wide
+  ) {
+  width: 100%;
+}
+
+/* --- Header: logo permanently compact, pre-header bar only visible at the
+ * top (site-wide, every page/language) ---
+ * public/scripts/site.js's stickyHeader() toggles `.sticky` on #site-header
+ * as soon as `window.scrollY > 0` (immediate, no threshold) — used both for
+ * `position:fixed` pinning (unchanged) and, in the vendor theme
+ * (twentytwenty-style.min.css), to shrink the logo (130px/80px mobile ->
+ * 50px) and hide `.pre-header-inner` (the language-switcher/social-icons
+ * bar). Per explicit user decision, the logo stays locked at its compact
+ * 50px size unconditionally, at every scroll position — `!important` is
+ * deliberate, not defensive: this exact header area already had one real
+ * specificity-tie bug in this project (see Task 15's `#site-header.sticky`
+ * fix in IMPLEMENTATION_NOTES.md), so an unambiguous win is preferred over
+ * relying on selector-specificity/load-order alone.
+ *
+ * The pre-header bar is deliberately handled differently: an earlier round
+ * force-hid it permanently, then force-showed it permanently, then narrowed
+ * that to "visible only at the top" (matching the vendor default) — but
+ * reported live as looking "buggy": the vendor's own `.sticky .pre-header-
+ * inner{display:none}` hides it with `display`, which cannot be transitioned
+ * by CSS at all, so it always was a hard, instant cut, no matter what
+ * triggered it. Replaced with a `max-height`+`opacity` transition instead
+ * (both are animatable), which requires overriding the vendor's `display:
+ * none` with `display:flex!important` so the element stays in the layout for
+ * the transition to actually animate between two states, rather than
+ * vanishing from the layout tree the instant `.sticky` is added. `60px` is a
+ * safely-larger-than-content estimate for the collapsed/expanded max-height
+ * (its real content — `font-size:1.3rem` text plus small icons — is
+ * comfortably under that), not an exact measurement; a max-height transition
+ * doesn't require an exact value to look like a real slide, only one that
+ * comfortably fits the content without clipping it at rest. --- */
+/* --- Task 34 (logo half): reverted. This project tried two variants of a
+ * bigger/centered logo tied to the pre-header's visibility — a two-row layout,
+ * then (per explicit request to "try the alternative") an overlay where the
+ * logo floated centered on top of the nav row — and both were rejected live
+ * ("I do not like the big logo" / "this does not look good"). Per explicit
+ * request to "go back to the compact logo that we always had on this project,"
+ * reverted to exactly Task 25's original rule below: logo locked at its compact
+ * 50px size unconditionally, at every scroll position and screen size, no
+ * pre-header-tied variation. Per `CLAUDE.md`'s circuit-breaker rule (two live
+ * rejections in a row for the same feature), this isn't a third incremental
+ * variant to try next — if a bigger/centered logo is wanted again later, that
+ * needs a fresh conversation about what specifically didn't work, not another
+ * guess at positioning. The menu font/case change from this same task (below)
+ * was not reported as disliked and stays as-is. --- */
+header#site-header .header-inner .site-logo img {
+  max-height: 50px !important;
+}
+
+/* --- Task 34 follow-up: desktop nav menu switched to normal sentence case,
+ * matching the rest of the site's text, per explicit request ("swap the menu
+ * font style to that of the rest of the site").
+ *
+ * The menu's actual rendered *font-family* was already `var(--body-font-family)`
+ * (Proza Libre, the same font the rest of the site uses) before this change —
+ * confirmed by tracing the full cascade, not assumed: `ul.primary-menu` itself
+ * has a leftover `font-family:Merriweather` (style-custom.min.css), but
+ * Merriweather is never actually loaded anywhere in this rebuild (no Google
+ * Fonts link, no `@font-face`), and a more specific, later rule
+ * (`ul.primary-menu li{font-family:var(--body-font-family)}`,
+ * geppa/twentytwenty-style.min.css) sets the font directly on the `<li>` itself
+ * — an element's own explicit declaration always wins over what it would
+ * otherwise inherit from an ancestor, regardless of that ancestor's own
+ * specificity, so the dead `Merriweather` declaration was never actually
+ * reaching the rendered text. What *was* visibly different was
+ * `text-transform:uppercase` (also from that same style-custom.min.css rule) —
+ * confirmed with the user this was the real target before touching it, since
+ * the font-family half of the original request turned out to already be true.
+ *
+ * Targets `ul.primary-menu` directly, not just an ancestor wrapper: the
+ * `uppercase` rule is declared directly *on* that element (style-custom.min.css),
+ * and an element's own explicit declaration always wins over whatever it would
+ * otherwise inherit from an ancestor, regardless of the ancestor rule's own
+ * specificity — so overriding only `.primary-menu-wrapper` (a parent of the
+ * `<ul>`, not the `<ul>` itself) would have had no effect at all, the same
+ * inheritance trap the font-family half of this investigation just uncovered.
+ * `header#site-header` in the selector (rather than bare `ul.primary-menu`) is
+ * only there to safely out-specificity style-custom.min.css's rule regardless
+ * of load order, matching this file's usual approach in this same header area.
+ * Once the `<ul>`'s own computed value is `none`, normal inheritance (nothing
+ * else in the chain redeclares text-transform) carries it down through the
+ * nested `.sub-menu` dropdown items too ("I nostri vini"'s children) without
+ * needing a separate rule for them. The mobile hamburger menu is unaffected by
+ * construction, not extra scoping — it's a structurally separate
+ * `<ul class="modal-menu">` in the slide-out `.menu-modal`, not a descendant of
+ * `ul.primary-menu` at all; changing its treatment too would be a separate
+ * decision, not asked for here. --- */
+header#site-header ul.primary-menu {
+  text-transform: none;
+}
+
+header#site-header .pre-header-inner {
+  overflow: hidden;
+  max-height: 60px;
+  opacity: 1;
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+}
+header#site-header.sticky .pre-header-inner {
+  display: flex !important;
+  max-height: 0;
+  opacity: 0;
+}
+
 /* --- Hero (replaces RevSlider) --- */
 .hero-slider {
   position: relative;
@@ -12,48 +162,27 @@
   width: 100%;
   height: 520px;
 }
-.hero-slider__slide {
+/* --- Task 35: single looping background video, replacing the 4-photo
+ * crossfading carousel that used to fill this same box (`.hero-slider__slide`/
+ * `.hero-slider__dots` and their rules removed outright — nothing left to
+ * paginate between with only one video, so nothing was left dead here). Sized
+ * identically to how the old slides filled their box (`position:absolute;
+ * inset:0`, full width/height, `object-fit:cover` doing the same job
+ * `background-size:cover` did) — `.hero-slider`'s own height (520px desktop,
+ * 420px mobile, or the Task 17 fixed-viewport override below) is unchanged and
+ * still fully governs the visible box; the video just fills whatever that box
+ * is, exactly like the photos did. No `object-position` override (the old
+ * `background-position:center 30%` isn't reproduced here): that value was
+ * tuned for the specific 4 product/vineyard photos it framed, not for this
+ * new, unrelated video's own composition — worth checking once seen live and
+ * adding an equivalent `object-position` then, if the video's subject needs
+ * similar vertical framing help. --- */
+.hero-slider__video {
   position: absolute;
   inset: 0;
-  opacity: 0;
-  transition: opacity 1s ease;
-  background-size: cover;
-  background-position: center 30%;
-}
-.hero-slider__slide.is-active {
-  opacity: 1;
-  z-index: 1;
-}
-.hero-slider__v-logo {
-  position: absolute;
-  right: 8%;
-  bottom: 0;
-  height: 85%;
-  width: auto;
-  z-index: 1;
-  opacity: 0.9;
-  pointer-events: none;
-}
-.hero-slider__dots {
-  position: absolute;
-  right: 24px;
-  bottom: 24px;
-  z-index: 3;
-  display: flex;
-  gap: 10px;
-}
-.hero-slider__dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  border: 1px solid #fff;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-}
-.hero-slider__dot.is-active {
-  background: #000;
-  border-color: #000;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 @media (max-width: 768px) {
   .hero-slider {
@@ -61,101 +190,218 @@
   }
 }
 
-/* --- Featured wines image slider (replaces Getwid images-slider block) --- */
-.wp-block-getwid-images-slider__wrapper {
+/* --- Task 17: full-viewport hero + fully-opaque, reversible white fade. See
+ * .claude/TODO.md Task 17 for the full design; IMPLEMENTATION_NOTES.md for why
+ * this replaces a fully-discarded prior attempt at the same effect.
+ *
+ * `--header-height` is set by Hero.astro's script from the header's own real
+ * rendered height (not assumed) — `.hero-fixed-wrapper` reserves exactly that
+ * much less than 100dvh of normal document-flow space, and `.hero-slider` (the
+ * actual fixed, visible image) starts exactly `top: var(--header-height)`, so it
+ * geometrically never overlaps the header at any screen size — no z-index
+ * reasoning needed for that specific guarantee.
+ *
+ * `.home-content` (wraps everything after the hero, homepage only) uses its own
+ * `background-color`, not a separate overlay element competing via z-index — an
+ * element's own background is guaranteed by the CSS box model to always paint
+ * behind its own content, which a separate overlay could never guarantee. That
+ * pattern failed twice in the discarded prior attempt; this one hasn't.
+ *
+ * `body.home #site-footer` needs its own explicit position+z-index for a
+ * different, easy-to-miss reason: `.hero-slider` is `position: fixed` with an
+ * explicit (non-auto) z-index, and by the CSS2.1 painting order, *any* positioned
+ * element with a specified z-index paints above *any* non-positioned in-flow
+ * content — regardless of DOM order. Without this, the footer (which has an
+ * opaque background but no position/z-index of its own) would render behind the
+ * still-fixed hero once scrolled into that same screen region, hiding it
+ * entirely. Scoped to `body.home` since the fixed hero only exists there. --- */
+@media (min-width: 769px) {
+  .hero-fixed-wrapper {
+    position: relative;
+    height: calc(100dvh - var(--header-height, 0px));
+  }
+  .hero-slider {
+    position: fixed;
+    top: var(--header-height, 0px);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    height: auto;
+  }
+  .home-content {
+    position: relative;
+    z-index: 500;
+    background-color: transparent;
+    transition: background-color 500ms ease;
+  }
+  html.is-hero-faded .home-content {
+    background-color: #fff;
+  }
+  body.home #site-footer {
+    position: relative;
+    z-index: 500;
+  }
+}
+/* Deliberately combined with min-width:769px, not a standalone
+ * prefers-reduced-motion query: everything here only needs to undo what the
+ * min-width:769px block above did, and nothing else in this file behaves
+ * differently under reduced motion at narrow widths. A standalone
+ * `@media (prefers-reduced-motion: reduce)` block setting `.hero-slider`'s height
+ * back to 520px would incorrectly win a cascade tie against the max-width:768px
+ * mobile rule above (420px) for narrow-screen reduced-motion users, since it
+ * would come later in source order at equal specificity — this combined query
+ * only ever matches at >=769px, where that mobile rule was never in play. */
+@media (min-width: 769px) and (prefers-reduced-motion: reduce) {
+  .hero-fixed-wrapper {
+    height: auto;
+  }
+  .hero-slider {
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    height: 520px;
+  }
+  .home-content {
+    position: static;
+    background-color: transparent;
+  }
+}
+
+/* --- Task 18 refinement: extra breathing room before "Dalla campagna al
+ * bicchiere", so the scroll-jacking brake (see Hero.astro) has more runway
+ * before engaging instead of triggering almost immediately after leaving the
+ * hero. The section's own scraped inline styles resolve its top margin to 0
+ * (--_gs-m-desktop's top value), so this simply gives it one instead.
+ * `!important` for the same reason as the header-size fix in Task 16: a
+ * deliberate, permanent override of the vendor default, not a defensive
+ * measure against a specificity tie that could go either way — site.css loads
+ * after the vendor grids CSS regardless.
+ *
+ * Both the brake's approach-zone check and Task 17's fade-trigger threshold
+ * measure this section's live rendered position at runtime
+ * (getBoundingClientRect()), not a hardcoded distance — so this one CSS change
+ * is sufficient on its own; both effects automatically shift later to match,
+ * with no JS changes needed. Desktop/tablet only, matching every other part of
+ * this scroll experience — mobile has no fixed hero or brake effect to give
+ * more runway to. */
+@media (min-width: 769px) {
+  .home-philosophy-section {
+    margin-top: 280px !important;
+  }
+}
+
+/* --- Task 20: "La nostra collezione" redesigned — centered text, then 6
+ * category images laid out in a horizontal row acting as navigation buttons,
+ * replacing the old 2-column layout (a rotating Getwid image-slider carousel
+ * of individual wine products on one side, a separate vertical icon+text
+ * category list on the other). See .claude/TODO.md Task 20 for the full
+ * design and category/image mapping (verified against src/data/wines.json
+ * and src/data/categories*.json, not guessed from filenames).
+ *
+ * Removing the carousel markup entirely orphaned the Getwid-slider CSS that
+ * used to live here (`.wp-block-getwid-images-slider__wrapper`, `.getwid-
+ * slider-arrow`) and its JS (site.js's enhanceImageSliders()) — confirmed via
+ * grep that no page anywhere in src/content/main still uses that component,
+ * so both were removed rather than left as dead code.
+ *
+ * `.collection-showcase` isn't grid-item-positioned the way the rest of this
+ * section's scraped Grids markup is (it doesn't use the plugin's
+ * --_ga-column/--_ga-row custom properties at all) — grid-column: 1 / -1
+ * makes it span the full width of the parent .grids-s-w_i grid container
+ * regardless of that container's own 12-column grid-template, sidestepping
+ * any auto-placement ambiguity. The heading/paragraphs get a constrained,
+ * centered max-width (readable line length); the category row is
+ * deliberately NOT constrained the same way, so it can use the section's
+ * full width instead of feeling cramped into a narrow column.
+ *
+ * `position: relative` is required, not decorative: this section's visible
+ * background isn't painted by .grids-section/.grids-area at all — it comes
+ * from a separate `position: absolute` `::before` pseudo-element on the
+ * parent .grids-s-w_i (part of the Grids plugin's own CSS,
+ * grids-frontend.min.css), with z-index: auto. Per the CSS painting-order
+ * spec, a `position: static` element (the default, and what this had before
+ * this fix) always paints *behind* a `position: absolute` element in the
+ * same stacking context, regardless of DOM order — so without this,
+ * .collection-showcase silently rendered underneath that pseudo-element's
+ * opaque grey background, fully invisible. The scraped .grids-area markup
+ * this replaced had `position: relative` for exactly this reason; this new
+ * element needs the same property to get the same guarantee.
+ *
+ * The heading's `margin-left/right: auto !important` below is deliberate,
+ * not defensive: the theme's own CSS (twentytwenty/parent-style.min.css) has
+ * `body .entry-content h1, h2, h3, h4, h5 { margin-left: 0; margin-right: 0;
+ * ... }` — that selector has *higher* specificity than a plain
+ * `.collection-showcase h2` (an extra `body` element in the selector beats
+ * ours on element count, even though we both have one class), so it silently
+ * won the cascade and forced the heading back to margin: 0, left-aligned
+ * instead of centered, regardless of the `margin: auto` below. No matching
+ * override was found for `.entry-content p`, so the paragraphs don't need
+ * the same `!important`. `font-size` on the heading needs it for the same
+ * reason: the theme sets a bare `h2 { font-size: 36px }` (confirmed via
+ * grep, not assumed) which a same-specificity-or-lower override could lose
+ * to depending on load order. --- */
+.collection-showcase {
   position: relative;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  text-align: center;
 }
-.wp-block-getwid-images-slider__wrapper[data-enhanced] .wp-block-getwid-images-slider__item {
-  display: none;
+.collection-showcase h2,
+.collection-showcase > p {
+  max-width: 700px;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
-.wp-block-getwid-images-slider__wrapper[data-enhanced] .wp-block-getwid-images-slider__item.is-active {
-  display: block;
+.collection-showcase h2 {
+  font-size: 3rem !important;
 }
-.getwid-slider-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  margin: 0;
+.collection-showcase__categories {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  background: rgba(255, 255, 255, 0.85);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 20px;
-  line-height: 1;
-  color: #333;
-}
-.getwid-slider-arrow:hover {
-  background: #fff;
-  border-color: rgba(0, 0, 0, 0.35);
-}
-.getwid-slider-arrow.prev {
-  left: 10px;
-}
-.getwid-slider-arrow.next {
-  right: 10px;
-}
-
-/* --- Share button pills (the plugin generates this styling via runtime JS from
-   admin settings rather than a static stylesheet, so it's rebuilt here to match the
-   visible pill/badge appearance seen on the live site) --- */
-.wp-share-button {
-  display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 40px;
 }
-.wp-share-button .share-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border: 1px solid #e2e2e2;
-  border-radius: 3px;
-  font-size: 0.85rem;
-  color: #333;
-  text-decoration: none;
-  white-space: nowrap;
-}
-.wp-share-button .share-button-more {
-  display: inline-flex;
-  padding: 6px 10px;
-  border: 1px solid #e2e2e2;
-  border-radius: 3px;
-  color: #333;
-}
-.wp-share-button .button-count {
-  color: #999;
-}
-
-/* --- Share button "more" popup (replaces social-share-button plugin JS) --- */
-.wp-share-button-popup {
-  display: none;
-  position: absolute;
-  z-index: 10;
-  background: #fff;
-  border: 1px solid #eee;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 10px;
-}
-.wp-share-button-popup.is-open {
-  display: block;
-}
-.wp-share-button-popup .popup-buttons {
+.collection-showcase__category {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 10px;
+  width: 200px;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 200ms ease;
 }
-.wp-share-button-popup .close {
-  cursor: pointer;
-  align-self: flex-end;
+.collection-showcase__category:hover {
+  opacity: 0.75;
+}
+.collection-showcase__category img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  /* contain, not cover: the 6 source product photos have noticeably different
+   * native framing (some have generous white space above/below the bottle,
+   * some crop tight to it) — cover would crop each one to fill the box,
+   * which is harmless for the loosely-framed ones but cuts directly into the
+   * bottle itself for a tightly-framed one (confirmed live: Cabernet
+   * Sauvignon). contain guarantees no image is ever cropped regardless of
+   * its own proportions, at the cost of some showing a bit more surrounding
+   * space than others — a smaller issue than clipping the subject. */
+  object-fit: contain;
+  border-radius: 4px;
+}
+.collection-showcase__category span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+@media (max-width: 768px) {
+  .collection-showcase__category {
+    width: 140px;
+  }
 }
 
 /* Task 1 originally replaced wp-image-zoooom (the live site's real behavior is a
@@ -169,10 +415,9 @@
 /* --- Loading screen (Task 13, new — no original-site equivalent, homepage only) ---
  * A single full-viewport black panel, scaled from the horizontal center via
  * `transform: scaleX()`. Growing 0 -> 1 reads as "white to black, sliding from the
- * center to both sides" (the entry); shrinking back 1 -> 0 on reveal is the exact
- * reverse, per the user's confirmed design decision (see .claude/TODO.md Task 13).
- * The logo is a separate element with its own opacity transition so the panel's
- * scaleX never stretches/squishes it.
+ * center to both sides" (the entry — unchanged since Task 13's original design).
+ * The logo/spinner are separate elements with their own opacity transition so the
+ * panel's scaleX never stretches/squishes them.
  * `.loading-screen` itself carries the opaque white background (not just the black
  * panel): the panel starts at scaleX(0) — zero width, covering nothing — so without
  * this, the real page underneath would show through until the panel grows, making
@@ -180,12 +425,39 @@
  * is plain CSS present from first paint (no JS delay), so there's never a flash of
  * real content. It's switched to transparent the instant `.is-hiding` is added (see
  * below) — invisible at that moment since the panel is still at full black coverage
- * — so the reveal exposes the real page, not another white layer, as it recedes. */
+ * — so the reveal exposes the real page, not another white layer, as it recedes.
+ *
+ * Task 30: the *reveal* (only) redesigned from "shrink back toward center"
+ * (scaleX 1->0) to a vertical slide-up, "so as to look like a scroll down" per
+ * explicit request — the panel, logo, and spinner all translate upward together
+ * and off the top of the viewport, rather than the panel alone shrinking
+ * horizontally. The entry (scaleX growth) is untouched — only reveal changed.
+ *
+ * All three elements share the exact same `transform: translateY(-110dvh)` value
+ * (one combined selector below, not three separately-typed numbers) and the same
+ * `650ms ease-in-out` transition — a literal shared value is what actually
+ * *guarantees* "the same speed" (distance ÷ time, both identical by construction)
+ * rather than three independently-chosen numbers that merely look similar.
+ * `-110dvh` (not `100dvh`): a small safety margin so no 1px sliver of the panel
+ * can remain visible at the very top edge if a browser rounds the transition's
+ * endpoint slightly short; `dvh` (not `vh`) for the same mobile-dynamic-toolbar
+ * reasoning already established elsewhere in this codebase (Hero.astro's
+ * `--header-height`/100dvh sizing) rather than introducing a second convention.
+ *
+ * The spinner needed restructuring into an outer wrapper (`.loading-screen__spinner`,
+ * gets the translateY) plus an inner ring (`.loading-screen__spinner-ring`, keeps
+ * the continuous rotation). Putting both `transform`s on one element would have
+ * been wrong: a CSS `animation` and a CSS `transition` targeting the *same*
+ * property on the *same* element don't combine — the animation wins outright and
+ * the transition is simply never visible — so the rotating ring is structurally
+ * isolated onto its own element instead of relying on any cascade-priority
+ * behavior to "probably" work out. */
 .loading-screen {
   position: fixed;
   inset: 0;
   z-index: 9999;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: #fff;
@@ -199,7 +471,7 @@
   background: #000;
   transform: scaleX(0);
   transform-origin: center;
-  transition: transform 600ms ease-in-out;
+  transition: transform 350ms ease-in-out;
 }
 .loading-screen__logo {
   position: relative;
@@ -207,7 +479,40 @@
   width: min(45vw, 220px);
   height: auto;
   opacity: 0;
-  transition: opacity 400ms ease;
+  transition: opacity 400ms ease, transform 650ms ease-in-out;
+}
+/* Simple minimal spinner below the logo — plain border-ring technique (no extra
+ * asset/SVG needed), white to read against the fully-black panel. Fades in
+ * alongside the logo (same opacity transition/delay) rather than popping in
+ * abruptly. Not gated separately behind prefers-reduced-motion: the whole
+ * `.loading-screen` is already `display:none` for those visitors below, so this
+ * spinner never renders/animates for them either. Split into an outer positioning
+ * wrapper (`.loading-screen__spinner`, opacity + reveal transform) and an inner
+ * ring (`.loading-screen__spinner-ring`, the visible border-ring + its continuous
+ * rotation) — see the Task 30 comment above for why this split is structural, not
+ * just tidiness. */
+.loading-screen__spinner {
+  position: relative;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  margin-top: 24px;
+  opacity: 0;
+  transition: opacity 400ms ease, transform 650ms ease-in-out;
+}
+.loading-screen__spinner-ring {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: loading-screen-spin 0.8s linear infinite;
+}
+@keyframes loading-screen-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .loading-screen.is-active .loading-screen__panel {
   transform: scaleX(1);
@@ -216,14 +521,478 @@
   opacity: 1;
   transition-delay: 250ms;
 }
+.loading-screen.is-active .loading-screen__spinner {
+  opacity: 1;
+  transition-delay: 250ms;
+}
 /* Reveal: intentionally slower/more deliberate than the entry, per explicit request —
- * `.is-hiding` is added alongside removing `.is-active` (see LoadingScreen.astro),
- * overriding just the duration for that transform change back to scaleX(0). */
+ * `.is-hiding` is added alongside removing `.is-active` (see LoadingScreen.astro).
+ * Both durations were halved from their original 600ms/1200ms per an explicit
+ * "speed up the sliding animations" request — the entry:exit 1:2 ratio (exit
+ * slower/more deliberate) is preserved, just scaled down. Task 30: the exit
+ * `transform` value changed from an implicit fallback to `scaleX(0)` to an
+ * explicit vertical slide, shared identically across all 3 elements (see the
+ * longer comment above `.loading-screen` for why this guarantees "same speed"). */
+.loading-screen.is-hiding .loading-screen__panel,
+.loading-screen.is-hiding .loading-screen__logo,
+.loading-screen.is-hiding .loading-screen__spinner {
+  transform: translateY(-110dvh);
+}
 .loading-screen.is-hiding .loading-screen__panel {
-  transition-duration: 1200ms;
+  transition-duration: 650ms;
 }
 @media (prefers-reduced-motion: reduce) {
   .loading-screen {
     display: none;
   }
+}
+
+/* --- Task 21: the homepage's closing section ("Un vino che esalta i sensi...")
+ * — solid black background instead of the original rigoni-barique-riflessi-c.jpg
+ * photo (swapped directly in the scraped inline custom properties, not here —
+ * see home.html/en/home.html/de/home.html's --_gs-bg-* values), and the gap that
+ * used to sit between the text/button group and the footer filled in.
+ *
+ * The text's own color (#f5efe0, from the theme's `.has-background-color` rule)
+ * was already a light color chosen for the original dark photo background, so
+ * it needed no adjustment for the new solid-black background — confirmed via
+ * the theme CSS before assuming, not guessed.
+ *
+ * Two earlier attempts at filling the gap both grew the section's own box from
+ * the inside (a flat `min-height: 70vh` guess, then a JS-measured min-height on
+ * `.grids-s-w_i`) — both reported live as still leaving a gap. The likely real
+ * cause, found by reading the theme CSS rather than guessing a third number:
+ * `#site-content` (the shared wrapper around the entire page body, every page,
+ * not homepage-specific) has `overflow: hidden` set on it
+ * (twentytwenty-style.min.css / parent-style.min.css). Growing something deep
+ * inside an overflow:hidden ancestor via min-height doesn't reliably repaint the
+ * way normal block growth does, even when the style value itself is being set
+ * correctly — a different failure class than "wrong number", not fixable by
+ * guessing a bigger one.
+ *
+ * Rather than keep fighting that (or risk a site-wide `overflow` change, which
+ * needs explicit approval given the blast radius — #site-content is shared by
+ * every page), this fills the gap from the *other* side instead: `#site-footer`
+ * is a sibling of `#site-content`, not a descendant, so it isn't subject to that
+ * clipping at all. `#site-footer::before` (below) extends the footer's own
+ * black background upward by exactly the measured gap, via the
+ * `--closing-gap-fill` custom property that `initClosingSectionFill()` in
+ * Hero.astro sets — see that script for the measurement logic. Scoped to the
+ * same `@media (min-width: 769px)` block as `#site-footer`'s existing
+ * `position: relative` rule (Task 17/18) since that positioning is what this
+ * pseudo-element's `position: absolute` needs to anchor to correctly — on
+ * mobile, the hero isn't `position: fixed` either (see that rule's own
+ * comment), so there's no bleed-through to cover there in the first place. ---
+ */
+@media (min-width: 769px) {
+  body.home #site-footer::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: var(--closing-gap-fill, 0px);
+    /* Task 25 follow-up: was solid #000 (matching ".home-closing-section"'s
+     * own black background, which this pseudo-element extends). Changed to
+     * the footer's own background color instead: the viewport-edge margin
+     * on the stacked homepage sections (see Task 25's own comment on
+     * .home-philosophy-section above) is being left as-is rather than
+     * chased further, which means this full-bleed, edge-to-edge filler
+     * (no side margin of its own) no longer visually matches the section
+     * it's meant to extend. Matching the footer's own color instead makes it
+     * blend into the always-full-bleed footer beneath it rather than clash
+     * with the section above. */
+    background: var(--footer-background-color);
+  }
+}
+
+/* --- Task 21 follow-up: the "cantina production" photo added to the left of
+ * the closing section's text (same image already used on /it/cantina/ etc.,
+ * right after this same "Un vino che esalta i sensi..." text there — see
+ * IMPLEMENTATION_NOTES.md).
+ *
+ * The uncropped, natural-sizing version (matching "Dalla campagna al
+ * bicchiere", see IMPLEMENTATION_NOTES.md) had a real, confirmed bug, not
+ * just an appearance: `.grids-area`'s flex `align-items:stretch` stretches
+ * the `<figure>` itself to 100% of the column width, but the plain `<img>`
+ * inside it (inline, `max-width:100%;height:auto`, no explicit width) only
+ * renders at its own intrinsic size when that's narrower than the figure —
+ * and with no `text-align`/`margin:auto` centering it, it sits flush at the
+ * figure's start edge, leaving asymmetric empty space on one side. Confirmed
+ * by reading the actual cascade (figure's own stretch vs. the image's
+ * separate, smaller intrinsic width), not assumed from the screenshot alone.
+ *
+ * Fixed by giving the `<img>` itself an explicit `width:100%` (so it always
+ * fills its figure, the same guarantee the figure already had — no more
+ * leftover asymmetric space to be off-center within) plus a fixed
+ * `aspect-ratio` slightly narrower than the source photo's native ~3:2, so
+ * `object-fit:cover` crops a bit off the left/right sides while keeping the
+ * full bottle height in frame, per explicit request. `4/3` chosen as a
+ * common, easily-reasoned-about ratio close to a "slight" crop of the
+ * original ~3:2, not an arbitrary decimal. This also directly delivers the
+ * "make it bigger" request: the image now reliably fills its full column
+ * width rather than rendering at a smaller intrinsic size. --- */
+.home-closing-section__image img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+/* --- Task 31: on desktop/tablet, make the photo fill the closing section's full
+ * black area top-to-bottom instead of sitting at its own fixed 4:3 crop with gaps
+ * above/below. The area's own top/bottom margin (the gap) was removed directly in
+ * home.html/en/home.html/de/home.html's `--_ga-m-desktop`/`--_ga-m-tablet`
+ * inline values (was `50px 0 50px 0` / `50px 0 25px 0`, now `0 0 0 0`) — the
+ * plugin's `.grids-is-advanced>.grids-s-w_i>.grids-area{height:100%}` rule
+ * (grids-frontend.min.css) already stretches this area to the full row height
+ * (which the text column's own 120px top margin + content drives), so once its
+ * own margin is zeroed it naturally spans from the section's top padding to its
+ * bottom padding — i.e. the visible black borders — with nothing extra to fix
+ * here. `aspect-ratio` is dropped in favor of `height:100%` so the image tracks
+ * that row height instead of a fixed ratio derived only from its own width.
+ *
+ * Filling that height at the column's original width alone made the photo look
+ * like a narrow vertical strip, so the figure is widened by a fixed 80px past its
+ * grid column and left to overflow (`overflow: visible`, the default — nothing
+ * here clips it, and #site-content's own `overflow: hidden` only clips at the
+ * page's outer edge, far past this) into the *text* column's own left portion.
+ * That's a deliberate, low-risk target: the text column is `text-align: right`,
+ * so its left portion is normally empty space anyway. `figure::after` fades the
+ * rightmost 20% of the photo to black (the section's own background) so the seam
+ * blends rather than hard-cutting under the text, and `.bottone-centro` gets an
+ * explicit `z-index` so the text stays legible on the rare line that does cross
+ * into the overlap (mainly the heading). Mobile is unchanged (stacks above the
+ * text at its own aspect-ratio; no side-by-side overlap to manage there). --- */
+@media (min-width: 769px) {
+  .home-closing-section__image {
+    overflow: visible;
+  }
+  .home-closing-section__image figure {
+    position: relative;
+    margin: 0;
+    width: calc(100% + 80px);
+    height: 100%;
+  }
+  .home-closing-section__image img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    aspect-ratio: auto;
+  }
+  .home-closing-section__image figure::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 20%;
+    background: linear-gradient(to right, transparent, #000);
+    pointer-events: none;
+  }
+  .bottone-centro {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* --- Task 22 follow-up: gives the footer's "go to contacts" link the same
+ * hover treatment as the top nav bar (`ul.primary-menu>li:hover` in
+ * geppa/twentytwenty-style.min.css) — a light brown stripe across the bottom
+ * of the item on hover. Reuses that exact gradient value (`#e2d1b4`, the
+ * nav's own hover color — not `#DCC59F`, which that same stylesheet uses for
+ * the nav's *active/current-page* state, a different color for a different
+ * state) and the nav item's own `padding:5px`, rather than inventing new
+ * values, so this reads as the same interaction pattern already established
+ * elsewhere on the site. `display:inline-block` so the padding/background box
+ * renders cleanly around the short text, the same way it does around a
+ * nav `<li>`. --- */
+.footer-contact-link {
+  display: inline-block;
+  padding: 5px;
+}
+.footer-contact-link:hover {
+  background: linear-gradient(0deg, #e2d1b4 45%, rgba(255, 0, 255, 0) 30%);
+}
+
+/* --- Task 22 follow-up: the footer logo (swapped to the header/nav logo
+ * earlier this task) made a bit smaller — display size reduced from 226x94 to
+ * 170x71 in the markup, same aspect ratio — and pushed further from the top
+ * of the footer's content column via margin-top. The theme's own
+ * `.footer-row-logo{margin:auto}` (geppa/twentytwenty-style.min.css) resolves
+ * top/bottom to 0 in normal block flow, so there was no spacing above it
+ * beyond the footer's own sitewide top padding; this adds more on top of
+ * that, specifically for the logo. Reduced from 40px to 20px per Task 25
+ * follow-up feedback — no specific amount was given, so this is a reasonable
+ * estimate (half), not a measured value. Reduced again to 8px (Task 28
+ * follow-up, "reduce it more", another estimate) — kept a small positive
+ * value rather than 0 so the logo doesn't sit flush against the footer's own
+ * top padding.
+ *
+ * Task 28: user asked to swap the static footer logo for "an animation ...
+ * most of the width of the viewport, but relatively thin vertically".
+ * Presented 3 concrete options (scrolling wordmark marquee, shimmer sweep
+ * over the existing logo, hand-drawn signature reveal — the last one flagged
+ * as needing a vector logo that doesn't exist in this repo, only PNG/JPG) via
+ * AskUserQuestion; user picked the shimmer sweep, which by its own preview
+ * description keeps the exact current logo image unanimated and just adds a
+ * moving light-glint over it — this doesn't by itself make anything "most of
+ * the viewport width", so the container itself was widened to satisfy that
+ * original stated requirement: `.footer-row-logo` is no longer sized to the
+ * logo's own natural width, it's a wide (`min(90vw,1100px)`), thin band with
+ * the unchanged logo centered inside it, and the shimmer gradient
+ * (`::before`, `overflow:hidden` on the parent to clip it) sweeps across the
+ * *entire band*, not just the logo's own pixels — this is what actually reads
+ * as "most of the width", not the (still small, untouched) logo image itself.
+ * `100deg` diagonal soft gold-toned gradient (`rgba(220,197,159,...)`, reusing
+ * the site's own existing `--link-color-hover` tone rather than inventing a
+ * new brand color) rather than plain white, since the footer background is
+ * white (`--footer-background-color:#fff` in wp-global.css) and a white-on-
+ * white glint would be close to invisible. `background-size:250% 100%`
+ * animated via `background-position` (GPU-friendly, no layout thrash) loops
+ * continuously; `prefers-reduced-motion` disables it entirely (the shimmer
+ * removed, static logo remains) rather than just slowing it down, consistent
+ * with this project's existing reduced-motion handling elsewhere (loading
+ * screen, Task 17/18's hero effects).
+ *
+ * Follow-up: widened from `min(90vw,1100px)` to the full `100vw` per explicit
+ * "make it take up all of the width of the viewport" request. `.footer-row-
+ * logo` sits inside the footer's normally-centered, `max-width`-constrained
+ * content column (`.section-inner{margin:0 auto;max-width:120rem}` in the
+ * theme CSS) with no `overflow:hidden` on any ancestor between it and
+ * `#site-footer` (checked directly, not assumed) — so the standard
+ * `width:100vw` + `margin-left/right:calc(50% - 50vw)` full-bleed break-out
+ * trick works cleanly here: it escapes the column's own max-width/padding to
+ * touch both true viewport edges, without needing to restructure the
+ * surrounding footer markup. --- */
+.footer-row-logo {
+  position: relative;
+  overflow: hidden;
+  width: 100vw;
+  margin: 8px calc(50% - 50vw) 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.footer-row-logo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    rgba(220, 197, 159, 0.55) 50%,
+    transparent 65%
+  );
+  background-size: 250% 100%;
+  background-repeat: no-repeat;
+  animation: footer-logo-shimmer 5s ease-in-out infinite;
+  pointer-events: none;
+}
+.footer-row-logo img {
+  position: relative;
+  z-index: 1;
+}
+@keyframes footer-logo-shimmer {
+  0% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -50% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer-row-logo::before {
+    display: none;
+  }
+}
+
+/* --- Task 22 follow-up: the "go to contacts" column looked vertically
+ * off-center relative to the phone/email columns beside it — a real layout
+ * bug, not just appearance. `.footer-icon-row{display:flex}` has no
+ * `align-items` set, so its default (`stretch`) makes every `.footer-icon-
+ * column` the same height as the tallest one (phone/email, which each have
+ * an icon + text line). `.footer-icon-column` itself only centers its
+ * content horizontally (`align-items:center` on its own cross axis); with no
+ * `justify-content` set, its single line of content sits at the top of that
+ * stretched box by default, rather than centered within the extra height —
+ * unlike the phone/email columns, which are tall enough on their own that
+ * this never showed. `.footer-icon-column` is shared/vendor CSS used
+ * elsewhere too, so this is scoped to a second, added class on just this one
+ * column instead of changing the shared rule. --- */
+.footer-contact-column {
+  justify-content: center;
+}
+
+/* --- Task 22 second follow-up: the `justify-content:center` fix above wasn't
+ * enough on its own — found the real remaining cause by reading the cascade
+ * further, not by guessing a second time. `twentytwenty/parent-style.min.css`
+ * gives every h1/h2/h3 an asymmetric default margin,
+ * `margin:6rem auto 3rem` (96px top, 48px bottom); the later, more specific
+ * `body h2{...margin-left:0;margin-right:0}` rule (geppa/twentytwenty-
+ * style.min.css) only ever zeroes the *left/right* margin, never top/bottom.
+ * The contact link is the only one of the three footer columns built from an
+ * `<h2>` (phone/email are plain `<div>`s, unaffected) — that leftover 96px
+ * top margin pushed it down inside its own flex box, fighting the
+ * `justify-content:center` fix above rather than being neutralized by it.
+ * Zeroing it here, scoped to just this column's heading, lets the
+ * `justify-content:center` centering actually work as intended. */
+.footer-contact-column .wp-block-heading {
+  margin: 0;
+}
+
+/* --- Task 22 second follow-up: the icon row didn't line up under the footer
+ * logo either — a second, different bug, also confirmed from the CSS rather
+ * than assumed. `.footer-icon-row{display:flex;justify-content:center}`
+ * centers the *combined width* of its 3 children as a single block; that
+ * only lines up with the row's true center — and thus the logo's own
+ * centered position above it — when the flanking columns (phone, email) are
+ * equal width. "Email: info@rigonivittorino.com" is visibly longer text than
+ * "Tel. +39 0422.746459", so the block is lopsided and the middle column's
+ * own center drifts off from the true center by roughly half that
+ * difference. Switching to equal-width grid columns removes the dependency
+ * on content length entirely — the middle column's center is then
+ * guaranteed to match the row's center regardless of how long the phone or
+ * email text is, a correct-by-construction fix rather than one that happens
+ * to work for today's specific text. Scoped to `min-width:769px` to match
+ * the vendor's own existing mobile breakpoint
+ * (`@media(max-width:768px){.footer-icon-row{...display:inline-grid...}}`)
+ * — without this scoping, this unconditional override would load after, and
+ * therefore win over, that mobile-only rule and break the intentional
+ * single-column mobile stacking. --- */
+@media (min-width: 769px) {
+  .footer-icon-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* --- Site-wide: disables the "rubber-band"/bounce overscroll effect (visible
+ * on trackpads, e.g. Safari on macOS, and on mobile) where scrolling past the
+ * very top or bottom of the page briefly reveals blank space beyond the
+ * page's own content before springing back — a deliberate polish request, not
+ * a bug fix. `overscroll-behavior` on `html` targets the real page-level
+ * scroll root: this project's own scroll-jacking code (Hero.astro,
+ * Task 17/18) already relies on `window.scrollY`/`window.scrollTo`, and that
+ * code is confirmed working live, which only happens if `html`/`window` is
+ * genuinely the scrolling context — not a nested wrapper div.
+ *
+ * `scroll-behavior: smooth` added as the deliberately low-complexity choice
+ * over building any custom JS scroll-jacking/inertia effect — this only
+ * affects *programmatic* scrolls (anchor-link jumps, any JS `scrollTo` on
+ * the page) with an eased animation instead of an instant jump; ordinary
+ * wheel/trackpad/touch scrolling is already natively smooth at the OS/browser
+ * level and isn't something CSS or a reasonable amount of JS can meaningfully
+ * improve on without re-implementing what the platform already does.
+ * `prefers-reduced-motion: reduce` overrides it back to an instant jump,
+ * matching every other motion effect on this page. --- */
+html {
+  overscroll-behavior-y: none;
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* --- Task 25: "Dalla campagna al bicchiere" ("La nostra collezione" and "Un
+ * vino che esalta i sensi..." were also reported as having a gap from the
+ * viewport edge, but neither has any margin/width reduction of its own in
+ * the scraped markup — `--_gs-m-desktop`/`-tablet`/`-mobile` are all `0 0 0
+ * 0` for both — so this fix is scoped to the one section confirmed to
+ * actually have a cause). This section's own `.grids-s-w_i` gets
+ * `--_gs-m-desktop:0 10px 60px 10px` / same 10px left+right at tablet/mobile
+ * (only the vertical 0px-top/60px-bottom values differ from that, and stay
+ * untouched here) — a real 10px margin on each side, not just an appearance,
+ * that leaves the page's own pale background (#f8f8f8) visible in a strip at
+ * both edges instead of the section reaching them. Overriding only the
+ * longhand `margin-left`/`margin-right` (not the shorthand `margin`, which
+ * would also need to redeclare the intentional 60px bottom spacing) removes
+ * exactly the side margins without touching that spacing. Applied at every
+ * breakpoint since the same 10px side margin is present in all three
+ * (desktop/tablet/mobile) values in the markup. --- */
+.home-philosophy-section .grids-s-w_i {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* --- Task 21 follow-up: positions the "Scopri di più"/"Find out more"
+ * button in the "Un vino che esalta i sensi..." group at the exact same
+ * distance below the paragraph as the title is above it — measured, not
+ * estimated: the h2's own `margin-bottom` is `3rem` (theme rule
+ * `h1,.heading-size-1,h2,...{margin:6rem auto 3rem}`, parent-style.min.css),
+ * and this theme sets `html{font-size:62.5%}` — 62.5% of the 16px browser
+ * default is 10px, so `1rem = 10px` here, making that margin exactly `30px`.
+ * The paragraph itself contributes nothing on either side: the sitewide
+ * base reset (`h1,h2,...,p,...{margin:0}`) is never re-added for `<p>`
+ * anywhere in this theme (confirmed by grep, not assumed) — so the entire
+ * visible title-to-text gap is that one 30px h2 margin, and the same 30px
+ * applied here as the button's own `margin-top` reproduces it exactly, since
+ * flex items (`.bottone-centro` is `display:flex`) don't margin-collapse
+ * with each other the way block elements can.
+ *
+ * `.bottone-home` is a shared theme class (geppa/twentytwenty-style.min.css)
+ * used by 2 buttons on this page — this one and the one in "Dalla campagna
+ * al bicchiere" — so this stays scoped to `.bottone-centro .bottone-home`
+ * specifically, not the bare `.bottone-home` class, which would move the
+ * other button too. Superseded two earlier rounds here (a `-10px` "nudge up"
+ * estimate, then `-20px`) — this is the first one grounded in an actual
+ * measured value rather than a guess. --- */
+.bottone-centro .bottone-home {
+  margin-top: 30px;
+}
+
+/* --- Redesigns the shared "Scopri di più"/"Find out more" button (used
+ * twice on the homepage — see IMPLEMENTATION_NOTES.md for the earlier
+ * confirmation of exactly where) into an icon-only square: the arrow's own
+ * grey background (`.bottone-home i{background-color:#403d3d}`, unchanged)
+ * stays as the only visible background; the anchor's own two-tone gradient
+ * background (which existed specifically to color the text portion
+ * differently from the icon portion) is removed since there's no text
+ * portion left to color differently.
+ *
+ * The label itself is *not* deleted from the markup — its `<span>` got
+ * `class="screen-reader-text"` (this codebase's existing accessible-hiding
+ * pattern, already used for the header logo's label) instead of `display:
+ * none`, specifically because the icon (`<i>`) already has `aria-hidden=
+ * "true"` — deleting the text outright would have left the button with no
+ * accessible name at all for screen reader users, a real regression, not
+ * hidden visually but silently broken for that guest.
+ *
+ * `width:auto!important` is required, not decorative: EN/DE give this
+ * anchor its own inline `style="width:225px"`/`"268px"` (sized for their
+ * longer translated button text) — only `!important` can override an inline
+ * style from an external stylesheet.
+ *
+ * `.bottone-home i` gets an explicit equal width/height instead of relying
+ * on its existing `padding:15px` + the icon glyph's own natural size to
+ * happen to be square — Font Awesome's arrow-right glyph isn't actually
+ * square, so that combination wouldn't reliably produce one. `48px` estimates
+ * the icon's *previous* effective size (15px padding + ~18px glyph + 15px
+ * padding), so the visible square stays close to its original scale rather
+ * than changing size as a side effect of this fix.
+ *
+ * No positioning changes were made beyond this — `.bottone-centro a.bottone-
+ * home{margin:auto}` (existing rule) already centers this specific button
+ * within its own group, and the *other* instance (in "Dalla campagna al
+ * bicchiere") has no such rule and stays exactly where it already sits;
+ * shrinking the button doesn't change either mechanism, so each stays where
+ * it currently sits, just visually simplified. --- */
+.bottone-home,
+.bottone-home:hover {
+  background: none;
+  width: auto !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bottone-home i {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }

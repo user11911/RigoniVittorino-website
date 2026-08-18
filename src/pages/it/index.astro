@@ -22,5 +22,7 @@ const contentHtml = await readFile(
   showLoadingScreen
 >
   <Hero />
-  <Fragment set:html={contentHtml} />
+  <div class="home-content">
+    <Fragment set:html={contentHtml} />
+  </div>
 </BaseLayout>

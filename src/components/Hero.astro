@@ -1,79 +1,339 @@
 ---
-// Reproduces the visible behavior of the homepage's original RevSlider hero: 4
-// full-width photo slides, crossfade transition, autoplay, dot pagination. Built
-// from scratch with vanilla JS/CSS instead of re-hosting the proprietary RevSlider
-// engine (see IMPLEMENTATION_NOTES.md for the reasoning). Slide images and order
-// were confirmed against the live site's actual rendered (not just static HTML)
-// output; one layer present in the original markup ("Amarone della Valpolicella",
-// linking to a different winery) was measured to be permanently clipped outside
-// the slider's visible bounds on the live site and is intentionally NOT reproduced
-// here since it is never actually seen by visitors.
+// Task 35: the hero's background is now a single looping video instead of the
+// crossfading 4-photo carousel this component originally reproduced (see git
+// history / IMPLEMENTATION_NOTES.md Task 1 for that original RevSlider
+// reconstruction) — per explicit request. The `slides`-array/dot-pagination
+// system this used to have is removed outright, not left dead alongside the
+// video: with a single continuous video there's nothing left to paginate
+// between, and /en/ and /de/ never actually diverged from /it/'s slide set
+// (Task 9's own comment on the old prop confirmed they were byte-identical),
+// so there's no per-language content this loses either. The first of the old 4
+// slide photos is kept on as the <video>'s `poster` (shown before the video's
+// own first frame paints, and if it fails to load at all) rather than dropped.
 //
-// Task 9: `slides` is now an optional prop (default = the exact IT array below,
-// unchanged) so /en/ and /de/ can reuse this component with the same 4 images
-// (confirmed language-neutral — identical src/alt across it/en/de in the raw
-// scrape).
-//
-// Task 14: the per-slide caption text (and its entrance animation) that used to
-// render here was removed by explicit user request — see .claude/TODO.md Task 14.
-export interface Props {
-  slides?: { image: string }[];
-}
-const { slides = [
-  { image: "/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s3-vigneti.jpg" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s4-famiglia.jpg" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s5-cantina.jpg" },
-] } = Astro.props;
+// Task 17: `.hero-fixed-wrapper` reserves real document-flow height equal to the
+// viewport minus the header's own rendered height, while `.hero-slider` itself
+// becomes `position: fixed`, pinned to start exactly below the header (never
+// overlapping it — no z-index reasoning needed for that specific guarantee) and
+// fill the rest of the screen. Below 769px, and under prefers-reduced-motion,
+// none of that applies — the hero behaves exactly as it did before this task
+// (normal block-flow height). See .claude/TODO.md Task 17 for the full design and
+// IMPLEMENTATION_NOTES.md for why this replaces the discarded prior attempt. This
+// container-level mechanism is unchanged by Task 35 — it doesn't care whether
+// what's filling `.hero-slider` is a photo div or a video, only the box itself.
 ---
 
-<div class="hero-slider" data-hero-slider>
-  {
-    slides.map((slide, i) => (
-      <div
-        class={`hero-slider__slide${i === 0 ? " is-active" : ""}`}
-        style={`background-image:url(${slide.image})`}
-        data-index={i}
-      >
-        <img class="hero-slider__v-logo" src="/wp-content/uploads/2021/01/v-rigoni-b-g.png" alt="" />
-      </div>
-    ))
-  }
-  <div class="hero-slider__dots">
-    {/* aria-label kept in Italian for every language: same un-fetchable-without-a-browser
-        limitation the original scrape had for this slider's text — not translated to
-        avoid inventing text. */}
-    {slides.map((_, i) => <button class={`hero-slider__dot${i === 0 ? " is-active" : ""}`} data-goto={i} aria-label={`Vai alla slide ${i + 1}`} />)}
+<div class="hero-fixed-wrapper" data-hero-fixed-wrapper>
+  <div class="hero-slider">
+    <video
+      class="hero-slider__video"
+      data-hero-video
+      poster="/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg"
+      muted
+      loop
+      playsinline
+      preload="none"
+      aria-hidden="true"
+    >
+      <source src="/videos/hero-background.mp4" type="video/mp4" />
+    </video>
   </div>
 </div>
 
 <script>
-  document.querySelectorAll<HTMLElement>("[data-hero-slider]").forEach((root) => {
-    const slides = Array.from(root.querySelectorAll<HTMLElement>(".hero-slider__slide"));
-    const dots = Array.from(root.querySelectorAll<HTMLElement>(".hero-slider__dot"));
-    let current = 0;
-    let timer: ReturnType<typeof setInterval>;
+  // Task 35: autoplay is started from JS, not the `autoplay` HTML attribute,
+  // specifically so `prefers-reduced-motion: reduce` visitors never even
+  // download the video (left at `preload="none"`, poster-only) — matching this
+  // project's existing convention of fully disabling motion, not just slowing
+  // it down, for that preference (loading screen, Task 17/18's scroll effects).
+  // `.play()`'s returned promise is swallowed on rejection: some mobile browsers
+  // still refuse autoplay even when muted in certain conditions, and the
+  // correct fallback there is simply staying on the poster frame, not an error.
+  (function initHeroVideo() {
+    const video = document.querySelector<HTMLVideoElement>("[data-hero-video]");
+    if (!video) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    video.preload = "auto";
+    video.play().catch(() => {});
+  })();
 
-    function show(index: number) {
-      slides[current].classList.remove("is-active");
-      dots[current].classList.remove("is-active");
-      current = (index + slides.length) % slides.length;
-      slides[current].classList.add("is-active");
-      dots[current].classList.add("is-active");
+  // Task 17: sets `--header-height` (consumed by .hero-fixed-wrapper/.hero-slider
+  // in public/styles/site.css to keep the fixed hero starting exactly below the
+  // header) and toggles `is-hero-faded` on <html> once the user has scrolled past
+  // a fixed point just before ".home-philosophy-title" ("Dalla campagna al
+  // bicchiere") would enter the viewport from the bottom. See .claude/TODO.md
+  // Task 17 for the full design.
+  //
+  // Deliberately a fixed scroll-position threshold, not an IntersectionObserver on
+  // the title itself: the fade must persist for the rest of the page (it must NOT
+  // revert once the title scrolls back out of view further down), and is
+  // reversible only by scrolling back above the threshold. A plain isIntersecting
+  // toggle on the title would flip back to false as soon as the title scrolls
+  // above the viewport too, which is wrong — comparing current scrollY against a
+  // fixed threshold computed once (and on resize) gets the one-sided-until-
+  // scrolled-back-up behavior actually needed. Same pattern already validated in
+  // Task 16's bug-fix round (see IMPLEMENTATION_NOTES.md).
+  (function initHeroFullViewport() {
+    const header = document.querySelector<HTMLElement>("#site-header");
+    const titleEl = document.querySelector<HTMLElement>(".home-philosophy-title");
+    if (!header || !titleEl) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const desktopQuery = window.matchMedia("(min-width: 769px)");
+    // The title sits only ~40-70px of real content after the hero's reserved
+    // space (confirmed by measuring the actual page — see .claude/TODO.md Task
+    // 17), so the buffer must be small and floor-guarded: a larger buffer here is
+    // exactly the arithmetic bug that broke Task 16 (it made the threshold go
+    // negative, so the fade was active from first paint on every load).
+    const TRIGGER_BUFFER_PX = 20;
+    const MIN_TRIGGER_SCROLL_PX = 30;
+
+    let active = false;
+    let triggerY = 0;
+
+    function docTop(el: HTMLElement) {
+      return el.getBoundingClientRect().top + window.scrollY;
     }
 
-    function restartAutoplay() {
-      clearInterval(timer);
-      timer = setInterval(() => show(current + 1), 8000);
+    function measure() {
+      active = desktopQuery.matches;
+      if (!active) {
+        document.documentElement.style.removeProperty("--header-height");
+        return;
+      }
+      document.documentElement.style.setProperty(
+        "--header-height",
+        `${header!.getBoundingClientRect().height}px`,
+      );
+      triggerY = Math.max(
+        MIN_TRIGGER_SCROLL_PX,
+        docTop(titleEl!) - window.innerHeight - TRIGGER_BUFFER_PX,
+      );
     }
 
-    dots.forEach((dot, i) => {
-      dot.addEventListener("click", () => {
-        show(i);
-        restartAutoplay();
+    function update() {
+      if (!active) {
+        document.documentElement.classList.remove("is-hero-faded");
+        return;
+      }
+      document.documentElement.classList.toggle("is-hero-faded", window.scrollY >= triggerY);
+    }
+
+    let ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        update();
+        ticking = false;
       });
-    });
+    }
 
-    restartAutoplay();
-  });
+    function onResize() {
+      measure();
+      update();
+    }
+
+    measure();
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+    desktopQuery.addEventListener("change", onResize);
+  })();
+
+  // Task 18: "brakes" the scroll as the user scrolls down into
+  // ".home-philosophy-section" ("Dalla campagna al bicchiere") — the section
+  // captures the scroll and animates to a centered rest position before
+  // releasing control back to the user, rather than letting them scroll freely
+  // past it. See .claude/TODO.md Task 18.
+  //
+  // This is the standard "scroll-jacking" technique: capture wheel/touch input
+  // with preventDefault() while animating window.scrollTo() programmatically,
+  // then release the capture once the animated scroll arrives. It replaces two
+  // earlier attempts at this same effect: a pure-CSS scroll-snap attempt
+  // (removed entirely — see IMPLEMENTATION_NOTES.md for why root-level
+  // scroll-snap turned out to be an unreliable technique in practice, not a
+  // tuning problem) and a passive JS version that only nudged the scroll into
+  // place *after* it had already come to rest — reported as unsatisfying
+  // precisely because it was passive: free scroll, then a corrective jump,
+  // rather than an active brake felt during the scroll itself.
+  //
+  // Only engages once, on the way down, per approach: it doesn't fire scrolling
+  // upward (matching "before going over it" — this is specifically about not
+  // being able to scroll past on the way down), and the guard resets once the
+  // user has scrolled back up near the very top of the page, so scrolling down
+  // again later re-triggers it — same reversible convention as every other
+  // scroll effect on this page.
+  //
+  // Triggers as soon as the user starts scrolling down past a small threshold
+  // (TRIGGER_SCROLL_THRESHOLD_PX) from the top of the page — not once the
+  // section's own position is already nearly in view. Reported live that
+  // requiring a long ordinary scroll through the hero before anything happened
+  // undercut the "premium" feel this was built for; triggering right as the
+  // user leaves the hero makes the whole hero-to-section transition read as one
+  // deliberate motion. Because the animation can now cover a much longer
+  // distance (from just past the hero all the way to centering the section,
+  // rather than a short final approach), its duration scales with that
+  // distance — SLIDE_MS_PER_PX added on top of a floor, capped at
+  // SLIDE_DURATION_MAX_MS — so a short trigger-to-target distance still feels
+  // snappy and a long one doesn't turn into an instant, blurry jump.
+  //
+  // The slide itself is driven manually frame-by-frame (requestAnimationFrame +
+  // duration/easing), not window.scrollTo({behavior:'smooth'}) released on the
+  // `scrollend` event — an earlier version did that and was reported as
+  // "brakes but doesn't slide, feels groggy". The likely cause: `scrollend`
+  // doesn't clearly distinguish the wheel-driven scroll that triggered the
+  // brake from the programmatic one meant to animate it, so the two could race
+  // and the native smooth-scroll could get interrupted or barely start before
+  // release fired. Manually driving every frame removes that ambiguity
+  // entirely — the brake has full, deterministic control over when the slide
+  // starts, how long it takes, and when it ends.
+  //
+  // Desktop/tablet only (>=769px): capturing touch input this way is
+  // meaningfully more disruptive to touch-scroll physics than to a mouse wheel,
+  // and this page's other scroll-driven effects (Task 17) share that same
+  // device scope already.
+  (function initPhilosophySectionBrake() {
+    const header = document.querySelector<HTMLElement>("#site-header");
+    const section = document.querySelector<HTMLElement>(".home-philosophy-section");
+    if (!header || !section) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const desktopQuery = window.matchMedia("(min-width: 769px)");
+    const TRIGGER_SCROLL_THRESHOLD_PX = 30;
+    const SLIDE_DURATION_FLOOR_MS = 400;
+    const SLIDE_DURATION_MAX_MS = 1200;
+    const SLIDE_MS_PER_PX = 0.3;
+
+    let active = desktopQuery.matches;
+    let isBraking = false;
+    let hasBraked = false;
+    let lastScrollY = window.scrollY;
+
+    function preventScroll(e: Event) {
+      e.preventDefault();
+    }
+
+    function targetScrollY() {
+      const headerHeight = header!.getBoundingClientRect().height;
+      const rect = section!.getBoundingClientRect();
+      const sectionCenter = rect.top + window.scrollY + rect.height / 2;
+      const viewportCenter = headerHeight + (window.innerHeight - headerHeight) / 2;
+      return sectionCenter - viewportCenter;
+    }
+
+    // Ease-in-out: gentle start (feels like a brake catching, not a jerk),
+    // gentle finish (settles into place rather than stopping abruptly).
+    function easeInOutQuad(t: number) {
+      return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+    }
+
+    function engageBrake() {
+      isBraking = true;
+      hasBraked = true;
+      window.addEventListener("wheel", preventScroll, { passive: false });
+      window.addEventListener("touchmove", preventScroll, { passive: false });
+
+      const startY = window.scrollY;
+      const endY = targetScrollY();
+      const distance = Math.abs(endY - startY);
+      const duration = Math.min(SLIDE_DURATION_MAX_MS, SLIDE_DURATION_FLOOR_MS + distance * SLIDE_MS_PER_PX);
+      const startTime = performance.now();
+
+      function step(now: number) {
+        const progress = Math.min(1, (now - startTime) / duration);
+        // Explicit object form + behavior:"auto" (not the 2-arg
+        // window.scrollTo(x, y) form) so this stays immune to the site-wide
+        // `scroll-behavior: smooth` in site.css — the 2-arg form is subject
+        // to that CSS property, and letting the browser layer its own smooth
+        // animation on top of a value already being manually eased every
+        // frame would fight this animation rather than complement it.
+        window.scrollTo({
+          top: startY + (endY - startY) * easeInOutQuad(progress),
+          left: 0,
+          behavior: "auto",
+        });
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          release();
+        }
+      }
+      requestAnimationFrame(step);
+
+      function release() {
+        isBraking = false;
+        window.removeEventListener("wheel", preventScroll);
+        window.removeEventListener("touchmove", preventScroll);
+      }
+    }
+
+    function onScroll() {
+      const currentY = window.scrollY;
+      const scrollingDown = currentY > lastScrollY;
+      lastScrollY = currentY;
+
+      if (!active || isBraking) return;
+
+      if (scrollingDown && currentY > TRIGGER_SCROLL_THRESHOLD_PX && !hasBraked) {
+        engageBrake();
+      } else if (currentY <= TRIGGER_SCROLL_THRESHOLD_PX) {
+        hasBraked = false;
+      }
+    }
+
+    function onResize() {
+      active = desktopQuery.matches;
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+    desktopQuery.addEventListener("change", onResize);
+  })();
+
+  // Task 21 follow-up: fills the gap between the closing "Un vino che esalta i
+  // sensi..." section and the footer. Two earlier attempts (a flat
+  // `min-height: 70vh` guess, then a JS-measured min-height on
+  // `.grids-s-w_i`) both grew the section's own box and were both reported
+  // live as still leaving a gap. Likely cause: `#site-content` (the shared
+  // wrapper around the whole page body, every page) has `overflow: hidden`
+  // set on it in the theme CSS — growing something deep inside that via
+  // min-height doesn't reliably repaint, a different failure class than "the
+  // number was too small". See site.css's Task 21 comment for the full
+  // reasoning.
+  //
+  // This measures the same real gap (between the section and #site-footer),
+  // but instead of growing the section, it sets a `--closing-gap-fill` custom
+  // property on #site-footer itself — #site-footer is a *sibling* of
+  // #site-content, not a descendant, so it isn't subject to that clipping.
+  // site.css's `#site-footer::before` rule uses that property to extend the
+  // footer's own black background upward by exactly the gap amount.
+  //
+  // Re-measures on resize and via a ResizeObserver on <body> (covers content
+  // height changes after the initial run, e.g. late web-font swaps shifting
+  // text line height) — reset-then-remeasure on each run converges to a
+  // stable value rather than growing indefinitely, since re-applying the same
+  // computed value doesn't itself change the observed size again.
+  (function initClosingSectionFill() {
+    const section = document.querySelector<HTMLElement>(".home-closing-section .grids-s-w_i");
+    const footer = document.querySelector<HTMLElement>("#site-footer");
+    if (!section || !footer) return;
+
+    function fill() {
+      footer!.style.setProperty("--closing-gap-fill", "0px");
+      const gap = footer!.getBoundingClientRect().top - section!.getBoundingClientRect().bottom;
+      if (gap > 0) {
+        footer!.style.setProperty("--closing-gap-fill", `${gap}px`);
+      }
+    }
+
+    fill();
+    window.addEventListener("resize", fill);
+    window.addEventListener("load", fill);
+    if (typeof ResizeObserver !== "undefined") {
+      new ResizeObserver(fill).observe(document.body);
+    }
+  })();
 </script>
