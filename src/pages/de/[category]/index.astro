@@ -15,11 +15,20 @@ export function getStaticPaths() {
 
 const { category } = Astro.props;
 const categoryWines = wines.filter((w) => w.category === category.key);
+// Task 37: see the IT version of this template for the full reasoning — this
+// page never set bodyClass, unlike every other content page, leaving up to
+// 160px of unwanted top padding (2 stacked vendor rules) that "singular
+// missing-post-thumbnail" (the same pair every other content page uses) removes.
+// Task 39: see the IT version of this template for the full reasoning — every
+// category now uses the same bigger-bottle-photo, no-text, 2-per-row treatment
+// Task 38 introduced for rossi.
+const imageVariant = "bottle-large";
 ---
 
 <BaseLayout
   title={`${category.title} - Rigoni Vittorino`}
   ogTitle={category.title}
+  bodyClass="singular missing-post-thumbnail"
   lang="de"
   otherLangUrls={(localeEquivalents.categories as Record<string, { it: string; en: string; de: string }>)[category.key]}
 >
@@ -36,17 +45,17 @@ const categoryWines = wines.filter((w) => w.category === category.key);
             <img class="category-logo-ico logo-rigoni-ico ico-color" src={category.categoryLogo} />
             <h1 class="category-title">{category.title}</h1>
           </div>
-          <div class="wine-list-container">
+          <div class="wine-list-container wine-list-container--large">
             {
               categoryWines.map((wine) => (
                 <WineCard
                   slug={wine.slug}
                   title={wine.title}
                   cardImageSrc={wine.cardImageSrc}
-                  cardImageSrcset={wine.cardImageSrcset}
                   cardImageWidth={wine.cardImageWidth}
                   cardImageHeight={wine.cardImageHeight}
                   lang="de"
+                  imageVariant={imageVariant}
                 />
               ))
             }

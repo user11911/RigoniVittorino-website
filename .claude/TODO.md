@@ -454,6 +454,108 @@ before editing" step 4.
   live by the user** — video playback, framing/composition (no `object-position` tuning was possible without
   seeing it), and real-world load time all need to be seen, not just code-reviewed.
 
+- Task 36 (superseded by Task 39 below — spumanti/bianchi no longer show label images, kept here for
+  history only): `/spumanti/` and `/bianchi/` category-listing pages (all 3 languages — `/it/spumanti/`+
+  `/it/bianchi/`, `/en/sparkling/`+`/en/white-wines/`, `/de/schaumweine/`+`/de/weissweine/`; 14 wine
+  entries total: 8 spumanti incl. 2 magnum variants, 6 bianchi), scope explicitly limited to just these 2
+  categories per request — every other category (rossi/affinati/passiti/frizzanti-e-rosati) unchanged.
+  User-supplied bottle-label photos replace the bottle-photo + name-text card display with label-image-only
+  (the label already shows the name). Mapped each of the 12 supplied label images to the correct wine by
+  cross-referencing `src/data/wines.json`'s actual `category`/`slug` fields, not by guessing from filenames
+  alone; the 2 magnum variants reuse their non-magnum counterpart's label (no separate magnum label was
+  supplied, and none was needed — same design regardless of bottle size). Images resized (max 800px on the
+  long side) and re-encoded as JPEG (quality 88) using this sandbox's available Pillow library — the
+  originals were ~2MB PNGs each (~24MB total for 12); now ~50-107KB each (~830KB total), since the largest
+  they're ever displayed at is 320px CSS-wide. `WineCard.astro` got a new optional `imageVariant` prop
+  ("bottle" default / "label") controlling both whether `.wine-title` renders and a new modifier class on
+  the image wrapper — defaults preserve today's exact behavior for every other category; only the
+  `/spumanti/`+`/bianchi/` page templates (it/en/de) pass `imageVariant="label"`. New CSS
+  (`.wine-image--label img`) gives label cards a fixed `4/3` box with `object-fit:contain`, reusing the same
+  approach and reasoning already established (and user-approved) for Task 20's homepage collection buttons,
+  since these 12 labels have very different native aspect ratios (~0.66 to ~2.09, measured) unlike the
+  near-uniform bottle photos this replaces. `check`/`test:unit`/`build` all pass; confirmed in compiled
+  output that all 6 target pages show the new label-only markup and every other category page (checked both
+  IT and EN examples) is byte-unaffected; fresh preview + 15-route smoke test (including a wine product
+  detail page, confirming that page's own separate `productImage` — untouched, out of scope — still serves
+  correctly) all pass. **Not yet confirmed live by the user** — the fixed-box sizing/whitespace tradeoff for
+  such varied label shapes is exactly the kind of thing that needs real eyes.
+
+- Task 37: all 6 wine category-listing pages (all 3 languages — `/it/spumanti/`, `/it/bianchi/`,
+  `/it/rossi/`, `/it/affinati/`, `/it/passiti/`, `/it/frizzanti-e-rosati/`, and their EN/DE equivalents),
+  triggered by a report of a "sizeable gap" between the nav header and the page title on the spumanti/
+  bianchi pages. Root cause: `src/pages/it/[categoria]/index.astro` (and its `en`/`de` `[category]`
+  equivalents) never set `bodyClass` on `<BaseLayout>`, unlike every other content page (chi-siamo/cantina/
+  contatti/dati-societari all pass `"singular missing-post-thumbnail"`). Two separate, unscoped vendor rules
+  key off exactly those two classes' *absence* to add 8rem (80px) of top padding each —
+  `body:not(.singular) main>article:first-of-type{padding:8rem 0 0}` and the base `.post-inner{padding-top:
+  8rem}`, only zeroed by `.reduced-spacing.missing-post-thumbnail .post-inner{padding-top:0}` (this
+  project's `reduced-spacing` is already sitewide, so only `missing-post-thumbnail` was ever the missing
+  half) — stacking to up to 160px of unwanted gap, confirmed by reading the real cascade, not guessed. This
+  page's own `.entry-header`/`<h1 class="entry-title">` is separately hidden entirely by an existing vendor
+  rule (`header.entry-header...{display:none}`) since the colored category banner already shows the title
+  a second time, so none of that missing padding was ever serving a visible purpose. Fixed by adding the
+  exact same `"singular missing-post-thumbnail"` pair every other content page already uses — checked every
+  other rule scoped to either class first for side effects (none apply to anything this template renders).
+  Fixes every category via the shared template, not just spumanti/bianchi, since the missing bodyClass was a
+  template-wide gap from the start. `check`/`test:unit`/`build` all pass; confirmed in compiled output that
+  all 6 category pages (both languages checked further) now carry the added body classes; fresh preview +
+  19-route smoke test (all 6 category pages × implied language coverage, homepage ×3, 4 other content pages,
+  1 product detail page) all pass. **Not yet confirmed live by the user.**
+
+- Task 38: `/rossi/` category-listing page (all 3 languages — `/it/rossi/`, `/en/red-wines/`,
+  `/de/rotweine/`; 5 wines), scope explicitly limited to this 1 category per request — every other category
+  unchanged. Three changes: (1) card images swapped from the low-resolution `cardImageSrc` thumbnails
+  (191×300, upscaled/cropped WP-generated crops) to each wine's own higher-resolution `productImage` (the
+  same photo the individual wine's own detail page already uses — confirmed identical crop/framing, just
+  637×1000 native res instead of a small thumbnail, before swapping, not assumed); (2) `.wine-title` text
+  removed so cards show only the bottle photo, per explicit request; (3) the grid goes from 3 columns to 2
+  on tablet/laptop widths (`min-width:768px`) for bigger, more readable cards — mobile (1 column) untouched.
+  Extended `WineCard.astro`'s existing `imageVariant` prop (Task 36) with a third value, `"bottle-large"` —
+  a real bottle photo (not a label image) with no title and a bigger box; every other category's default
+  `"bottle"` behavior is byte-unchanged. New CSS (`.wine-image--bottle-large img`) uses plain `width`+
+  `height:auto` rather than Task 36's fixed-box/`object-fit:contain` technique — measured that all 5 red
+  wines' higher-res photos share one consistent ~0.637 aspect ratio (same crop as the old thumbnails, just
+  higher-res), so no shape-normalizing box is needed here, unlike the label images. `.wine-list-container--
+  large` (new modifier class on the category page's own template, not WineCard) overrides the vendor's
+  `≥879px` 3-column rule to match its own already-2-column `768-878px` rule. `check`/`test:unit`/`build` all
+  pass; confirmed in compiled output that rossi (all 3 languages) shows the new high-res images/no-title/
+  2-column markup and every other category page is byte-unaffected; fresh preview + 13-route smoke test
+  (including a wine product detail page, confirming its own image field is untouched) all pass. **Not yet
+  confirmed live by the user.**
+
+- Task 39: extends Task 38's "rossi" treatment to every remaining wine category (all 3 languages) — the
+  entire wine section now looks and behaves identically across all 6 categories. Explicit request "do the
+  same operation as red wines for all the other categories," with an `AskUserQuestion` resolving one real
+  ambiguity first: spumanti/bianchi already had Task 36's custom label-image treatment (praised as looking
+  nice) — confirmed the user wants that *replaced* by plain higher-resolution bottle photos to match every
+  other category exactly, not preserved alongside a grid-only update. Data: all 25 remaining wines (8
+  spumanti incl. 2 magnum, 6 bianchi, 4 affinati, 4 frizzanti-e-rosati, 3 passiti) across all 3
+  `wines*.json` files got the same `cardImageSrc`→`productImage` swap Task 38 did for rossi — verified
+  every one of the higher-resolution files shares the same ~0.637 aspect ratio as rossi's (one outlier,
+  Creativo Prosecco, is a larger 1200×1880 file but the *same* ratio — same crop, just even higher native
+  resolution), so no per-category CSS variation was needed, confirming `bottle-large`'s existing
+  plain-`width`+`height:auto` CSS (no `object-fit` box) already generalizes correctly. Code: the 3 category
+  page templates' per-category `imageVariant` branching (Task 36/38's `LABEL_CATEGORIES`/
+  `LARGE_BOTTLE_CATEGORIES` sets) collapsed to a single unconditional `imageVariant = "bottle-large"`, since
+  every category now behaves identically — no more branch to maintain. `cardImageSrcset` (and the `sizes`
+  attribute that was inert without it) removed entirely from `WineCard.astro` and all 3 templates, since
+  every wine in `wines*.json` had that field deleted once every category converted, making the prop
+  permanently unused. `WineCard.astro`'s `"label"`/plain-`"bottle"` variant code paths are themselves now
+  unused by any caller but were left in place, not deleted — a recently-built, still-correct, documented
+  capability, not legacy cruft. **Correction, caught before committing:** 11 of Task 36's 12 label JPEGs
+  turned out to have silently overwritten pre-existing, already-committed Task 9 bottle photos that
+  happened to share the exact same filenames (Task 36's own collision check was buggy — a plain `ls`, not a
+  `git log` check, so it missed files that existed in git history). Confirmed those 11 filenames had zero
+  remaining references anywhere once `cardImageSrcset` was deleted sitewide, then reverted all 11 to their
+  original Task 9 content with `git restore --source=HEAD` — zero effect on anything live, pure correction.
+  Only `public/wp-content/uploads/2021/01/creativo-v-rigoni.jpg` (no collision, genuinely new) remains as
+  the one flagged-but-unused leftover. Full account in `IMPLEMENTATION_NOTES.md`'s Task 39 entry.
+  `check`/`test:unit`/`build` all pass (one round of `check`
+  errors from the `cardImageSrcset` removal, caught and fixed before the final pass — see
+  `IMPLEMENTATION_NOTES.md`); confirmed in compiled output that all 18 category pages (6 categories × 3
+  languages) show the new markup and zero old low-res image sources remain sitewide; fresh preview +
+  23-route smoke test all pass. **Not yet confirmed live by the user.**
+
 ## Completed / frozen project state
 
 The rebuilt Italian website is approved work. Do not reopen, refactor, redesign, or modify completed work unless the active task strictly requires it.

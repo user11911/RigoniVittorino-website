@@ -996,3 +996,81 @@ html {
   justify-content: center;
   box-sizing: border-box;
 }
+
+/* --- Task 36: "label-only" wine cards on /spumanti/ and /bianchi/ (all 3
+ * languages) — replaces the bottle photo + name-text display with just the
+ * label image (the label already shows the name, so the text underneath was
+ * dropped too — see WineCard.astro's own comment for how that's scoped).
+ *
+ * The label photos have wildly different native aspect ratios (measured, not
+ * guessed: from ~0.66, tall, to ~2.09, wide, across the 12 supplied images) —
+ * unlike the bottle photos this replaces, which were all near-identical tall
+ * portraits and so never needed a shape-normalizing box. Reused the same
+ * fixed-box + `object-fit:contain` technique already established (and
+ * user-approved) for the homepage's own varying-aspect-ratio product photos
+ * (Task 20's `.collection-showcase__category img`) rather than inventing a new
+ * pattern: every card gets the same visible box size regardless of category or
+ * language, and `contain` guarantees no label is ever cropped, at the cost of
+ * some showing a bit more surrounding white space than others — the same
+ * accepted tradeoff that pattern already established. `4/3` chosen as a
+ * reasonable middle ground for this specific image set (most labels are
+ * ~0.66-1.17, i.e. square-ish-to-tall; `4/3` leans slightly the other way so
+ * the one very wide outlier, Pinot Nero Spumante at ~2.09, doesn't force an
+ * unusually short box for every other card too).
+ *
+ * `max-width:320px` keeps the box from growing to an awkward size on wide
+ * single-column mobile layouts (`.wine-list-container` drops to 1 column
+ * there) — the grid's own column width has no other cap on this element.
+ * Scoped to the `.wine-image--label` modifier class (added only when
+ * `WineCard`'s `imageVariant="label"`, only passed by the spumanti/bianchi
+ * category pages), so `.wine-image` on every other category's bottle-photo
+ * cards is completely unaffected. --- */
+.wine-image--label img {
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+/* --- Task 38: "/rossi/" (all 3 languages) wine cards — bigger, higher-
+ * resolution bottle photos, no name-text underneath, 2-per-row instead of 3 on
+ * tablet/laptop widths, per explicit request.
+ *
+ * Unlike the label photos (Task 38's `.wine-image--label`, above), these
+ * are real bottle photos and all share one consistent native aspect ratio
+ * (measured, not guessed: all 5 red wines' higher-resolution `productImage`
+ * files are 637x1000, exactly the same ~0.637 ratio the old 191x300 thumbnail
+ * already had — same photos, same crop, WordPress had just also generated a
+ * much smaller version for card use). No `aspect-ratio`/`object-fit:contain`
+ * box is needed for that reason: plain `width` + `height:auto` already
+ * preserves proportions correctly with zero risk of cropping or letterboxing,
+ * since every card in this category shares the same shape.
+ *
+ * `max-width:380px` roughly doubles the old default (unset width, rendered at
+ * the `<img>`'s own 191px width attribute) — the actual increase in on-screen
+ * size that makes the label printed on the bottle itself more readable, which
+ * is what was actually asked for; the grid becoming 2-column below gives each
+ * card the room to actually use that extra width rather than just growing the
+ * gutters. --- */
+.wine-image--bottle-large img {
+  width: 100%;
+  max-width: 380px;
+  height: auto;
+  margin: 0 auto;
+}
+/* `.wine-list-container` already becomes 2 columns at 768-878px in the vendor
+ * CSS (twentytwenty-style.min.css) — only the >=879px rule (3 columns) needed
+ * overriding to also show 2, so a single `min-width:768px` query covers both
+ * ranges in one rule (redundant, harmless, at the already-2-column range).
+ * Equal specificity to the vendor rules it overrides (one class each); wins on
+ * source order alone since `site.css` loads last of every stylesheet
+ * (`BaseLayout.astro`) — no `!important` needed. Scoped to the
+ * `.wine-list-container--large` modifier class (added only for the "rossi"
+ * category's own page template), so every other category's 3-column desktop
+ * grid is unaffected. */
+@media (min-width: 768px) {
+  .wine-list-container--large {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
