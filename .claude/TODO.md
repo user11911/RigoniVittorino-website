@@ -335,6 +335,125 @@ before editing" step 4.
   user** — motion timing/synchronization between 3 separate elements is exactly the kind of thing that needs
   real eyes, not just code review.
 
+- Task 31: "Un vino che esalta i sensi" closing section (Task 21), desktop/tablet only — the photo now fills
+  the section's full black area top-to-bottom instead of sitting inset with a gap above/below, per explicit
+  request ("make the picture vertically fit with the borders of the section - the black background. Check
+  for margins, padding to ensure this"). The gap was the image column's own `50px 0 50px 0`/`50px 0 25px 0`
+  top/bottom margin (`--_ga-m-desktop`/`--_ga-m-tablet` in home.html/en/home.html/de/home.html) stacked on
+  top of the section's own 50px padding; zeroed to `0 0 0 0` in all 3 languages, and `site.css`'s
+  `.home-closing-section__image img` switched from a fixed `aspect-ratio:4/3` to `height:100%` so it tracks
+  the row's actual height (already stretched to 100% by the Grids plugin's own
+  `.grids-is-advanced>.grids-s-w_i>.grids-area{height:100%}` rule) instead of a ratio derived only from
+  width. Filling that height at the column's original (half-page) width alone read as an oddly narrow
+  vertical strip, so per the user's own anticipation ("on the right side, it may overflow to the text") the
+  figure is widened by a fixed 80px past its grid column and allowed to bleed (`overflow:visible`) into the
+  text column's own left portion — safe/low-risk because that column is `text-align:right`, so its left
+  portion is normally empty space, and `#site-content`'s own `overflow:hidden` only clips at the page's
+  outer edge, nowhere near this internal column boundary. A `figure::after` gradient fades the rightmost 20%
+  of the photo to black (matching the section's own background) so the seam blends rather than hard-cutting,
+  and `.bottone-centro` (the text column) got an explicit `position:relative;z-index:1` so text stays
+  legible over the overlap even though DOM order already put it on top. Mobile unchanged (image still stacks
+  above the text at its own fixed aspect-ratio; no side-by-side overlap to manage there — layout is a single
+  stacked column, not the desktop/tablet 2-column grid this all applies to). `check`/`test:unit`/`build` all
+  pass; compiled output confirmed in all 3 languages (`_ga-m-desktop:0 0 0 0` in the served HTML, the new
+  `figure::after` rule present in the served CSS); fresh preview + route smoke test (`/`, `/it/`, `/en/`,
+  `/de/`, `/it/cantina/`, `/it/contatti/`, `/it/privacy-policy/`, `/it/dati-societari/`, `/news/`) all pass.
+  **Not yet confirmed live by the user** — this is exactly the kind of overlap/fade/z-index composition that
+  needs real eyes, not just a CSS review.
+
+- Task 32: site-wide (every page, every language) — fixed a ~20px gap between page content and the true
+  left/right viewport edges, reported as making the site "look less clean," present everywhere except the
+  header and footer. Root cause: the vendor theme gives every direct child of `.entry-content` that isn't a
+  WP "wide"/"full"-aligned block `width:calc(100% - 4rem)` (a standard WordPress block-editor convention) —
+  every page's content (`.grids-section` on the main pages, `.wines-row-container` on wine category pages)
+  is exactly such a child, so all of them carried this 40px (auto-centered, ~20px/side) reservation, while
+  `#site-header`/`#site-footer` sit outside `.entry-content` entirely and were never subject to it. Fixed in
+  `site.css` with a verbatim copy of the theme's own selector (guarantees the override wins: identical
+  specificity, `site.css` loads last) that sets `width:100%` instead. See `site.css`'s own comment for full
+  detail, including the one known side effect (`/it/privacy-policy/`'s placeholder callout box now spans
+  the full column width too — presentational only, not a change to its legal content). `check`/`test:unit`/
+  `build` all pass; compiled CSS confirmed present and correctly ordered last of all stylesheets in the
+  built HTML. Fresh preview + 12-route smoke test (`/`, `/it/`, `/en/`, `/de/`, `/it/chi-siamo/`,
+  `/it/cantina/`, `/it/contatti/`, `/it/dati-societari/`, `/it/privacy-policy/`, `/it/bianchi/`, `/it/rossi/`,
+  `/news/`) all pass. **Not yet confirmed live by the user** — a sitewide spacing change like this needs
+  real eyes on a real screen to confirm it actually reads as "nicer," not just structurally correct.
+
+- Task 33: "La nostra collezione" section (Task 20, homepage, all 3 languages — frozen, narrowly
+  reactivated for this asset swap only). User supplied 5 new product photos (matching filenames exactly:
+  `Raboso-Passito-rigoni.png`, `rigoni-prosecco-creativo.png`, `Incrocio-Manzoni-rigoni.png`, `Everything-
+  coming-up-rose-rigoni.png`, `Pinot-Nero-rigoni.png`) to replace 5 of the section's 6 category-button bottle
+  photos in `public/wp-content/uploads/2020/12/`, per an explicit, already-known issue: the Cabernet
+  Sauvignon (Affinati) bottle rendered noticeably taller than the other 5 in the category row. Root cause,
+  confirmed by measuring actual PNG dimensions (not guessed): `.collection-showcase__category img` is a
+  fixed 200×266.67px (`aspect-ratio: 3/4`) box with `object-fit: contain` (see that rule's own Task 20
+  comment for why `contain` over `cover`), so each bottle's *rendered* height depends on how tall its own
+  source canvas is relative to its width, not on any per-category CSS. The old 5 replaced images were all
+  600×650px canvases (width-constrained under `contain` → ~216px rendered height); the untouched Cabernet
+  image is 637×1000px (height-constrained → the box's full 266.67px height) — that mismatch was the entire
+  visible size difference. The 5 new images are all narrow, tall canvases (144–206px wide × 650px tall,
+  aspect ratios ≈0.22–0.32) — narrower relative to height than the 3:4 box itself, so every one of them is
+  now also height-constrained under `contain`, i.e. all render at the box's full height, matching Cabernet.
+  Verified by computing the actual `contain` scale factor for all 6 images against the fixed box (not just
+  assumed from the file dimensions) — confirms uniform full-height rendering across all 6 categories with
+  zero markup/CSS changes, since the existing `<img>` tags reference these exact filenames already (a pure
+  asset swap). Cabernet Sauvignon's own image was intentionally left untouched — no new file was supplied
+  for it, and it didn't need one. `check`/`test:unit`/`build` all pass; confirmed byte-for-byte that the
+  built `dist/` output serves the new files (not the old ones); fresh preview server, route smoke test
+  across `/`, `/it/`, `/en/`, `/de/`, and all 6 category pages (`spumanti`/`bianchi`/`rossi`/`passiti`/
+  `frizzanti-e-rosati`/`affinati`) — all pass. **Not yet confirmed live by the user** — whether the 5 new
+  photos' own art direction (lighting, crop, bottle angle) actually "look better" together, as intended, can
+  only be judged visually.
+
+- Task 34: header (site-wide, every page/language). Two changes, both per explicit request. (1) Logo size:
+  tried making it vary with the pre-header (language bar) visibility — bigger (130px) and centered at the
+  top, back to compact 50px once scrolled — in 2 different layouts (two-row stacked header, then an overlay
+  with the logo floated centered on top of the nav row). Both were rejected live in turn ("I do not like the
+  big logo" after the two-row version; "This does not look good" after the overlay version, with an explicit
+  "go back to the compact logo that we always had on this project"). Fully reverted to Task 25's original
+  behavior: logo locked at its compact 50px size unconditionally, at every scroll position and screen size,
+  no pre-header-tied variation — byte-identical to the pre-Task-34 rule. Per `CLAUDE.md`'s circuit-breaker
+  rule (2 live rejections in a row for the same feature), this is now closed rather than a candidate for a
+  third variant; a bigger/centered logo would need a fresh conversation about what specifically isn't
+  working, not another positioning guess. (2) Desktop nav menu switched from ALL CAPS to normal sentence
+  case — **not** reported as disliked, kept as-is. Investigation found the menu's *font-family* was already
+  `var(--body-font-family)` (Proza Libre, matching the rest of the site) — a leftover
+  `font-family:Merriweather` rule was dead (Merriweather is never actually loaded anywhere in this rebuild,
+  and a more specific rule already sets the family directly on the `<li>`, which always wins over what it'd
+  otherwise inherit). Flagged this to the user before touching anything; confirmed via a follow-up
+  `AskUserQuestion` that the real, visible difference — `text-transform:uppercase` — should be removed too.
+  See `site.css`'s own comments for the full history and cascade tracing. `check`/`test:unit`/`build` all
+  pass at every round (4 verification passes total across the 2 logo attempts, the revert, and the font
+  change); compiled CSS confirmed present/correct/fully-removed at each step; fresh preview + 6–8-route smoke
+  tests all pass. **Logo: reverted to the known-good, previously-confirmed state — no further confirmation
+  needed.** **Menu font/case: not yet confirmed live by the user.**
+
+- Task 35: homepage hero background (all 3 languages) — the crossfading 4-photo carousel replaced with a
+  single looping background video, per explicit request and a user-supplied file
+  (`17999240-uhd_4096_2160_30fps.mp4`, 16.7MB, 4096×2160). Copied to `public/videos/hero-background.mp4`
+  (new asset folder, alongside the existing `public/scripts`/`public/styles` precedent for non-scraped,
+  project-authored assets — not `wp-content/uploads`, which is reserved for the original WP scrape).
+  `Hero.astro`'s entire `slides` prop/dot-pagination/crossfade-timer system removed outright (not left dead
+  next to the video) — `/en/`/`/de/` never actually diverged from `/it/`'s slide set (confirmed
+  byte-identical, per Task 9's own original comment on that prop), so nothing language-specific was lost;
+  their `index.astro` files' now-unused `slides` arrays and the prop pass-through were removed too. The
+  first of the old 4 slide photos (`rigoni-s2-bottiglie.jpg`) is kept on as the `<video>`'s `poster`. Video
+  autoplay is started from JS (not the `autoplay` HTML attribute) specifically so `prefers-reduced-motion:
+  reduce` visitors never download it at all (`preload="none"` stays in place, poster-only) — matching this
+  project's existing full-disable convention for that preference elsewhere (loading screen, Task 17/18).
+  **Known, disclosed limitation:** this sandbox has no `ffmpeg`/video-transcoding tool available (confirmed
+  — not installable without sudo either) and no way to extract a real poster frame or verify the video's
+  exact duration/codec, so the file is used exactly as supplied, at its native 4K resolution/16.7MB size —
+  larger than ideal for a hero background (typical web guidance: ~1080p, a few MB). Flagged to the user as
+  a real, unaddressed tradeoff, not silently shipped; recommended they compress it (e.g. to 1080p H.264) on
+  their own machine if load time turns out to matter, and the file can be swapped in place with no code
+  changes needed either way, since nothing else depends on its exact encode. `check`/`test:unit`/`build` all
+  pass; confirmed in compiled output that the video byte-matches the source file, serves with the correct
+  `video/mp4` content-type, and the markup/CSS are correctly wired in all 3 languages; fresh preview + 7-route
+  smoke test all pass. The 3 other original carousel photos (`rigoni-s3/s4/s5`) are now unused but were left
+  in place, not deleted — flagged here for the user's awareness, not removed unasked. **Not yet confirmed
+  live by the user** — video playback, framing/composition (no `object-position` tuning was possible without
+  seeing it), and real-world load time all need to be seen, not just code-reviewed.
+
 ## Completed / frozen project state
 
 The rebuilt Italian website is approved work. Do not reopen, refactor, redesign, or modify completed work unless the active task strictly requires it.

@@ -4502,3 +4502,647 @@ if their underlying numbers are provably identical) can only be judged by watchi
 browser, which isn't available in this sandbox.
 
 Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Task 31: closing section photo fills the black area top-to-bottom, bleeds under the text with a fade
+
+Request, verbatim: "Make the picture vertically fit with the borders of the section - the black background.
+Check for margins, padding to ensure this. On the right side, it may overflow to the text. Ensure that the
+text is on top of it, and add a fade on the right side that takes about 20% of the picture." The user also
+explicitly invited alternatives if the description was unclear or the implementation looked unreasonably
+complex — it wasn't; this is a bounded, well-understood combination of three CSS techniques (fill height,
+overflow bleed, gradient fade), each independently simple, so it was implemented directly rather than
+deferred back for clarification.
+
+**Why there was a gap at all.** `.home-closing-section` (`.grids-section`) has its own `50px 0 50px 0`
+padding (desktop/tablet) — that's the section's true visible black border. The image column
+(`.home-closing-section__image`, a `.grids-area`) had an *additional* `50px 0 50px 0` / `50px 0 25px 0` of
+its own top/bottom margin on top of that (`--_ga-m-desktop`/`--_ga-m-tablet` in
+`src/content/main/home.html`/`en/home.html`/`de/home.html`), stacking two separate gaps. Zeroed to
+`0 0 0 0` in all 3 languages — the section's own padding is now the only vertical inset, which is what
+"fit with the borders" calls for.
+
+**Why zeroing the margin alone wasn't enough.** The vendor Grids plugin
+(`public/wp-content/plugins/grids/assets/css/grids-frontend.min.css`) already has
+`.grids-is-advanced>.grids-s-w_i>.grids-area{height:100%}` — `.home-closing-section` carries the
+`grids-is-advanced` class, so both the image and text columns already stretch to 100% of their shared grid
+row's height. That row's own height is `auto`-sized by the grid track algorithm to fit its tallest item —
+in practice the text column, whose `120px 0 50px 0` top/bottom margin plus its heading/paragraph/button
+content sets the row height. So once the image column's own margin was zeroed, it already spans exactly
+from the section's top padding to its bottom padding — the "borders" — with no separate height rule needed
+for the *column*. What did need to change was the `<img>` itself: `.home-closing-section__image img` had a
+fixed `aspect-ratio:4/3`, sizing its height purely from its own width regardless of how tall its container
+now was. Switched to `height:100%` (dropping `aspect-ratio`, since a definite width and height together
+override it anyway per spec) so the image tracks the column's real height, still `object-fit:cover` for
+cropping.
+
+**Why the photo needed to overflow, not just get taller.** Filling that height at the column's original
+width (half the 12-column grid, minus its own 48px gutters) made the photo read as an oddly narrow vertical
+strip once it was no longer constrained to a landscape-ish 4:3 crop — the user anticipated exactly this
+("on the right side, it may overflow to the text"). Handled it as a deliberate, bounded bleed: the
+`<figure>` wrapping the `<img>` is widened by a fixed `80px` past its own grid column
+(`width:calc(100% + 80px)`) and left to overflow visually (`overflow:visible` — the default; nothing on
+`.home-closing-section__image` or its ancestors clips it). This is low-risk for two independent reasons: (1)
+the text column (`.bottone-centro`) is `text-align:right`, so its *left* portion — exactly where the bleed
+lands — is normally empty space, not where the actual glyphs sit, for most lines; (2) `#site-content` (the
+shared `<main>` wrapper, confirmed via `src/layouts/BaseLayout.astro`) does have its own `overflow:hidden`
+(the same constraint Task 21's own footer-gap-fill work had to route around), but that only clips content at
+`#site-content`'s own outer box edge — this bleed stays entirely inside two grid columns of the same
+section, nowhere near that outer edge, so it's unaffected.
+
+**The fade and the stacking guarantee.** `.home-closing-section__image figure::after` is an absolutely
+positioned pseudo-element, `right:0` / full height, `width:20%`, `background:linear-gradient(to right,
+transparent, #000)` — `#000` matching the section's own solid black background (not white or a guess), so
+the photo's right edge visually dissolves into the section rather than hard-cutting under the text.
+`pointer-events:none` so it never intercepts clicks meant for the button link in the text column above.
+Text-on-top was already true by default (both columns are `.grids-area{position:relative}` with
+`z-index:auto`, so paint order follows DOM order, and the text column comes second in the markup) —
+`.bottone-centro{position:relative;z-index:1}` was added anyway, explicitly, per the request's own "ensure
+the text is on top of it," rather than relying silently on implicit DOM-order stacking that a future change
+elsewhere in the cascade could accidentally disturb.
+
+**Scope: desktop/tablet only** (`@media (min-width: 769px)`, matching this stylesheet's existing breakpoint
+convention, e.g. the Task 21 footer-gap-fill rule above). Mobile keeps the original `aspect-ratio:4/3;
+object-fit:cover` image and its already-zero margin — at `max-width:768px` the Grids plugin switches
+`.grids-s-w_i` to a stacked flex column (image above text), where there's no side-by-side overlap to manage
+and no "vertically fit the section" concern in the same sense (the section isn't a fixed-height box next to
+a differently-sized column there).
+
+Verified: `npm run check` (0 errors, 0 warnings, same 1 pre-existing unrelated hint in `index.astro`),
+`npm run test:unit` (42/42 pass), `npm run build` succeeds. Confirmed in compiled output for all 3
+languages: `_ga-m-desktop:0 0 0 0` / `_ga-m-tablet:0 0 0 0` present in each language's built homepage HTML;
+`.home-closing-section__image figure::after` present in the built `site.css`. Fresh preview server, route
+smoke test covering `/` (302, expected — locale redirect), `/it/`, `/en/`, `/de/`, `/it/cantina/`,
+`/it/contatti/`, `/it/privacy-policy/`, `/it/dati-societari/`, `/news/` — all pass. Killed the preview's own
+`astro preview`/`workerd serve` processes afterward; also found and killed one additional orphaned `workerd
+serve` process (PID 1447, started 08:31, no live `astro preview` parent) left over from earlier in this
+session, unrelated to this task's own server.
+
+**Not yet confirmed live by the user.** An overlap/fade/z-index composition like this is exactly the kind of
+thing that needs real eyes — whether the 80px bleed amount and 20% fade width actually look proportionate
+next to the real photo and real text line lengths (not just structurally correct) can only be judged in a
+real browser.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Task 32: sitewide side-margin gap fixed at the root cause
+
+Request, verbatim: "it seems all the site, except the nav header and the footer, sitz in the viewport with
+a slight distance on the sides to the actual border of the pc, which makes it look less clean. Can you find
+the likely reason and make sure that the site sits in the nicer way?" — with an explicit invitation to
+explain if the description wasn't understood. It was understood clearly enough (and confirmed by finding a
+concrete, exactly-matching cause) to implement directly rather than asking for clarification first.
+
+**Diagnosis process.** Started from the exact wording — content is inset, header/footer are not — which
+pointed at something specific to the DOM subtree those two don't share.
+`src/layouts/BaseLayout.astro` confirms the structure: `<body>` contains `<Fragment set:html={headerHtml}>`,
+then `<main id="site-content"><slot /></main>`, then `<Fragment set:html={footerHtml}>` — header and footer
+are siblings of `#site-content`, not descendants of it. So the cause had to be something that applies inside
+`#site-content` but not to its siblings.
+
+Checked `#site-content` itself first (`grep`'d `twentytwenty-style.min.css`): `width:100%;margin:0 auto 3em`
+and `padding:3rem 0` — no side padding/margin at all, and `body{margin:0;padding:0}` /
+`body{display:grid;grid-template-columns:repeat(12,1fr)}` (the theme's own top-level layout) confirmed
+`#site-content` really does span the full 12-of-12 grid columns, i.e. the true viewport width. So the cause
+had to be *inside* `#site-content`, not at its own box.
+
+An initial guess — `#site-content article{padding:0 1.5rem}` — turned out to be a red herring: re-checked
+with full selector context (a plain `grep -o` had silently truncated the selector prefix) and it's actually
+`body.blog main#site-content article{...}`, scoped to the one `body.blog` page (`/news/`) only, not global.
+Caught before proposing it as the fix — this project's own "measure, don't assume" verification-rigor rule
+paid for itself here.
+
+The real cause, found the same careful way (full-selector `python3 -re` scan of every loaded stylesheet for
+`padding`/`margin`/`max-width` rules touching `#site-content`, `.entry-content`, `.post-inner`, `article`,
+`main`, `.section-inner`, `body`, `html`): `twentytwenty/parent-style.min.css` (the base WordPress parent
+theme, loaded before the `geppa` child theme) has
+
+```
+.entry-content>*:not(.alignwide):not(.alignfull):not(.alignleft):not(.alignright):not(.is-style-wide) {
+  max-width: 58rem;
+  width: calc(100% - 4rem);
+}
+.entry-content>* { margin-left: auto; margin-right: auto; margin-bottom: 1.25em; }
+```
+
+— a standard WordPress block-editor convention: regular content blocks get a capped, centered column with
+40px of reserved breathing room; only blocks explicitly marked `alignwide`/`alignfull` (an editor concept,
+not used anywhere in this rebuild's content) are allowed to reach the edges. The child theme
+(`geppa/twentytwenty-style.min.css`) already has its own override —
+`:root body .entry-content>*:not(...):not(...){max-width:unset;width:calc(100% - 4rem)}` — which removes
+the 580px cap (this site's sections are much wider than that already) but *keeps* the same
+`width:calc(100% - 4rem)`, so the 40px reservation (auto-centered by the first rule above, i.e. ~20px each
+side) survived untouched into this rebuild.
+
+**Confirmed this explains literally the reported scope, not just plausibly.** Checked what's actually a
+direct child of `.entry-content` on every page template in the site (`grep`'d every file in
+`src/content/main/**/*.html` right after their `entry-content">` marker, plus read the Astro page templates
+for the non-static-HTML pages):
+- The 4 main pages (`chi-siamo`/`cantina`/`dati-societari`/`contatti`) and `home`, all 3 languages: direct
+  child is always `.grids-section` (the Grids plugin's own section wrapper) — none carry
+  `alignwide`/`alignfull`/`is-style-wide`, so all were caught.
+- Wine category pages (`src/pages/it/[categoria]/index.astro` etc.): direct child is `.wines-row-container`
+  — no CSS anywhere gives it its own width (confirmed by grep — zero hits), so it was fully subject to the
+  inherited rule too.
+- Wine product detail pages (`src/pages/it/i-nostri-vini/[slug]/index.astro`): use `<article class="wines-
+  template-default ..."><div class="wine-container">` — no `.entry-content` wrapper at all, so this rule
+  never applied there in the first place; a different, dedicated layout (untouched, out of scope).
+- `/news/` (`src/pages/news/index.astro`): `bodyClass="blog"`, renders `<NewsCard>` components directly as
+  `#site-content` children with no `.entry-content` wrapper either — also never subject to this rule (it
+  currently shows zero real posts, draft-only content per Task 4/9's own scope, so there's nothing visible
+  to have been misaligned there regardless).
+- `#site-header`/`#site-footer`: confirmed via `BaseLayout.astro` to be siblings of `#site-content`, so
+  never inside `.entry-content` to begin with — matches "except header and footer" exactly.
+- The homepage's `<Hero />` component: also renders as a sibling of the `.entry-content` Fragment inside
+  `<main>` (`src/pages/it/index.astro`: `<Hero /><Fragment set:html={contentHtml} />`), so it was never
+  subject to this rule either — consistent with Hero already having its own dedicated full-viewport CSS
+  from Task 17/18, unrelated to this fix.
+
+This also retroactively explains something Task 25 investigated and only partially resolved: that task's
+own notes record "\[the collection and closing sections\] were also reported as having a gap from the
+viewport edge, but neither has any margin/width reduction of its own in the scraped markup... so this fix is
+scoped to the one section confirmed to actually have a cause" (`.home-philosophy-section`, which did have
+its own extra local margin at the time). Task 25 was looking for a cause in each section's own *inline*
+`--_gs-m-*` custom properties and correctly found none for those two sections — but the real cause was one
+level higher, in the *outer* theme CSS governing `.grids-section` itself as a `.entry-content` child, which
+inline per-section margins can't see or override. That's why the fix here is structural (the shared parent
+rule), not another per-section patch.
+
+**The fix.** In `site.css`:
+
+```css
+:root
+  body
+  .entry-content
+  > *:not(.alignwide):not(.alignfull):not(.alignleft):not(.alignright):not(
+    .is-style-wide
+  ) {
+  width: 100%;
+}
+```
+
+A verbatim copy of the child theme's own selector (`:root body .entry-content>*:not(...)...`, specificity
+(0,7,1): `:root` + `body` + `.entry-content` + five `:not(.class)` clauses), reused rather than a shorter
+equivalent, specifically so there's no specificity arithmetic to get wrong — identical specificity plus
+`site.css` loading after `geppa/twentytwenty-style.min.css` (confirmed via `BaseLayout.astro`'s `<link>`
+order, and re-confirmed in the *built* HTML's actual `<link>` list) guarantees this wins by the normal
+cascade tie-break (later source wins on equal specificity), with no `!important` needed. Only `width` is
+overridden — `max-width` was already `unset` by the child theme's own rule, nothing to touch there.
+
+**Known, disclosed side effect.** `/it/privacy-policy/`'s one placeholder callout (`<div class="wp-block-
+paragraph" style="border:2px solid #b23c1a;padding:16px 20px;...">`, the "Nota per il titolare del sito"
+site-owner reminder from Task 6) is also an unaligned direct `.entry-content` child, so it now spans the
+full column width instead of stopping 40px short. This is presentational only — its own border, background,
+padding, and all legal text are completely untouched — so it doesn't trigger the frozen-legal-content rule
+in `CLAUDE.md` (that rule protects factual/legal *content*, and explicitly allows restyling presentation
+"if scoped"); flagged here rather than silently accepted since Task 6 is named as sensitive.
+
+Verified: `npm run check` (0 errors, 0 warnings, same 1 pre-existing unrelated hint), `npm run test:unit`
+(42/42 pass), `npm run build` succeeds. Confirmed in compiled output: the new rule present in
+`dist/client/styles/site.css`; `<link>` order in built `dist/client/it/index.html` confirms `site.css` is
+still the last stylesheet before the no-op `wp-custom-background.css` (checked that file too — a single
+`body.custom-background{background-color:#fff}` rule, no `.entry-content` involvement, so it can't undo
+this). Fresh preview server, route smoke test across 12 routes spanning every affected template type (home
+×3 languages, the 4 main content pages, 2 wine category pages, privacy-policy, news) — all pass. Killed the
+preview's own `astro preview`/`workerd serve` processes afterward, plus one additional orphaned `workerd
+serve` (PID 4627, started 09:10, no live `astro preview` parent) found left over from earlier in this
+session.
+
+**Not yet confirmed live by the user.** This is a sitewide spacing change — whether the result genuinely
+reads as "nicer" (not just structurally edge-to-edge) can only be judged by looking at it, which isn't
+possible in this sandbox.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Task 33: "La nostra collezione" bottle photos swapped, uniform height achieved by measurement not guesswork
+
+Request: swap 5 of the 6 "La nostra collezione" category-button bottle photos for new ones the user
+provided (as chat images, with local source paths on their own machine under `/mnt/c/Users/Pc/Desktop/` —
+a WSL path, readable directly from this sandbox), with the explicit success criterion: "the bottles actually
+look the same height, while before the cabernet sauvignon was noticeably bigger."
+
+**Confirmed this was a pure asset swap before touching anything.** The 5 filenames the user's images were
+saved as (`Raboso-Passito-rigoni.png`, `rigoni-prosecco-creativo.png`, `Incrocio-Manzoni-rigoni.png`,
+`Everything-coming-up-rose-rigoni.png`, `Pinot-Nero-rigoni.png`) are an exact, case-sensitive match for the
+5 filenames already referenced in `src/content/main/home.html`'s (and `en/`/`de/`) `.collection-showcase__
+category` `<img src>` attributes — and those `<img>` tags carry no explicit `width`/`height` attributes, so
+there was nothing in the markup that could go stale from a dimension change. Confirmed the 6th button
+(Cabernet Sauvignon / Affinati, `Cabernet-sauvignon-rigoni.png`) was correctly *not* among the 5 supplied
+files — the request's own framing ("while before the cabernet sauvignon was noticeably bigger") implies it
+was already the visual target, not something to also replace.
+
+**Diagnosed the actual size-mismatch mechanism before assuming the new images would fix it, rather than just
+swapping files and hoping.** `.collection-showcase__category img` (`site.css`, Task 20) is `width:100%;
+aspect-ratio:3/4;object-fit:contain` inside a `width:200px` box — a fixed 200×266.67px box, `contain` (not
+`cover`) chosen deliberately back in Task 20 specifically because the 6 source photos already had
+"noticeably different native framing." `contain` scales the *whole* source canvas (including any blank
+margin around the bottle) to fit inside the box without cropping, so a photo's rendered bottle height is a
+function of *the canvas's own aspect ratio relative to the box's*, not of anything this project's CSS
+controls per-category.
+
+Measured (not assumed) every relevant PNG's actual pixel dimensions with `PIL`:
+- Old (about-to-be-replaced) images: all `600×650` (aspect ratio ≈0.923) — wider relative to height than the
+  3:4≈0.75 box, so `contain` is *width*-constrained: scale = min(200/600, 266.67/650) = 0.333 → rendered at
+  the box's full 200px width but only 650×0.333 ≈ 216.5px tall (81% of the box's height).
+- Cabernet Sauvignon (untouched): `637×1000` (aspect ratio ≈0.637) — narrower relative to height than the
+  box, so `contain` is *height*-constrained instead: scale = min(200/637, 266.67/1000) = 0.267 → rendered at
+  the box's full 266.67px height (and only ≈170px wide). That's the entire ~50px visible height difference
+  the user described as "noticeably bigger" — nothing to do with the bottle's real-world size, purely a
+  side effect of that one source photo's canvas already being cropped tighter to the bottle than the other
+  5's.
+- New images: `144×650`, `206×650`, `165×650`, `167×650`, `165×650` (aspect ratios ≈0.22–0.32) — all
+  *narrower* relative to height than even Cabernet's canvas, let alone the box. Recomputed the same `contain`
+  scale-factor check for each: for every one of them, `200/width` (the width-constraint scale) comes out
+  larger than `266.67/650` (the height-constraint scale) — e.g. the widest new image, 206px, gives
+  `200/206≈0.971` vs `266.67/650≈0.410` — so all 5 are height-constrained too, and all render at the box's
+  full 266.67px height, exactly matching Cabernet. This was verified arithmetically for all 5 individually,
+  not inferred from one representative case, since the whole point was confirming *uniform* height across
+  every one of them, not just "probably close."
+
+This means the fix requires zero CSS or markup changes — the existing fixed-box + `contain` mechanism
+already normalizes to the tallest-relative-to-width source image automatically; swapping in narrower-canvas
+source photos is sufficient on its own to raise all 5 replaced bottles up to Cabernet's existing height,
+with no risk of the reverse problem (cropping) since `contain` never crops regardless of the source aspect
+ratio.
+
+**Implementation.** Backed up the 5 original files (to this session's job tmp dir, outside the repo, in case
+of any need to compare/revert) before overwriting. Copied all 5 new files from
+`/mnt/c/Users/Pc/Desktop/` directly over the matching filenames in
+`public/wp-content/uploads/2020/12/` — no renames, no markup edits, no other files touched.
+
+Verified: `npm run check` (0 errors, 0 warnings, same 1 pre-existing unrelated hint), `npm run test:unit`
+(42/42 pass), `npm run build` succeeds. Confirmed byte-for-byte (`cmp`) that `dist/client/wp-content/
+uploads/2020/12/` contains the *new* files post-build, and that a fresh preview server serves byte-identical
+content to the user's original source files (not a stale cache of the old ones). Route smoke test: `/`,
+`/it/`, `/en/`, `/de/`, and all 6 wine category pages (`/it/spumanti/`, `/it/bianchi/`, `/it/rossi/`,
+`/it/passiti/`, `/it/frizzanti-e-rosati/`, `/it/affinati/`) — all 200 (root `/` still its known, pre-existing
+302 country-redirect behavior, unrelated to this task). Killed the preview's own `astro preview`/`workerd
+serve` processes afterward, including one leftover orphaned `workerd serve` process from the prior task's
+own preview round.
+
+**Not yet confirmed live by the user.** The *height-matching* outcome is arithmetically guaranteed by the
+`contain` mechanics above, not merely hoped for — but whether the 5 new photos' own art direction (lighting,
+bottle angle, label crop) genuinely "look better" together, as the request's own framing anticipated, is a
+subjective visual judgment only the user can make.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Task 34: header logo grows + centers at top, nav font matched to the rest of the site
+
+Two requests in one message: "I would like the Rigoni Vittorino logo to be bigger and centered when the
+languages selection is visible, and take the smaller, current size when it becomes hidden. Moreover, I
+would like to try to swap the menu font style to that of the rest of the site." The user also proactively
+asked mid-turn for alternatives if either part wasn't understood or seemed unreasonably complex — both were
+answered with a concrete `AskUserQuestion` rather than either guessing silently or over-explaining before
+having anything concrete to show.
+
+**Part 1: logo size/centering, tied to the pre-header's own visibility.**
+
+The pre-header (language switcher bar) is already shown/hidden by the existing `.sticky` class
+(`public/scripts/site.js`'s `stickyHeader()`, toggled the instant `scrollY > 0`) — so "when the language
+selection is visible/hidden" maps directly onto `:not(.sticky)`/`.sticky`, no new state needed.
+
+The header is a single flex row today (`.header-inner{display:flex;justify-content:space-between}`, logo
+left via `.header-titles-wrapper`, nav right via `.header-navigation-wrapper`) — "centered" can't happen
+within that row without either restructuring it or layering the logo over the nav. Rather than guess, asked
+via `AskUserQuestion` with two concrete, previewed options: a two-row header (centered logo row, nav row
+below, collapsing to today's single row on scroll) vs. an overlay (logo floats centered over the same row as
+the nav, risking crowding on narrower desktop widths). User picked the two-row layout.
+
+Before committing to the two-row approach, checked it wouldn't destabilize `Hero.astro`'s existing
+`--header-height` measurement logic (Task 17/18's full-viewport hero positions itself relative to that
+value). Read `initHeroFullViewport()`'s `measure()`: it runs once on load, then again only on `resize`/
+breakpoint-change — never on `scroll`. Since the header only grows taller (two-row) in its *initial*, pre-
+scroll state (before `.sticky` is ever applied), that's exactly the height the very first `measure()` call
+captures — correct by construction, no risk of a stale height once the user later scrolls and the header
+collapses back to one row.
+
+Confirmed the real desktop breakpoint by reading the vendor CSS directly rather than assuming this project's
+common `769px` convention: `.header-navigation-wrapper` only becomes a visible flex row at
+`min-width:1000px` in `parent-style.min.css` — below that, the nav is `display:none` entirely (mobile's
+hamburger + slide-out modal takes over, a structurally different UI with no nav row to stack against). All
+new rules scoped to `min-width:1000px`; the old unconditional 50px lock was kept, now explicitly scoped to
+`max-width:999px`, so mobile's behavior is byte-for-byte unchanged.
+
+For the actual centering, avoided adding new flex properties where possible: `.header-inner` already has
+`align-items:center` unconditionally (from the existing Task 25 block above), which centers cross-axis
+children in row mode today and, once switched to `flex-direction:column`, centers each *stacked row*
+instead — for free. The only thing stopping `.header-titles-wrapper` from actually being centered by that
+existing rule was its own `max-width:50%;margin-right:4rem` (`parent-style.min.css`, sized for the old
+side-by-side layout, where the right margin made room for the nav). Reset both to content-width, no margin,
+for the `:not(.sticky)` state — with a content-sized box and no asymmetric margin, `align-items:center`
+alone centers it correctly with no `justify-content` override needed. Verified the 130px logo (given its
+markup's own `width="100" height="47"` intrinsic ratio, ≈277px wide at that height) comfortably fits within
+`.header-titles-wrapper`'s box even before that reset, at the `1000px` breakpoint's edge — no overflow risk
+either way, but the simpler content-width approach was preferred regardless (fewer interacting properties to
+reason about).
+
+Logo size target: `130px`, not a new arbitrary number — that's the vendor theme's own original "top of page"
+size (from `header .header-inner .site-logo img{max-height:130px}`, unconditionally present in
+`geppa/twentytwenty-style.min.css`, which Task 25 had overridden to a flat 50px everywhere). Reusing an
+already-tuned value that shipped as this theme's own default, rather than inventing a "bigger" number, per
+this project's general preference for measured/derived values over guesses.
+
+`!important` kept on both size rules (matching Task 25's own stated reason: this exact selector already had
+one real specificity-tie bug in this project's history — Task 15's `#site-header.sticky` fix). The size
+change transitions smoothly for free — `parent-style.min.css` already has
+`.site-logo img{transition:height .15s linear,width .15s linear,max-height .15s linear}`, untouched by this
+change. The row↔column layout switch itself is an instant snap (`flex-direction` isn't a tweenable
+property) — acceptable alongside the pre-header's own already-transitioning collapse; flagged as a possible
+future polish item, not implemented now (would need a more involved approach — e.g. FLIP — out of scope for
+what was asked).
+
+**Part 2: nav font — investigated before "fixing," since the obvious read was wrong.**
+
+Traced the actual cascade for `ul.primary-menu` → `<li>` → `<a>` across every stylesheet that touches it,
+rather than assuming the visibly-different menu meant a different font-family:
+- `style-custom.min.css`: `ul.primary-menu{font-family:Merriweather;...text-transform:uppercase}` — sets
+  Merriweather directly on the `<ul>`.
+- `geppa/twentytwenty-style.min.css`: `ul.primary-menu li,ul li.menu-item-has-children ul.sub-menu li{font-
+  family:var(--body-font-family);font-size:15px}` — sets Proza Libre directly on the `<li>` itself.
+
+An element's own explicitly-declared value for an inherited property (like `font-family`) always wins for
+that element and everything that inherits from it — regardless of the ancestor's own rule specificity. Since
+the `<li>` has its own explicit `font-family:var(--body-font-family)`, that's what actually reaches the
+rendered `<a>` text (which has no font-family rule of its own, so it inherits from its parent `<li>`, not
+from the `<ul>` two levels up). Also confirmed Merriweather was never loaded at all in this rebuild (grepped
+every stylesheet and `BaseLayout.astro`'s `<link>` list for `@font-face`/a Google Fonts URL — none), so even
+without the `<li>` override, the browser would've silently substituted a generic serif, not literally shown
+"Merriweather" as a mismatched font either way.
+
+Reported this finding to the user *before* changing anything font-related — the obvious interpretation of
+the request ("swap the font-family") would have been a no-op, since it already matched. Asked via
+`AskUserQuestion` whether the actual visible difference — `text-transform:uppercase` (plus a barely-
+perceptible `-0.0277em` letter-spacing from `parent-style.min.css`, left untouched as out of scope) — should
+be removed. Confirmed yes.
+
+Implementation went through one self-caught mistake: the first attempt overrode `text-transform:none` on
+`.primary-menu-wrapper` (the `<nav>` wrapping the `<ul>`), reasoning that inheritance would carry `none` down
+to the `<ul>` and its children. That's the exact same inheritance trap the font-family investigation had just
+surfaced, applied in the wrong direction: `ul.primary-menu` has its OWN direct `text-transform:uppercase`
+declaration, so it doesn't inherit from its parent wrapper at all — overriding only the wrapper would have
+had zero effect on the actual rendered `<ul>`. Caught before shipping (re-derived the same reasoning that had
+just been used to diagnose the original bug) and corrected to target `header#site-header ul.primary-menu`
+directly — high enough specificity (an ID selector in the chain) to beat `style-custom.min.css`'s rule
+regardless of load order, matching this file's usual approach in this same header area. Once the `<ul>`'s own
+computed value is `none`, ordinary inheritance carries it down through the nested `.sub-menu` dropdown items
+("I nostri vini"'s children) too, with no separate rule needed for them, since nothing along that chain
+redeclares `text-transform` of its own. The mobile hamburger/slide-out menu uses a structurally separate
+`<ul class="modal-menu">`, not a descendant of `ul.primary-menu` — confirmed via `header.html`'s markup — so
+it's unaffected by construction, not by any extra scoping; left untouched since changing it wasn't asked for
+and wasn't part of either `AskUserQuestion`.
+
+Verified: `npm run check` (0 errors, 0 warnings, same 1 pre-existing unrelated hint), `npm run test:unit`
+(42/42 pass), `npm run build` succeeds. Confirmed in compiled output: `flex-direction: column` (×3 total in
+the file — one is this task's, the others are pre-existing unrelated rules, confirmed by line number) and
+`text-transform: none` present in `dist/client/styles/site.css`; `<link>` order in the built HTML confirms
+`site.css` loads after both `style-custom.min.css` and `geppa/twentytwenty-style.min.css`. Fresh preview
+server, route smoke test across `/`, `/it/`, `/en/`, `/de/`, `/it/chi-siamo/`, `/it/cantina/`,
+`/it/contatti/`, `/it/bianchi/` — all pass; confirmed the header markup/classes are otherwise byte-identical
+(no accidental markup changes, this was CSS-only). Killed the preview's own `astro preview`/`workerd serve`
+processes after each of the two verification rounds this task needed (one for the logo/layout change, one
+after the text-transform selector fix).
+
+**Not yet confirmed live by the user.** Both changes are exactly the category `CLAUDE.md`'s verification-
+rigor section flags as needing real eyes: a header restructure (does the two-row layout actually look
+balanced with a 130px logo, not oversized or cramped against the pre-header bar above it?) and a typography
+change (does normal-case nav read as more cohesive with the rest of the site, as intended, once actually
+seen next to real body text?) are both fundamentally visual judgments this sandbox can't make.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Task 34 follow-up: two-row logo replaced with the overlay alternative
+
+Live feedback: "I do not like the big logo. Try the alternative you proposed." — referring back to the
+2-option `AskUserQuestion` from the original Task 34 round (two-row header vs. overlay logo). The dislike is
+about how the two-row version presented the enlarged logo, not the size itself — the user explicitly asked
+to try the *other* option, which also uses the same 130px size, just positioned differently. Replaced the
+two-row implementation outright rather than adding a third variant.
+
+**What changed.** `.header-inner` no longer switches to `flex-direction:column` at any point — it stays a
+normal single row (logo left, nav right in its default state) at every scroll position now, matching the
+original pre-Task-34 structure. Instead, `.header-titles-wrapper` (not-sticky only) is taken out of normal
+flow entirely: `position:absolute; left:50%; top:50%; transform:translate(-50%,-50%)`, with `.header-inner`
+given `position:relative` (added unconditionally within the `min-width:1000px` block — harmless at every
+scroll position, since a `position:relative` element with no offsets of its own doesn't move or resize) to
+serve as the containing block that `left:50%` resolves against.
+
+With the titles-wrapper out of flow, `.header-navigation-wrapper` is left as the row's only in-flow flex
+child, so it naturally expands to occupy the row on its own — and `ul.primary-menu{justify-content:center}`
+(`geppa/twentytwenty-style.min.css`, already existed, untouched) then centers the actual menu items across
+that now-full-width row. The enlarged logo floats centered on top of it, reproducing the exact composition
+shown in the original `AskUserQuestion` preview ("Azien [ BIG LOGO ] Vini ...").
+
+**The one risk flagged in the original option description — surfaced then, now actually addressed.** The
+overlay option's own description warned it "may visually crowd or sit close to the menu items." Worked out
+the concrete version of that risk before shipping: once the logo is out of flow, the row's own height is
+set only by the nav's much shorter line height (~15px font, 5px `<li>` padding, plus the header's own
+`2rem 2rem 1rem` padding) — call it roughly 60px tall. A 130px-tall absolutely-positioned logo centered on a
+~60px row would overflow about 35px past both the top and bottom edges, bleeding into the pre-header bar
+above and the page content below. Fixed with `min-height:130px` on `.header-inner` (not-sticky only) —
+guarantees the row is always at least as tall as the logo needs, so it's fully contained; the nav's own
+content stays vertically centered within that taller row via the pre-existing, unconditional
+`align-items:center` on `.header-inner`.
+
+Reused the same `max-width:none;margin-right:0` reset on `.header-titles-wrapper` that the two-row version
+needed, for the same underlying reason: the vendor's `max-width:50%;margin-right:4rem`
+(`parent-style.min.css`) was sized for the old side-by-side layout, and the asymmetric right margin would
+otherwise shift the box's true center away from the calculated `left:50%` point. Added `z-index:1` to make
+"logo layered over the nav" an explicit, stated intent rather than relying on the (correct, but implicit)
+default fact that positioned elements already paint above static in-flow content.
+
+Verified: `npm run check` (0 errors, 0 warnings, same 1 pre-existing unrelated hint), `npm run test:unit`
+(42/42 pass), `npm run build` succeeds. Confirmed in compiled output: `min-height: 130px` and
+`transform: translate(-50%, -50%)` both present in `dist/client/styles/site.css`. Fresh preview server, route
+smoke test (`/`, `/it/`, `/en/`, `/de/`, `/it/chi-siamo/`, `/it/bianchi/`) — all pass. One process-hygiene
+note this round: a separate `astro preview` was already running on port 4321 (started 10:35, not by this
+session's own commands this round) when this round's own preview was launched — it bumped to port 4322
+automatically, tested against 4322, and only this round's own PIDs were killed afterward, leaving the other,
+possibly-the-user's-own session on port 4321 untouched, per this project's established selective-kill
+convention for exactly this situation.
+
+**Not yet confirmed live by the user** — same as the rest of Task 34, this needs real eyes, especially given
+the two-row version's own live rejection means this exact category of change (header logo prominence) has
+now had one round of negative feedback already; if the overlay version is also rejected, per `CLAUDE.md`'s
+circuit-breaker rule this would be the point to stop making incremental variants and instead lay out
+genuinely different approaches or ask targeted diagnostic questions about what specifically isn't working,
+rather than trying a third logo-treatment guess.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Task 34 (logo half): reverted after a second live rejection
+
+Live feedback: "This does not look good. Go back to the compact logo that we always had on this project." —
+following the overlay version (itself a swap-in after the two-row version's own earlier rejection, "I do not
+like the big logo"). Two live rejections in a row for the same underlying feature (a bigger/centered logo
+tied to pre-header visibility) is exactly `CLAUDE.md`'s stated circuit-breaker condition: "If the same
+feature has been live-tested and reported broken twice in a row, don't make a third incremental patch to the
+same architecture." Read literally that rule is framed around bug-fixing; applied here by the same spirit —
+this is a design-taste rejection repeated twice, not a bug, so the applicable move is the same: stop
+iterating on positioning variants and revert to the known-good baseline instead of guessing a third layout.
+The user's own instruction ("go back to... that we always had") independently asked for exactly that, so
+there was no tension between the rule and the request.
+
+**The revert.** Removed the entire Task 34 logo block — both the `max-width:999px` mobile-lock rule and the
+`min-width:1000px` desktop block (position/min-height/transform/z-index overrides) — and restored the single
+original rule from Task 25:
+
+```css
+header#site-header .header-inner .site-logo img {
+  max-height: 50px !important;
+}
+```
+
+Confirmed this is genuinely identical to the pre-Task-34 state, not just visually similar: same selector,
+same declaration, same `!important`, unconditional (no media query), matching what `git diff` would show
+this file looked like before Task 34 ever touched it (verified by comparing against this file's own Task 25
+comment block just above, which still accurately describes this exact rule and was left untouched throughout
+all of Task 34's churn).
+
+**What was deliberately NOT reverted.** The menu font/case change (ALL CAPS → normal sentence case) from the
+same Task 34 request is a separate, independently-approved change (its own `AskUserQuestion`) that was never
+reported as disliked — reverting it too would have been overreach beyond what "go back to the compact logo"
+actually asked for. Confirmed it's still present and untouched (`header#site-header ul.primary-menu{text-
+transform:none}` still in the file, right after the reverted block).
+
+Verified: `npm run check` (0 errors, 0 warnings, same 1 pre-existing unrelated hint), `npm run test:unit`
+(42/42 pass), `npm run build` succeeds. Confirmed in compiled output: `max-height: 50px !important` present
+(the restored rule); `min-height: 130px`, `translate(-50%, -50%)`, and any logo-related
+`flex-direction: column` are all absent from `dist/client/styles/site.css` — the file's only remaining
+`flex-direction: column` hits (grep count 2) are pre-existing, unrelated rules (the loading-screen spinner
+and the collection-showcase category buttons), confirmed by line number, not leftover Task 34 remnants.
+`text-transform: none` confirmed still present (1 hit), confirming the font/case change survived the revert
+untouched. Fresh preview server, route smoke test (`/`, `/it/`, `/en/`, `/de/`, `/it/chi-siamo/`,
+`/it/bianchi/`) — all pass.
+
+**Status going forward:** the logo is back to its previously-shipped, already-confirmed-live-elsewhere
+baseline (Task 25's own decision, which itself was never reported as a problem) — this doesn't need a fresh
+round of "confirm this live" the way a new visual change would, since it's a return to known state, not an
+unverified new one. The menu font/case change remains genuinely new and still awaits live confirmation.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Task 35: hero carousel replaced with a background video
+
+Request: "swap the carousel of pictures that currently sits in the background... which is the carousel
+visible when the site is initially loaded or when you scroll all the way up, to this video," supplying a
+local file (`C:\Users\Pc\Downloads\17999240-uhd_4096_2160_30fps.mp4`) and explicitly inviting alternatives if
+the description or implementation seemed unreasonably hard. This follows up on an exploratory question much
+earlier in this session ("would swapping the carousel for a video/gif be difficult and slow the site down?"),
+answered then with a recommendation (video over GIF, a single loop rather than a video carousel, compress
+well) but not implemented at the time — this request supplies the actual asset and asks for the real thing.
+
+**Feasibility check before implementing anything.** Confirmed the Windows path resolves inside this sandbox
+via the same WSL mount already used for the Task 33 image swap (`/mnt/c/Users/Pc/Downloads/...`), and that
+the file exists: 16,777,571... (17,477,571) bytes, ≈16.7MB. Checked for any video-transcoding capability
+before deciding whether to compress/resize it down from its native 4096×2160: no `ffmpeg`/`ffprobe` binary
+anywhere on the system (`command -v`, then a bounded search of `/usr/bin`, `/usr/local/bin`, `/opt`, and
+project `node_modules` after an earlier unbounded `find /` search was killed for violating this project's own
+guidance against scanning the full filesystem); `apt-get install ffmpeg` fails outright (`Permission denied`
+on the dpkg lock, not root, no passwordless sudo); no Python video library available either (`cv2`,
+`hachoir`, `pymediainfo`, `moviepy` all absent, and no working `pip install` path checked further once the
+system package manager itself was confirmed inaccessible). Conclusion: this sandbox cannot transcode,
+resize, compress, or extract a poster frame from video — a real, disclosed limitation, not silently worked
+around. The feature itself (swapping a carousel for a `<video>` background) is not remotely difficult;
+only the "compress it properly first" sub-step is unavailable here, so that's what got flagged rather than
+declining the whole request or silently shipping an unaddressed 4K file without comment.
+
+**Where the file lives.** Copied to `public/videos/hero-background.mp4` — a new folder, matching this
+project's existing pattern of keeping project-authored (non-scraped) assets outside `wp-content/uploads`
+(which Task 1 established as reserved for the original WordPress scrape's own media), the same way
+`public/scripts/site.js` and `public/styles/site.css` already sit alongside `wp-content` rather than inside
+it.
+
+**Component changes (`Hero.astro`).** The old implementation reproduced RevSlider's 4-photo crossfade: an
+array of `{image}` slide objects mapped to absolutely-positioned `<div>`s with `background-image`, a
+`.hero-slider__dots` pagination row, and a `setInterval`-driven `show()`/`restartAutoplay()` JS loop toggling
+`.is-active`. All of it removed outright, not left inert next to the new video — with a single continuous
+video loop there's nothing left to paginate between, and Task 9's own original comment on the `slides` prop
+already established `/en/`/`/de/` were passing byte-identical arrays to `/it/`'s default, so removing the
+prop entirely (rather than keeping it "just in case") loses no actual per-language content. Replaced with a
+single `<video>`:
+
+```html
+<video class="hero-slider__video" data-hero-video
+  poster="/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg"
+  muted loop playsinline preload="none" aria-hidden="true">
+  <source src="/videos/hero-background.mp4" type="video/mp4" />
+</video>
+```
+
+- `poster`: reuses the first of the 4 old carousel photos rather than dropping the fallback entirely — shown
+  before the video's own first frame paints, and if the video fails to load at all. Chosen over generating a
+  frame from the video itself only because no tool here can extract one; this is a reasonable, low-effort
+  substitute, not a compromise made from indifference.
+- `<source type="video/mp4">` inside the element rather than a bare `src` attribute on `<video>` directly —
+  the more standards-correct way to declare a video's MIME type, letting the browser make a definite
+  format-support decision rather than sniffing the URL's extension.
+- `aria-hidden="true"`: a `background-image` `<div>` was never in the accessibility tree to begin with; a
+  `<video>` element is, by default, so this needed an explicit opt-out to stay purely decorative, matching
+  what the old implementation already achieved implicitly.
+- `muted loop playsinline`: the standard, necessary combination for a cross-browser-autoplayable,
+  continuously-looping background video (unmuted or non-inline video reliably gets blocked/interrupted on
+  mobile Safari in particular).
+- `preload="none"` in the markup, deliberately not `"auto"` — see the reduced-motion handling below for why.
+
+**Reduced-motion handling.** `autoplay` is not a static HTML attribute here — it's started from a small
+script that checks `prefers-reduced-motion` first:
+
+```js
+(function initHeroVideo() {
+  const video = document.querySelector<HTMLVideoElement>("[data-hero-video]");
+  if (!video) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  video.preload = "auto";
+  video.play().catch(() => {});
+})();
+```
+
+For `prefers-reduced-motion: reduce` visitors, this function returns immediately, leaving `preload="none"` in
+place — the browser never downloads any of the 16.7MB file, and the visitor sees only the static poster
+image, motion-free. This matches this project's established convention for that preference elsewhere (the
+loading screen and Task 17/18's scroll effects all fully disable, not just slow down, under reduced motion)
+and is a genuine bandwidth/battery win for those visitors, not just an accessibility checkbox. For everyone
+else, `preload` is bumped to `"auto"` and `.play()` is called explicitly; the returned promise's rejection is
+swallowed rather than surfaced, because some mobile browsers still refuse autoplay under certain conditions
+even when muted, and the correct behavior there is simply staying on the poster frame, not a console error or
+a broken page.
+
+**CSS (`site.css`).** `.hero-slider__slide`/`.hero-slider__dot(.is-active)` rules removed (dead once the
+markup no longer produces those elements); replaced with a single `.hero-slider__video{position:absolute;
+inset:0;width:100%;height:100%;object-fit:cover}` — the same box-filling job `background-size:cover` did for
+the old slides, now done via `object-fit` since it's a real element instead of a CSS background. `.hero-
+slider`'s own height rules (520px desktop, 420px mobile) and the entire Task 17 fixed-viewport
+positioning/fade mechanism are completely untouched — that machinery only cares about the size/position of
+the `.hero-slider` box itself, not what's rendered inside it, so nothing there needed to change for this
+swap. Deliberately did not carry over the old `background-position:center 30%` as an equivalent
+`object-position`: that value was tuned specifically for the 4 photos it used to frame (giving headroom above
+the subject), and applying it blindly to an entirely different, unrelated video's own composition without
+having seen it would be guessing, not fixing anything — left as a follow-up to consider once the video's
+actual framing is visible.
+
+**Page-level cleanup (`src/pages/en/index.astro`, `de/index.astro`).** Both files' now-dead `const slides =
+[...]` arrays and `<Hero slides={slides} />` passes removed — `it/index.astro` already used the bare `<Hero
+/>` form (no explicit slides), so all 3 languages now call the component identically.
+
+Verified: `npm run check` (0 errors, 0 warnings, same 1 pre-existing unrelated hint), `npm run test:unit`
+(42/42 pass), `npm run build` succeeds. Confirmed in compiled output: `dist/client/videos/hero-background.mp4`
+is byte-identical (`cmp`) to the source file and to `public/videos/hero-background.mp4`; the `<video>`/
+`<source>` markup is present and correctly wired in all 3 languages' built homepage HTML; the new
+`.hero-slider__video` CSS rule is present in the built stylesheet. Fresh preview server: route smoke test
+(`/`, `/it/`, `/en/`, `/de/`, `/it/chi-siamo/`, `/it/bianchi/`, `/news/`) all pass; separately confirmed the
+video itself is actually served correctly (`200`, `video/mp4` content-type, full 17,477,571-byte length via
+`curl -w`). Killed the preview's own `astro preview`/`workerd serve` processes afterward.
+
+**Not deleted, flagged instead:** the 3 other original carousel photos (`rigoni-s3-vigneti.jpg`,
+`rigoni-s4-famiglia.jpg`, `rigoni-s5-cantina.jpg`) are now unused (only `rigoni-s2-bottiglie.jpg` survives, as
+the video's poster) but were left in the repo rather than removed — asset deletion wasn't asked for, and this
+project's own convention (Task 15's dead-code audit) is to flag unused assets for an explicit decision rather
+than auto-delete them.
+
+**Not yet confirmed live by the user.** Beyond the usual "needs real eyes" caveat, this one specifically
+needs: actual playback behavior (does it loop cleanly, does autoplay actually kick in on their browser/device),
+whether the video's own framing/composition works with `object-fit:cover`'s cropping at hero dimensions (no
+`object-position` tuning was possible sight-unseen), and whether the un-compressed 16.7MB/4K file's real-world
+load time is acceptable or needs the compression pass flagged above.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.

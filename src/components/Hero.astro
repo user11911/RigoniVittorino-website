@@ -1,21 +1,15 @@
 ---
-// Reproduces the visible behavior of the homepage's original RevSlider hero: 4
-// full-width photo slides, crossfade transition, autoplay, dot pagination. Built
-// from scratch with vanilla JS/CSS instead of re-hosting the proprietary RevSlider
-// engine (see IMPLEMENTATION_NOTES.md for the reasoning). Slide images and order
-// were confirmed against the live site's actual rendered (not just static HTML)
-// output; one layer present in the original markup ("Amarone della Valpolicella",
-// linking to a different winery) was measured to be permanently clipped outside
-// the slider's visible bounds on the live site and is intentionally NOT reproduced
-// here since it is never actually seen by visitors.
-//
-// Task 9: `slides` is now an optional prop (default = the exact IT array below,
-// unchanged) so /en/ and /de/ can reuse this component with the same 4 images
-// (confirmed language-neutral — identical src/alt across it/en/de in the raw
-// scrape).
-//
-// Task 14: the per-slide caption text (and its entrance animation) that used to
-// render here was removed by explicit user request — see .claude/TODO.md Task 14.
+// Task 35: the hero's background is now a single looping video instead of the
+// crossfading 4-photo carousel this component originally reproduced (see git
+// history / IMPLEMENTATION_NOTES.md Task 1 for that original RevSlider
+// reconstruction) — per explicit request. The `slides`-array/dot-pagination
+// system this used to have is removed outright, not left dead alongside the
+// video: with a single continuous video there's nothing left to paginate
+// between, and /en/ and /de/ never actually diverged from /it/'s slide set
+// (Task 9's own comment on the old prop confirmed they were byte-identical),
+// so there's no per-language content this loses either. The first of the old 4
+// slide photos is kept on as the <video>'s `poster` (shown before the video's
+// own first frame paints, and if it fails to load at all) rather than dropped.
 //
 // Task 17: `.hero-fixed-wrapper` reserves real document-flow height equal to the
 // viewport minus the header's own rendered height, while `.hero-slider` itself
@@ -24,67 +18,44 @@
 // fill the rest of the screen. Below 769px, and under prefers-reduced-motion,
 // none of that applies — the hero behaves exactly as it did before this task
 // (normal block-flow height). See .claude/TODO.md Task 17 for the full design and
-// IMPLEMENTATION_NOTES.md for why this replaces the discarded prior attempt.
-export interface Props {
-  slides?: { image: string }[];
-}
-const { slides = [
-  { image: "/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s3-vigneti.jpg" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s4-famiglia.jpg" },
-  { image: "/wp-content/uploads/2021/01/rigoni-s5-cantina.jpg" },
-] } = Astro.props;
+// IMPLEMENTATION_NOTES.md for why this replaces the discarded prior attempt. This
+// container-level mechanism is unchanged by Task 35 — it doesn't care whether
+// what's filling `.hero-slider` is a photo div or a video, only the box itself.
 ---
 
 <div class="hero-fixed-wrapper" data-hero-fixed-wrapper>
-  <div class="hero-slider" data-hero-slider>
-    {
-      slides.map((slide, i) => (
-        <div
-          class={`hero-slider__slide${i === 0 ? " is-active" : ""}`}
-          style={`background-image:url(${slide.image})`}
-          data-index={i}
-        />
-      ))
-    }
-    <div class="hero-slider__dots">
-      {/* aria-label kept in Italian for every language: same un-fetchable-without-a-browser
-          limitation the original scrape had for this slider's text — not translated to
-          avoid inventing text. */}
-      {slides.map((_, i) => <button class={`hero-slider__dot${i === 0 ? " is-active" : ""}`} data-goto={i} aria-label={`Vai alla slide ${i + 1}`} />)}
-    </div>
+  <div class="hero-slider">
+    <video
+      class="hero-slider__video"
+      data-hero-video
+      poster="/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg"
+      muted
+      loop
+      playsinline
+      preload="none"
+      aria-hidden="true"
+    >
+      <source src="/videos/hero-background.mp4" type="video/mp4" />
+    </video>
   </div>
 </div>
 
 <script>
-  document.querySelectorAll<HTMLElement>("[data-hero-slider]").forEach((root) => {
-    const slides = Array.from(root.querySelectorAll<HTMLElement>(".hero-slider__slide"));
-    const dots = Array.from(root.querySelectorAll<HTMLElement>(".hero-slider__dot"));
-    let current = 0;
-    let timer: ReturnType<typeof setInterval>;
-
-    function show(index: number) {
-      slides[current].classList.remove("is-active");
-      dots[current].classList.remove("is-active");
-      current = (index + slides.length) % slides.length;
-      slides[current].classList.add("is-active");
-      dots[current].classList.add("is-active");
-    }
-
-    function restartAutoplay() {
-      clearInterval(timer);
-      timer = setInterval(() => show(current + 1), 8000);
-    }
-
-    dots.forEach((dot, i) => {
-      dot.addEventListener("click", () => {
-        show(i);
-        restartAutoplay();
-      });
-    });
-
-    restartAutoplay();
-  });
+  // Task 35: autoplay is started from JS, not the `autoplay` HTML attribute,
+  // specifically so `prefers-reduced-motion: reduce` visitors never even
+  // download the video (left at `preload="none"`, poster-only) — matching this
+  // project's existing convention of fully disabling motion, not just slowing
+  // it down, for that preference (loading screen, Task 17/18's scroll effects).
+  // `.play()`'s returned promise is swallowed on rejection: some mobile browsers
+  // still refuse autoplay even when muted in certain conditions, and the
+  // correct fallback there is simply staying on the poster frame, not an error.
+  (function initHeroVideo() {
+    const video = document.querySelector<HTMLVideoElement>("[data-hero-video]");
+    if (!video) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    video.preload = "auto";
+    video.play().catch(() => {});
+  })();
 
   // Task 17: sets `--header-height` (consumed by .hero-fixed-wrapper/.hero-slider
   // in public/styles/site.css to keep the fixed hero starting exactly below the

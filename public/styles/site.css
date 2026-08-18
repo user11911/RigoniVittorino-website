@@ -5,6 +5,54 @@
  * self-hosted original CSS files loaded in BaseLayout.
  */
 
+/* --- Task 32: site-wide (every page, every language) — page content sat with a
+ * ~20px gap from the true left/right viewport edges everywhere except the header
+ * and footer, reported as making the site "look less clean." Root cause, found by
+ * reading the theme cascade rather than guessing a container/padding value to
+ * override: the vendor theme (twentytwenty/parent-style.min.css) gives every
+ * *direct child* of `.entry-content` that isn't a WP "wide"/"full"-aligned block
+ * `margin-left:auto;margin-right:auto` plus `width:calc(100% - 4rem)` — a
+ * deliberate 40px (`4rem`, and `1rem=10px` under this theme's own
+ * `html{font-size:62.5%}`) reservation that's a standard WordPress block-editor
+ * convention (regular content gets breathing room; only explicitly "wide"/"full"
+ * blocks reach the edges). The child theme (geppa/twentytwenty-style.min.css)
+ * already overrides this rule's `max-width` to `unset`, but keeps that same
+ * `width: calc(100% - 4rem)` — so the 40px reservation (auto-centered, i.e. ~20px
+ * each side) survived into this rebuild untouched.
+ *
+ * Every page in this rebuild renders its content as `.entry-content`'s direct
+ * child (`.grids-section` on the 4 main Grids-plugin pages and their EN/DE
+ * equivalents; `.wines-row-container` on the wine category listing pages) — none
+ * of these carry an `alignwide`/`alignfull`/`is-style-wide` class, so *all* of
+ * them were caught by this rule, while `#site-header`/`#site-footer` (siblings of
+ * `#site-content`, not descendants of `.entry-content` at all — see
+ * `BaseLayout.astro`) were never subject to it, matching exactly the reported
+ * "every page except header/footer" pattern. (Wine product detail pages use their
+ * own `.wine-container`, not `.entry-content`, so they were never affected
+ * either — confirmed by reading that page template, not assumed.)
+ *
+ * Fixed by overriding just the `width` this rule sets, back to the child's full
+ * available `100%` — removing the reserved 40px rather than changing how it's
+ * distributed. The selector below is a verbatim copy of the child theme's own
+ * (`:root body .entry-content>*:not(...)`), which guarantees this wins: identical
+ * specificity, and `site.css` loads last of all stylesheets (`BaseLayout.astro`).
+ * Known side effect: `/it/privacy-policy/`'s one placeholder callout box (the
+ * "Nota per il titolare del sito" warning, Task 6) is also a direct
+ * `.entry-content` child with no alignment class, so its bordered box now spans
+ * the full column width too instead of stopping 40px short — a presentational
+ * width change only, its own text/border/background and all legal content are
+ * untouched, so this doesn't need separate authorization under the frozen-legal-
+ * content rule (which covers factual/legal text, not a generic sitewide spacing
+ * fix that happens to reach this page too). --- */
+:root
+  body
+  .entry-content
+  > *:not(.alignwide):not(.alignfull):not(.alignleft):not(.alignright):not(
+    .is-style-wide
+  ) {
+  width: 100%;
+}
+
 /* --- Header: logo permanently compact, pre-header bar only visible at the
  * top (site-wide, every page/language) ---
  * public/scripts/site.js's stickyHeader() toggles `.sticky` on #site-header
@@ -35,9 +83,66 @@
  * comfortably under that), not an exact measurement; a max-height transition
  * doesn't require an exact value to look like a real slide, only one that
  * comfortably fits the content without clipping it at rest. --- */
+/* --- Task 34 (logo half): reverted. This project tried two variants of a
+ * bigger/centered logo tied to the pre-header's visibility — a two-row layout,
+ * then (per explicit request to "try the alternative") an overlay where the
+ * logo floated centered on top of the nav row — and both were rejected live
+ * ("I do not like the big logo" / "this does not look good"). Per explicit
+ * request to "go back to the compact logo that we always had on this project,"
+ * reverted to exactly Task 25's original rule below: logo locked at its compact
+ * 50px size unconditionally, at every scroll position and screen size, no
+ * pre-header-tied variation. Per `CLAUDE.md`'s circuit-breaker rule (two live
+ * rejections in a row for the same feature), this isn't a third incremental
+ * variant to try next — if a bigger/centered logo is wanted again later, that
+ * needs a fresh conversation about what specifically didn't work, not another
+ * guess at positioning. The menu font/case change from this same task (below)
+ * was not reported as disliked and stays as-is. --- */
 header#site-header .header-inner .site-logo img {
   max-height: 50px !important;
 }
+
+/* --- Task 34 follow-up: desktop nav menu switched to normal sentence case,
+ * matching the rest of the site's text, per explicit request ("swap the menu
+ * font style to that of the rest of the site").
+ *
+ * The menu's actual rendered *font-family* was already `var(--body-font-family)`
+ * (Proza Libre, the same font the rest of the site uses) before this change —
+ * confirmed by tracing the full cascade, not assumed: `ul.primary-menu` itself
+ * has a leftover `font-family:Merriweather` (style-custom.min.css), but
+ * Merriweather is never actually loaded anywhere in this rebuild (no Google
+ * Fonts link, no `@font-face`), and a more specific, later rule
+ * (`ul.primary-menu li{font-family:var(--body-font-family)}`,
+ * geppa/twentytwenty-style.min.css) sets the font directly on the `<li>` itself
+ * — an element's own explicit declaration always wins over what it would
+ * otherwise inherit from an ancestor, regardless of that ancestor's own
+ * specificity, so the dead `Merriweather` declaration was never actually
+ * reaching the rendered text. What *was* visibly different was
+ * `text-transform:uppercase` (also from that same style-custom.min.css rule) —
+ * confirmed with the user this was the real target before touching it, since
+ * the font-family half of the original request turned out to already be true.
+ *
+ * Targets `ul.primary-menu` directly, not just an ancestor wrapper: the
+ * `uppercase` rule is declared directly *on* that element (style-custom.min.css),
+ * and an element's own explicit declaration always wins over whatever it would
+ * otherwise inherit from an ancestor, regardless of the ancestor rule's own
+ * specificity — so overriding only `.primary-menu-wrapper` (a parent of the
+ * `<ul>`, not the `<ul>` itself) would have had no effect at all, the same
+ * inheritance trap the font-family half of this investigation just uncovered.
+ * `header#site-header` in the selector (rather than bare `ul.primary-menu`) is
+ * only there to safely out-specificity style-custom.min.css's rule regardless
+ * of load order, matching this file's usual approach in this same header area.
+ * Once the `<ul>`'s own computed value is `none`, normal inheritance (nothing
+ * else in the chain redeclares text-transform) carries it down through the
+ * nested `.sub-menu` dropdown items too ("I nostri vini"'s children) without
+ * needing a separate rule for them. The mobile hamburger menu is unaffected by
+ * construction, not extra scoping — it's a structurally separate
+ * `<ul class="modal-menu">` in the slide-out `.menu-modal`, not a descendant of
+ * `ul.primary-menu` at all; changing its treatment too would be a separate
+ * decision, not asked for here. --- */
+header#site-header ul.primary-menu {
+  text-transform: none;
+}
+
 header#site-header .pre-header-inner {
   overflow: hidden;
   max-height: 60px;
@@ -57,38 +162,27 @@ header#site-header.sticky .pre-header-inner {
   width: 100%;
   height: 520px;
 }
-.hero-slider__slide {
+/* --- Task 35: single looping background video, replacing the 4-photo
+ * crossfading carousel that used to fill this same box (`.hero-slider__slide`/
+ * `.hero-slider__dots` and their rules removed outright — nothing left to
+ * paginate between with only one video, so nothing was left dead here). Sized
+ * identically to how the old slides filled their box (`position:absolute;
+ * inset:0`, full width/height, `object-fit:cover` doing the same job
+ * `background-size:cover` did) — `.hero-slider`'s own height (520px desktop,
+ * 420px mobile, or the Task 17 fixed-viewport override below) is unchanged and
+ * still fully governs the visible box; the video just fills whatever that box
+ * is, exactly like the photos did. No `object-position` override (the old
+ * `background-position:center 30%` isn't reproduced here): that value was
+ * tuned for the specific 4 product/vineyard photos it framed, not for this
+ * new, unrelated video's own composition — worth checking once seen live and
+ * adding an equivalent `object-position` then, if the video's subject needs
+ * similar vertical framing help. --- */
+.hero-slider__video {
   position: absolute;
   inset: 0;
-  opacity: 0;
-  transition: opacity 1s ease;
-  background-size: cover;
-  background-position: center 30%;
-}
-.hero-slider__slide.is-active {
-  opacity: 1;
-  z-index: 1;
-}
-.hero-slider__dots {
-  position: absolute;
-  right: 24px;
-  bottom: 24px;
-  z-index: 3;
-  display: flex;
-  gap: 10px;
-}
-.hero-slider__dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  border: 1px solid #fff;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-}
-.hero-slider__dot.is-active {
-  background: #000;
-  border-color: #000;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 @media (max-width: 768px) {
   .hero-slider {
@@ -543,6 +637,63 @@ header#site-header.sticky .pre-header-inner {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
+}
+
+/* --- Task 31: on desktop/tablet, make the photo fill the closing section's full
+ * black area top-to-bottom instead of sitting at its own fixed 4:3 crop with gaps
+ * above/below. The area's own top/bottom margin (the gap) was removed directly in
+ * home.html/en/home.html/de/home.html's `--_ga-m-desktop`/`--_ga-m-tablet`
+ * inline values (was `50px 0 50px 0` / `50px 0 25px 0`, now `0 0 0 0`) — the
+ * plugin's `.grids-is-advanced>.grids-s-w_i>.grids-area{height:100%}` rule
+ * (grids-frontend.min.css) already stretches this area to the full row height
+ * (which the text column's own 120px top margin + content drives), so once its
+ * own margin is zeroed it naturally spans from the section's top padding to its
+ * bottom padding — i.e. the visible black borders — with nothing extra to fix
+ * here. `aspect-ratio` is dropped in favor of `height:100%` so the image tracks
+ * that row height instead of a fixed ratio derived only from its own width.
+ *
+ * Filling that height at the column's original width alone made the photo look
+ * like a narrow vertical strip, so the figure is widened by a fixed 80px past its
+ * grid column and left to overflow (`overflow: visible`, the default — nothing
+ * here clips it, and #site-content's own `overflow: hidden` only clips at the
+ * page's outer edge, far past this) into the *text* column's own left portion.
+ * That's a deliberate, low-risk target: the text column is `text-align: right`,
+ * so its left portion is normally empty space anyway. `figure::after` fades the
+ * rightmost 20% of the photo to black (the section's own background) so the seam
+ * blends rather than hard-cutting under the text, and `.bottone-centro` gets an
+ * explicit `z-index` so the text stays legible on the rare line that does cross
+ * into the overlap (mainly the heading). Mobile is unchanged (stacks above the
+ * text at its own aspect-ratio; no side-by-side overlap to manage there). --- */
+@media (min-width: 769px) {
+  .home-closing-section__image {
+    overflow: visible;
+  }
+  .home-closing-section__image figure {
+    position: relative;
+    margin: 0;
+    width: calc(100% + 80px);
+    height: 100%;
+  }
+  .home-closing-section__image img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    aspect-ratio: auto;
+  }
+  .home-closing-section__image figure::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 20%;
+    background: linear-gradient(to right, transparent, #000);
+    pointer-events: none;
+  }
+  .bottone-centro {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 /* --- Task 22 follow-up: gives the footer's "go to contacts" link the same
