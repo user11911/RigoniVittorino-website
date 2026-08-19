@@ -52,58 +52,6 @@
     ]
   },
   {
-    "slug": "creativo-prosecco-millesimato-brut-doc-treviso-magnum",
-    "category": "spumanti",
-    "title": "Creativo Prosecco Brut Doc Treviso Magnum",
-    "productImage": "/wp-content/uploads/2021/01/creativo-magnum-v-rigoni-e1611075125873.jpg",
-    "cardImageSrc": "/wp-content/uploads/2021/01/creativo-magnum-v-rigoni-e1611075125873.jpg",
-    "cardImageWidth": "637",
-    "cardImageHeight": "1000",
-    "servingTempBadge": "6-8°C",
-    "glassIcon": "/wp-content/themes/geppa/img/ico-glass-1.svg",
-    "foodIcon": "/wp-content/themes/geppa/img/ico-pesce.svg",
-    "categoryLogo": "/wp-content/themes/geppa/img/vitorino-spumanti.svg",
-    "shopUrl": "https://www.rigonivittorinoshop.it/it/creativo-prosecco-millesimato-brut-magnum-doc-79",
-    "pdfUrl": "/wp-content/uploads/2021/01/prosecco-creativo-rigoni-vittorino-IT.pdf",
-    "typologyLabel": "Spumanti",
-    "typologyHref": "https://rigonivittorino.com/it/wines_categories/spumanti/",
-    "gradazione": "11%",
-    "coltivazione": "Vigneti allevati con il sistema doppio capovolto con densità di allevamento di 3500 viti per ettaro.",
-    "vinificazione": "Le uve più belle giunte al giusto grado di maturazione vengono raccolte e macerate a freddo per alcune ore. Si procede quindi alla pressatura soffice ed il mosto ottenuto viene fatto fermentare con lieviti selezionati a temperatura controllata. A fine fermentazione il vino ottenuto viene lasciato riposare in botti di acciaio fino alla successiva presa di spuma che avviene in autoclave con il metodo Charmat. Solamente dopo alcuni mesi di maturazione in autoclave si procede all’imbottigliamento.",
-    "resaMedia": "150 q/HA",
-    "abbinamenti": "Ideale per aperitivi e brindisi, si abbina magnificamente a molluschi e crostacei crudi.",
-    "servizio": "6-8°C",
-    "tastingNoteParagraphs": [
-      "Colore giallo paglierino luminoso, perlage fine e persistente, profumi di fiori e frutta a polpa bianca. Alla degustazione si mostra secco, fresco, fine ed equilibrato."
-    ]
-  },
-  {
-    "slug": "pinot-nero-spumante-millesimato-brut-magnum",
-    "category": "spumanti",
-    "title": "Pinot Nero Spumante Brut Magnum",
-    "productImage": "/wp-content/uploads/2021/01/pinot-nero-magnum-v-rigoni-e1611075622852.jpg",
-    "cardImageSrc": "/wp-content/uploads/2021/01/pinot-nero-magnum-v-rigoni-e1611075622852.jpg",
-    "cardImageWidth": "637",
-    "cardImageHeight": "1000",
-    "servingTempBadge": "6-8°C",
-    "glassIcon": "/wp-content/themes/geppa/img/ico-glass-1.svg",
-    "foodIcon": "/wp-content/themes/geppa/img/ico-pesce.svg",
-    "categoryLogo": "/wp-content/themes/geppa/img/vitorino-spumanti.svg",
-    "shopUrl": "https://www.rigonivittorinoshop.it/it/pinot-nero-millesimato-brut-magnum-79",
-    "pdfUrl": "/wp-content/uploads/2021/01/pinot-nero-spumante-brut-rigoni-vittorino-IT.pdf",
-    "typologyLabel": "Spumanti",
-    "typologyHref": "https://rigonivittorino.com/it/wines_categories/spumanti/",
-    "gradazione": "12,0%",
-    "coltivazione": "Vigneti allevati a doppio capovolto, densità di allevamento 3500 piante per ettaro.",
-    "vinificazione": "Le uve vengono raccolte anticipatamente. Dopo la pigiatura viene fatta una pressatura molto soffice in bianco. Perciò il mosto viene avviato alla fermentazione in vasche di acciaio ad una temperatura di circa 13 °C. La presa di spuma viene fatta secondo il metodo Martinotti con permanenza in autoclave per almeno un anno.",
-    "resaMedia": "120 q/HA",
-    "abbinamenti": "Eccellente come aperitivo. Accompagna egregiamente antipasti e frutti di mare. Ottimo con i crostacei.",
-    "servizio": "6-8°C",
-    "tastingNoteParagraphs": [
-      "È un vino dal colore giallo paglierino con riflessi ramati, perlage fine e persistente. Al naso è fresco, elegante, con iniziali note di pane lievitato ed un finale agrumato. Al palato è sapido, equilibrato, molto gradevole. Ha una buona persistenza gusto olfattiva."
-    ]
-  },
-  {
     "slug": "prosecco-950-extra-dry-doc-treviso",
     "category": "spumanti",
     "title": "Prosecco 950 Extra Dry Doc Treviso",

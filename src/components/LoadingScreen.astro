@@ -11,6 +11,12 @@
 // wrapping an inner `.loading-screen__spinner-ring` (the rotating border-ring) — see
 // site.css's comment above `.loading-screen` for why a CSS `animation` and `transition`
 // can't both drive the same element's `transform` at once.
+//
+// Task 42: `onLoaded()` now also waits for the homepage's hero video (Task 35) to
+// be ready to play, not just the page's own `load` event + minimum-display floor
+// — see that function's own comment for why the previous version could reveal
+// the page before the video was actually playing, undermining the whole point
+// of having a loading screen in the first place.
 ---
 
 <div id="loading-screen" class="loading-screen" aria-hidden="true">
@@ -156,9 +162,36 @@
       setTimeout(remove, EXIT_DURATION_MS + 300); // safety net if transitionend never fires
     }
 
+    // Task 42: on the homepage, don't reveal until the hero background video
+    // (Task 35) can actually start playing — otherwise the loading screen's own
+    // job (hiding the page's real load state) was being defeated by its own
+    // timing: MIN_DISPLAY_MS is a *floor*, not tied to whether the video is
+    // ready, so on a slow-enough connection the screen could reveal a page
+    // that's still showing the video's static `poster` fallback, right as the
+    // loading screen — whose entire purpose is hiding exactly that kind of
+    // in-progress state — gets out of the way. Resolves immediately (no-op) if
+    // there's no hero video on this page at all, or if it's already able to
+    // play by the time this runs, so this changes nothing for any page other
+    // than the homepage on a slow connection. Deliberately has no timeout of
+    // its own: `MAX_WAIT_MS` below already exists as an unconditional
+    // "never trap a visitor" backstop that fires `reveal()` regardless (safe to
+    // call twice — `revealed` guards it), so a video that fails to load doesn't
+    // need a second, separate timeout here.
+    function heroVideoReady(): Promise<void> {
+      const video = document.querySelector<HTMLVideoElement>("[data-hero-video]");
+      if (!video || video.readyState >= video.HAVE_FUTURE_DATA) return Promise.resolve();
+      return new Promise((resolve) => {
+        video.addEventListener("canplay", () => resolve(), { once: true });
+        video.addEventListener("error", () => resolve(), { once: true });
+      });
+    }
+
     function onLoaded() {
       const elapsed = performance.now() - start;
-      setTimeout(reveal, Math.max(0, MIN_DISPLAY_MS - elapsed));
+      const minDelay = Math.max(0, MIN_DISPLAY_MS - elapsed);
+      Promise.all([new Promise<void>((resolve) => setTimeout(resolve, minDelay)), heroVideoReady()]).then(
+        reveal,
+      );
     }
 
     if (document.readyState === "complete") {

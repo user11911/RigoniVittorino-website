@@ -1,0 +1,65 @@
+---
+// Task 43: the flavor ("tasting note") and winemaking-process descriptions for a
+// wine product page, promoted out of their old positions (a separate colored-
+// background box further down the page, and a single line buried in the flat
+// tipologia-row list, respectively) into their own prose sections. Rendered
+// *inside* `.description` — the column that already sits beside the bottle photo
+// — right after `.specs-row`, per live correction that an earlier version had
+// wrongly placed this as a full-width block below the whole top section instead
+// of beside the bottle like the title/icons. Built and approved for spumanti
+// only, then (Task 44) extended to every wine category by explicit request —
+// this component itself has no category logic, it just renders whatever data
+// it's given, so no change was needed here for that extension. No CSS padding
+// of its own on either axis that would fight with
+// `.description`'s own (`padding:20px 20% 30px 60px`, twentytwenty-
+// style.min.css) — see site.css's own Task 43 comment for the sizing this
+// nested context needed vs. the original full-width version.
+//
+// One shared component across it/en/de (not 3 near-duplicates) because it carries
+// no per-language label text of its own — just the wine's own already-translated
+// data fields, unchanged content, only relocated and restyled. Contrast with the
+// tipologia-row/buttons-row block the 3 templates still render directly: that one
+// already has hardcoded per-language label strings duplicated across those 3
+// files today, so it stays a simple per-template conditional rather than growing
+// a new shared component with a label-string prop for only 3 call sites.
+//
+// The Rigoni V-logo overlapping the flavor text's top-left corner is meant to
+// evoke the "Dalla campagna al bicchiere" section on /it/chi-siamo/ (same visual
+// idea, same logo asset). First implemented with `float:left` (text wrapping
+// beside the logo) as a simpler stand-in for chi-siamo's own hand-authored
+// overlapping-grid-line technique; a later live round asked explicitly for the
+// text to sit *on top of* the logo instead of beside it, so site.css now layers
+// them via `position:absolute` (logo, behind) + `position:relative;z-index`
+// (text, in front) inside this component's own `position:relative` wrapper —
+// still a standard CSS technique, just layering instead of float-wrapping.
+//
+// The logo image itself (`V-rigoni-bianco.png`) is a solid white shape on a
+// fully transparent background (confirmed by inspecting its actual pixels, not
+// assumed) — invisible by construction on a plain white background, which is
+// exactly why it read as "no V logo is visible" the first time this went live.
+// It's only visible on chi-siamo's own reference section because that specific
+// block sits on a `#ede9e4` tan-colored ancestor there. Rather than add a
+// background box back (the earlier "conventional text" request specifically
+// asked to drop that) or source a new image asset, site.css applies
+// `filter:invert(1)` (turns the opaque white pixels black; transparent pixels
+// are untouched, filters don't affect alpha) plus a low `opacity` to keep it
+// reading as a soft decorative watermark the text can legibly sit over — same
+// file, no new asset, no background box.
+export interface Props {
+  tastingNoteParagraphs: string[];
+  vinificazione: string;
+}
+const { tastingNoteParagraphs, vinificazione } = Astro.props;
+---
+
+<div class="wine-tasting-section">
+  <div class="wine-tasting-section__logo">
+    <img src="/wp-content/uploads/2020/12/V-rigoni-bianco.png" alt="" loading="lazy" />
+  </div>
+  <div class="wine-tasting-section__text">
+    {tastingNoteParagraphs.map((p) => <p>{p}</p>)}
+  </div>
+</div>
+<div class="wine-process-section">
+  <p>{vinificazione}</p>
+</div>

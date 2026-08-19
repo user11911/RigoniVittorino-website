@@ -556,7 +556,243 @@ before editing" step 4.
   languages) show the new markup and zero old low-res image sources remain sitewide; fresh preview +
   23-route smoke test all pass. **Not yet confirmed live by the user.**
 
-- Task 40: `/it/contatti/` (+ `/en/contatti/`, `/de/contacts/`) team section redesign, explicit request: white
+- Task 40: native cross-document View Transition (browser-level, not Astro's ClientRouter/SPA routing —
+  this stays a fully static, prerendered multi-page site) between the spumanti category page's wine cards
+  and each wine's own product page — the bottle image now morphs smoothly into its new position/size across
+  the navigation instead of an instant cut. Scoped to spumanti only for now, per explicit request ("only do
+  prosecchi e spumanti... for now"), presented as the recommended option out of 3 alternatives discussed
+  first (native cross-document transitions vs. Astro's ClientRouter — rejected as too risky given how much
+  bespoke scroll/animation JS this site has — vs. a manual JS/sessionStorage FLIP approach). Implementation:
+  `BaseLayout.astro`'s new opt-in `enableViewTransitions` prop emits the required
+  `<meta name="view-transition" content="same-origin">` tag only on pages that need it (never sitewide —
+  that would give *every* navigation a default whole-page cross-fade, a real, unscoped animation change);
+  `WineCard.astro`'s new optional `viewTransitionName` prop and matching inline style on the product page's
+  own bottle `<img>` give the *same* `view-transition-name` to what is, since Task 38/39, already the same
+  underlying image file at two sizes, so there's no source-image mismatch for the browser's automatic
+  interpolation to paper over. Reduced-motion visitors get the animation fully disabled (not just slowed),
+  matching this project's existing convention elsewhere. No JS was added — the browser handles the entire
+  transition natively; on browsers without cross-document View Transition support (Safari, Firefox, as of
+  this writing), the meta tag/`view-transition-name` are simply inert and navigation works exactly as
+  before. `check`/`test:unit`/`build` all pass; confirmed in compiled output that the meta tag and matching
+  `wine-bottle-<slug>` names are present and identical between the spumanti category page and each of its 8
+  wines' product pages (all 3 languages), and completely absent from every other category page and every
+  non-spumanti product page; fresh preview + 14-route smoke test all pass. **Not yet confirmed live by the
+  user** — this is a genuinely new animation effect that needs to be seen in a supporting browser (Chrome/
+  Edge) to judge whether it reads as smooth/correct, especially given this sandbox can't run a browser at
+  all to self-check the actual transition.
+
+- Task 41: removed the 2 magnum-bottle wines (`creativo-prosecco-millesimato-brut-doc-treviso-magnum`,
+  `pinot-nero-spumante-millesimato-brut-magnum`, both spumanti) entirely from the site, per explicit request
+  ("they are the same as their equivalent, it gives no extra information to show them"). Deleted both
+  entries from all 3 `wines*.json` files (confirmed via `grep` these were the only references anywhere in
+  `src/` before removing — no hardcoded links, no sitemap). Removing the JSON entries alone was sufficient:
+  the category pages filter from these files (so spumanti now shows 6 wines instead of 8) and the product
+  detail pages are generated via `getStaticPaths()` mapping over the same array (so both magnum product
+  pages simply stop being generated — confirmed their URLs now correctly 404). The 2 magnum-specific
+  product images (`creativo-magnum-v-rigoni-e1611075125873.jpg`, `pinot-nero-magnum-v-rigoni-
+  e1611075622852.jpg`) are now unused — left in place, flagged here, not deleted, matching this project's
+  established convention; their PDF spec sheets were already shared with the non-magnum wines, so nothing
+  there is orphaned. `check`/`test:unit`/`build` all pass; confirmed in compiled output that both magnum
+  product pages are absent from `dist/` and spumanti's card count dropped from 8 to 6 in all 3 languages;
+  fresh preview + route smoke test (including confirming the old magnum URLs now 404) all pass.
+
+- Task 42: homepage hero video (all 3 languages), two related changes prompted by the user asking "is there
+  something not working?" about briefly glimpsing what looked like the old carousel. (1) The `<video>`'s
+  `poster` attribute (one of the original 4 carousel photos) removed per explicit request ("can you just
+  have a white background as the static fallback") — replaced with plain `background-color:#fff` on
+  `.hero-slider__video` (matching `.loading-screen`'s own white), not a substitute image, since the video
+  fills the box completely the instant it can render a frame either way. (2) A real, found bug, not just a
+  request: `LoadingScreen.astro`'s reveal timing was decoupled from whether the hero video had actually
+  started playing — `MIN_DISPLAY_MS` is a floor timed from script start, not gated on video readiness, so on
+  a slow-enough connection (a real risk given the hero video is still uncompressed/16.7MB, per Task 35's own
+  disclosed limitation) the loading screen could finish and reveal a page whose video was still showing its
+  fallback — the loading screen's own stated purpose (hiding exactly that kind of in-progress load state)
+  defeated by its own timing. Fixed by having `onLoaded()` also wait for the hero video's `canplay`/`error`
+  event (or resolve immediately if no video is present, or it's already `readyState >= HAVE_FUTURE_DATA`) in
+  addition to the existing minimum-display floor, both racing against the pre-existing `MAX_WAIT_MS`
+  absolute backstop so a video that never loads still can't trap a visitor indefinitely. This is a bug fix
+  in Task 13/27/30's already-approved loading-screen behavior, not a new design decision, so didn't need
+  fresh design approval per `CLAUDE.md`'s own stated exception for that case. Also confirmed and explained,
+  not fixed (nothing was actually broken here): the loading screen intentionally only plays once per browser
+  session (`sessionStorage`-gated, Task 13's own approved design) — a repeat homepage visit within the same
+  session skips it entirely by design, which is the other plausible explanation for what was briefly seen.
+  `check`/`test:unit`/`build` all pass; confirmed in compiled output that the `poster` attribute is gone,
+  `background-color:#fff` is present, and the new `canplay`/`HAVE_FUTURE_DATA` logic is present, in all 3
+  languages; fresh preview + 8-route smoke test all pass. **Not yet confirmed live by the user** — same
+  caveat as Task 40: whether this actually eliminates the visible flash on a real slow connection can't be
+  verified in this sandbox at all, only reasoned through.
+
+- Task 43: reordered the 6 spumanti wine product pages' layout (all 3 languages), scope explicitly limited
+  to spumanti for now per request. Now on its 3rd live-feedback round. Current state: bottle + title + spec
+  icons occupy their original position; everything that follows — flavor description, winemaking-process
+  description (`vinificazione`), and the remaining short fields (gradazione/coltivazione/resa
+  media/abbinamenti/servizio) + PDF button — all live inside `.description`, the single column beside the
+  bottle (round 3 moved the short-fields block, `.wine-other-info`, back inside `.description`; round 2 had
+  left it as a separate full-width block below, per an earlier, more literal reading of "under both of
+  them" that round 3's "keep all info on the right side" superseded). The bottle image (`.wine-image`) is
+  now `position:sticky` (desktop/tablet only, `min-width:769px`) so it stays visible while the now much
+  taller description column scrolls past it — relies on CSS Grid's default `align-items:stretch` giving
+  `.wine-image` a tall cell to scroll within, no JS; its own `max-height` is additionally capped to
+  `min(780px, calc(100vh - 120px))` in that same scope, per a live follow-up that a short viewport must
+  never crop the sticky bottle. The flavor text now sits directly *on top of* the Rigoni V-logo (round 2's
+  `float:left` wrap-beside approach is replaced with `position:absolute` logo behind + `position:relative;
+  z-index` text in front — same low-opacity `filter:invert(1)` recolor from round 2, unchanged) per an
+  explicit "on top, not beside" correction. `.description`'s pre-existing, unscoped `#f8f8f8` background
+  (twentytwenty-style.min.css, present on every category, not introduced by this task) is overridden to
+  white, scoped to spumanti only via a new `.wine-spumanti` class on `<article>` (also used to scope the
+  sticky-bottle rules, since `.wine-image`/`.description` are otherwise unscoped vendor selectors shared by
+  every category). Flavor paragraphs (not the process paragraph) get `font-style:italic`. No new text was
+  written anywhere across any round — every word was already in `wines*.json`, only relocated/restyled.
+  Every other category's product pages render byte-identical to before this task — confirmed directly in
+  `dist/`, not assumed, in all 4 rounds. Round 4 (live feedback: "the pictures do not seem to stick at
+  all... delete the type: info... as it is obvious"): the sticky bottle genuinely wasn't sticking — root
+  cause was `#site-content{overflow:hidden}` (twentytwenty-style.min.css, every page), which breaks
+  `position:sticky` on any descendant since the sticky scrollport ends up clipped. Fixed by passing a new
+  `bodyClass="wine-spumanti"` prop to `BaseLayout` (existing mechanism, reused) from the 3 product templates,
+  so `body.wine-spumanti #site-content{overflow:visible}` overrides it scoped to only these 18 pages — every
+  other page keeps the clip unchanged. Also dropped the "Tipologia"/"Type"/"Charakter" line from
+  `.wine-other-info`'s field list for spumanti only (redundant given page/category context, per request) —
+  the non-spumanti tipologia-row keeps it, unchanged. Round 5 (live: "still not sticky", asked whether a
+  working sticky bottle would then overlap the footer): the `overflow:hidden` fix from round 4 was
+  necessary but not sufficient — the actual remaining blocker was CSS Grid's default `align-items:stretch`
+  stretching `.wine-image`'s own box to match `.description`'s full height, which leaves *zero slack* for a
+  sticky element to move through (a stretched box already equals its container's height by definition) —
+  it just renders at the top and scrolls normally, indistinguishable from `position:static`, matching "not
+  sticky at all" exactly. Fixed with `align-self:start` on `.wine-image` (standard, required companion to
+  `position:sticky` in every documented "sticky sidebar beside long content" pattern), which keeps its box
+  at its own natural height, leaving real slack within the row to stick through. This also answers the
+  footer question directly: the row's own height (and thus the sticky stop point) is still bounded by
+  `.description`'s height, comfortably inside `.wine-container` — the footer is a sibling of `#site-content`
+  at the body-grid level, entirely outside this row, so the bottle structurally cannot reach it regardless.
+  `check`/`test:unit`/`build` all pass at every round; fresh preview + route smoke tests pass each round (23
+  routes this round, including the homepage and chi-siamo as controls the `#site-content` override must not
+  affect). Round 6 (live: "empty space between the header and actual content, which suddenly disappears
+  when I scroll down... residue of animation"; plus "add some space between the title, the stickers, and
+  the text"): root-caused the gap to Task 40's *root* view transition, which had never been explicitly
+  styled — the browser's default behavior doesn't just cross-fade, it animates the root snapshot's own
+  width/height from the outgoing page's captured size to the incoming page's, and since the spumanti
+  category page and a wine's own product page are very different heights, that resize animation was
+  visible mid-flight as a blank gap below the header until it finished growing (or a scroll forced a
+  repaint) — inherent to Task 40 itself, not something Task 43's later CSS introduced. Fixed with the
+  standard technique for this: `::view-transition-old(root), ::view-transition-new(root) { animation: none;
+  }`, which swaps the (visually-identical, shared) chrome instantly while leaving the actually-requested
+  named `wine-bottle-*` bottle-morph transition fully untouched. Also added small (+10px each), explicitly
+  scoped spacing bumps for "premium feel": `.description h1`'s bottom margin (title → spec icons) and
+  `.specs-row`'s bottom margin (spec icons → flavor text), both otherwise-unscoped vendor rules, overridden
+  under `.wine-spumanti` only. `check`/`test:unit`/`build` all pass; fresh preview + 23-route smoke test
+  (same set as round 5) all pass. Round 6's own fix, while a real improvement, turned out not to be the
+  cause of the gap — live re-test still showed it, and diagnostic questions (confirmed: happens on a direct
+  load with no click-through, ruling out the view-transition entirely; happens on non-spumanti wine pages
+  too, ruling out every spumanti-scoped change in this task) narrowed it to a sitewide mechanism whose
+  visual effect only shows up on wine pages. Round 7: root cause is `stickyHeader()`'s `.sticky` toggle
+  doing two things with mismatched timing on first scroll — `position:fixed` (instant, unanimatable) and
+  `.pre-header-inner`'s collapse (animated over 0.35s, Task 25) — for that 0.35s window the still-collapsing
+  fixed header covers a strip of the content `#site-content` just shifted into, then uncovers it as the
+  pre-header finishes collapsing, reading as "a gap closing." This is a sitewide mechanism (every page has
+  it) but only visually obvious where the top content is blank/white (a bottle photo) rather than full-bleed
+  (hero video, chi-siamo's imagery) — matching "only on wine pages" exactly. Fixed by removing the pre-header
+  transition specifically on wine product pages via `body:has(article.single-wines) header#site-header
+  .pre-header-inner{transition:none}` (`.single-wines` is on every wine product page's `<article>`
+  unconditionally, spumanti or not) — the collapse becomes instant, synchronized with `position:fixed`'s own
+  instant switch, eliminating the timing-mismatch window entirely. Every other page's header keeps its
+  existing smooth 0.35s collapse (Task 25/34's own prior decision), unchanged. `check`/`test:unit`/`build`
+  all pass; fresh preview + 8-route smoke test (including a non-spumanti wine page and 4 non-wine controls)
+  all pass. Round 7's live re-test: "still the same issue" — the user then clarified the bug is not wine-page-
+  specific at all: on *every* page, there's a downward jump when the language switcher (pre-header) collapses
+  on first scroll; wine pages *additionally* show their own separate white space between the top of the page
+  and the content, on top of that shared jump. Round 7's fix, scoped only to wine pages, was therefore both
+  too narrow and treating a symptom (the animation timing) rather than the actual mechanism. Round 8: found
+  the real mechanism — `#site-header` lives in `body`'s own CSS Grid (`grid-area:header`), and `.sticky`
+  switches it to `position:fixed` (vendor rule), which is an instant, unanimatable change that removes the
+  header from grid flow the moment it happens, instantly collapsing the grid's header row and shifting all
+  following content up by the header's *full* previous height — well before `.pre-header-inner`'s own 0.35s
+  collapse (Task 25) has even started animating. Fixed at the source, not by chasing the timing further:
+  `header#site-header.sticky { position: sticky }` overrides the vendor's `position:fixed`. A sticky element
+  never leaves flow, so it keeps contributing its real, current height to the grid row at all times — the
+  existing pre-header collapse animation now naturally carries the content along with it frame-by-frame
+  instead of the content jumping to its end state before the animation starts. This removes the jump on every
+  page, with no per-page scoping needed (round 7's `body:has(article.single-wines)` patch was removed
+  outright, superseded). The end visual state (header pinned to the top while scrolling) is unchanged — only
+  the transition into that state is fixed — so this is a bug fix of Task 25/34's existing approved behavior,
+  not a new design decision. `check`/`test:unit`/`build` all pass; compiled CSS confirmed (`position: sticky`
+  present, `body:has(article...)` fully gone); fresh preview + 8-route smoke test (a spumanti wine page in all
+  3 languages, a non-spumanti wine page, plus homepage/chi-siamo/cantina/category-page controls) all pass.
+  **Not yet confirmed live by the user.** The separate wine-page-specific white space (on top of the now-fixed
+  jump) has not yet been root-caused — nothing in this task's own CSS obviously explains it, and it needs
+  either a screenshot or one more precise detail (e.g. whether it's present before any scroll at all, on the
+  very first frame of load) once the user can check whether it's still there after this round's fix.
+
+- Task 44: extended Task 43's spumanti product-page layout to every wine category (bianchi, rossi, affinati,
+  frizzanti-e-rosati, passiti — all 3 languages), by explicit request ("implement the wine page layout on all
+  the other categories... the wine page layout is that which we worked on in the prosecchi e spumanti
+  categories"), once approved for spumanti. Confirmed first that every one of the 28 wines across all 6
+  categories carries both `tastingNoteParagraphs` and `vinificazione` (`wines.json`, not assumed) — no data
+  gap that would have forced a partial rollout, so the full set was implemented rather than only bianchi/rossi.
+  The 3 product templates' `isSpumanti`-gated branch (the new layout) is now the *only* branch — the old,
+  pre-Task-43 layout (flat label:value list including "Tipologia"/"Type"/"Charakter", plus a separate
+  full-width flavor box further down) is removed outright, not kept as a second, now-dead code path. The
+  "Tipologia"/"Type"/"Charakter" line is dropped from every category's info list, for the same reason it was
+  dropped for spumanti (redundant given the category page you arrived from). `isSpumanti` itself is kept, but
+  now only gates Task 40's cross-document View Transition (still explicitly spumanti-only, unrelated to this
+  task, unchanged) — nothing else. Every `.wine-spumanti`-scoped rule in site.css is rescoped to `.single-wines`
+  (present unconditionally on every wine product `<article>`) instead; the `#site-content{overflow:visible}`
+  fix, which needs to reach an ancestor of `<article>`, switched from the now-removed `bodyClass="wine-spumanti"`
+  prop to `body:has(article.single-wines)` (the same technique already proven in Task 43 round 7). No values
+  (spacing, sticky offsets, colors, italics) changed from the approved spumanti design — only what they're
+  scoped to. `check`/`test:unit`/`build` all pass (0 errors/warnings, the one pre-existing unrelated `locale`
+  hint only). Confirmed directly in `dist/`, all 6 categories × 3 languages (one representative wine per
+  category, 18 pages checked): `.single-wines` class present, `wine-tasting-section`/`wine-process-section`/
+  `wine-other-info` present, `text-wine-container`/`wine-color-logo` (the old layout's markup) absent,
+  "Tipologia"/"Type"/"Charakter" absent. Confirmed Task 40's View Transition scoping is untouched: exactly 18
+  pages (6 spumanti wines × 3 languages) carry `view-transition-name`, matching before this task exactly. Fresh
+  preview + full route smoke test: all 84 wine product pages (28 wines × 3 languages) plus 11 non-wine controls
+  (homepages, chi-siamo, cantina, all 6 category listing pages) — 95 routes, 0 failures. **Not yet confirmed
+  live by the user** — this is a visual layout change and this sandbox cannot screenshot it, consistent with
+  every other visual task this session.
+
+- Task 45: two follow-up polish items on the (now shared, Task 43/44) wine product-detail page. (1) The
+  serving-temp badge's text (`.contenuto-specs`, a leftover vendor `lustria`/600 font) now uses
+  `var(--body-font-family)`/400 — the same font the header menu itself resolves to. Also asked whether badge
+  content (text + the glass/food SVG icons) should turn white on a dark-enough badge background: measured
+  all 6 category colors against the W3C contrast-ratio formula for both black and white — black wins on
+  every one, even the more saturated tones (rossi/affinati/frizzanti-e-rosati) — so none are "dark enough" by
+  the numbers. Presented this to the user directly; they chose to keep black everywhere over their own
+  visual instinct, so this is a confirmed no-op, not an oversight — no conditional-color CSS was added, since
+  nothing in today's palette would ever trigger it. (2) `.wine-other-info` (the short remaining fields +
+  "SCHEDA TECNICA"/"PRODUCT SHEET"/"WEINBESCHREIBUNG" PDF button) is now a native `<details>` element,
+  collapsed by default, behind a `<summary>` toggle labeled "Altre informazioni"/"Other info"/"Weitere
+  Informationen" — no JS, matching this project's preference for native disclosure widgets over hand-rolled
+  ones. Per live follow-up on the toggle's look ("minimal and elegant... just text, with an arrow that
+  changes direction... like a closed and open folder"): plain text, no background fill, small triangle that
+  rotates 90° (right → down) on open, browser's own default marker suppressed so only that one arrow shows.
+  `check`/`test:unit`/`build` all pass (0 errors/warnings, the one pre-existing unrelated `locale` hint).
+  Confirmed in `dist/`, one wine per category × 3 languages (18 pages): `<details>` present, correct
+  per-language label, collapsed by default (no `open` attribute), `.tipologia-row`/`.buttons-row` both
+  inside. Fresh preview + full route smoke test: same 95-route set as Task 44, 0 failures. **Not yet
+  confirmed live by the user** — the toggle's open/close interaction and arrow rotation need a real browser,
+  consistent with every other visual/interactive task this session.
+
+  Round 2 (live feedback): "I do not want the 'other info' text to be in caps lock" — dropped
+  `text-transform:uppercase` (and its accompanying `letter-spacing`) from `.wine-other-info__toggle`; the
+  labels themselves were already sentence-case in the markup, so removing the CSS transform was sufficient.
+  "I do not like the triangle... a bigger icon that looks like this >" — swapped the small filled-triangle
+  glyph for a literal `>` character at 20px/700-weight (up from 10px), same 90°-rotate-on-open behavior.
+  Also asked to check the SCHEDA TECNICA button, suspected broken: static inspection alone (HTML/CSS diff)
+  didn't surface anything, so asked the user what "broken" looked like rather than guessing — answer: "the
+  background of the button icon overflows." Root-caused: `.arrowBtn` (vendor CSS) only overrides
+  `padding-top`, leaving the other 3 sides to fall through to the theme's generic `button{padding:1.1em
+  1.44em}` reset (sized for a text button, not this small icon square); combined with `.arrowBtn`'s own
+  `height:100%`, resolved against `.scheda-wine`'s definite grid-row height (a context that only exists on
+  this page — the same `.arrowBtn` class is reused unscoped in `WineCard.astro`'s card list, but in a
+  non-grid context where `height:100%` is a no-op, so that usage was correctly left untouched), the icon's
+  inherited padding needs more vertical room than the row provides, pushing the button's own dark background
+  past the row's bounds. Fixed with `padding:0` (explicit on all 4 sides now) plus flexbox centering,
+  scoped to `.scheda-wine .arrowBtn` only — a structural fix (center via flex, not a re-tuned padding
+  number) so the same class of bug can't recur if the row's height changes again later. `check`/`test:unit`/
+  `build` all pass; confirmed in compiled CSS: no bare unscoped `.arrowBtn` rule exists, only the correctly
+  scoped one. Fresh preview + full 95-route smoke test, 0 failures. **Not yet confirmed live by the user.**
+
+- Task 46: `/it/contatti/` (+ `/en/contatti/`, `/de/contacts/`) team section redesign, explicit request: white
   page background instead of the current grey, the 3 team members (Stefano/Michele/Annamaria) turned into
   rounded cards carrying that same grey as their own background, all 3 visible side by side on desktop, one
   at a time with a horizontal swipe on mobile (viewport "sticking" to the current card, i.e. scroll-snap), and

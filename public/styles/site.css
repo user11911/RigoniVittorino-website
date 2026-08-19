@@ -155,6 +155,50 @@ header#site-header.sticky .pre-header-inner {
   opacity: 0;
 }
 
+/* --- Task 43 round 8 (supersedes round 7's `transition:none` patch below,
+ * removed): round 7 correctly found the *symptom's* timing but the wrong
+ * mechanism. The user confirmed live that the jump/gap happens site-wide,
+ * on every page, whenever the pre-header (language switcher) collapses on
+ * first scroll — not just on wine pages (wine pages just also have their
+ * own, still-unexplained, separate top-of-page whitespace on top of this).
+ * Scoping the fix to wine pages only, as round 7 did, was therefore wrong
+ * in scope, and killing the transition entirely (rather than fixing the
+ * actual mismatch) would have thrown away Task 25/34's deliberate smooth
+ * collapse everywhere it was applied.
+ *
+ * Real root cause: `#site-header` sits in `body`'s own CSS Grid
+ * (`grid-area:header`, `twentytwenty-style.min.css`), and `.sticky` (site.js's
+ * `stickyHeader()`, on the very first scroll) switches it to
+ * `position:fixed` (vendor rule, `#site-header.sticky{position:fixed}`).
+ * `position` cannot be CSS-transitioned — the switch to `fixed` removes the
+ * header from grid flow *instantly*, in the same frame `.sticky` is added,
+ * collapsing the grid's "header" row to 0 and instantly shifting all
+ * following content (`#site-content`, `#site-footer`) up by the header's
+ * *entire* previous height, well before `.pre-header-inner`'s own 0.35s
+ * collapse (below) has even started. The animated collapse was only ever
+ * changing the *fixed* header's own painted height after that instant
+ * jump already happened — two effects, two different timings, on what
+ * should be one smooth motion.
+ *
+ * Fixed at the actual source: `#site-header.sticky` now uses
+ * `position:sticky` instead of `position:fixed`. A sticky element is never
+ * removed from document/grid flow — it keeps contributing its own real,
+ * current height to the grid's row sizing at all times, and only visually
+ * pins to `top:0` once its natural position would scroll past that point
+ * (functionally identical end state to `fixed` once scrolled — still reads
+ * as "pinned to the top" — so Task 25/34's original intent, a header that
+ * stays visible while scrolling, is unchanged). Because it's still in flow,
+ * `.pre-header-inner`'s existing `max-height`/`opacity` transition now
+ * *naturally* carries `#site-content` along with it frame-by-frame as it
+ * animates — the grid row shrinks in step with the collapse instead of
+ * jumping to its end state before the collapse even starts. No more
+ * instant jump, on any page, and no per-page scoping needed. `z-index:1000`
+ * (vendor, unchanged) still applies to `.sticky` regardless of `position`
+ * value, so stacking above page content while pinned is unaffected. --- */
+header#site-header.sticky {
+  position: sticky;
+}
+
 /* --- Hero (replaces RevSlider) --- */
 .hero-slider {
   position: relative;
@@ -177,12 +221,24 @@ header#site-header.sticky .pre-header-inner {
  * new, unrelated video's own composition — worth checking once seen live and
  * adding an equivalent `object-position` then, if the video's subject needs
  * similar vertical framing help. --- */
+/* Task 42: plain white fallback instead of the `poster` photo this element
+ * originally had — see Hero.astro's own Task 42 comment for why. `background-
+ * color` (not, say, a solid-white replacement image) since a real fallback
+ * image was never actually needed here: the video fills this box edge-to-edge
+ * (`inset:0`, `object-fit:cover`, same as below) the instant it can render a
+ * frame, so the background only shows for the brief window before that, and a
+ * flat color is both simpler and one less asset than a fake "blank" image
+ * file. `#fff` to match `.loading-screen`'s own white (Task 13) — the same
+ * white this box sits behind while the loading screen is still up, so there's
+ * no visible seam between the two if the video happens to still be loading
+ * exactly as the loading screen's reveal transition is mid-flight. */
 .hero-slider__video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  background-color: #fff;
 }
 @media (max-width: 768px) {
   .hero-slider {
@@ -1075,7 +1131,417 @@ html {
   }
 }
 
-/* --- Task 40: /it/contatti/ (+ /en/contatti/, /de/contacts/) team section
+/* --- Task 40: native cross-document View Transition between the spumanti
+ * category page's wine cards and each wine's own product page — the bottle
+ * image morphs smoothly into its new position/size across the navigation
+ * instead of an instant cut, per explicit request. Scoped to spumanti only for
+ * now (other categories can follow later).
+ *
+ * No JS, no Astro ClientRouter/`astro:transitions` — this stays a fully
+ * static, prerendered multi-page site. The browser itself handles everything:
+ * `BaseLayout.astro`'s `enableViewTransitions` prop emits the one required
+ * `<meta name="view-transition" content="same-origin">` tag on both the
+ * spumanti category page and each of its 8 wines' own product pages (all 3
+ * languages); `WineCard.astro`'s `viewTransitionName` prop and this same
+ * template literal on the product page's own bottle `<img>`
+ * (`view-transition-name: wine-bottle-${slug}`) give the *same* name to what
+ * is, since Task 38/39, already the exact same underlying image file at two
+ * different displayed sizes — so the browser's automatic old-snapshot/new-
+ * snapshot interpolation has no source-image mismatch to paper over, just a
+ * clean size/position morph. On browsers without cross-document View
+ * Transition support (Safari, Firefox, as of this writing), the `<meta>` tag
+ * and `view-transition-name` are simply inert — navigation still works
+ * exactly as before, just without the animation; nothing to feature-detect or
+ * guard here.
+ *
+ * The only CSS actually needed on this project's side is this reduced-motion
+ * override: browsers don't automatically skip View Transition animations for
+ * that preference, so this disables them explicitly, matching this project's
+ * existing convention of fully turning motion off (not just slowing it down)
+ * for `prefers-reduced-motion: reduce` elsewhere (loading screen, hero video,
+ * Task 17/18's scroll effects) — reduced-motion visitors get an instant page
+ * swap, same as browsers with no View Transition support at all. --- */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* --- Task 40 follow-up (found while investigating Task 43's "empty space
+ * below the header that disappears on scroll" report): the *root* view
+ * transition — every pixel of the page EXCEPT the one named `wine-bottle-*`
+ * element — was never explicitly styled above; it was left to the browser's
+ * default, which doesn't just cross-fade opacity, it *animates the root
+ * snapshot's own width/height* from the outgoing page's captured size to the
+ * incoming page's size over the transition's duration. The spumanti category
+ * page and a wine's own product page are very different heights, so that
+ * default resize animation was mid-flight, for a few hundred ms, growing the
+ * captured "new page" snapshot from a shorter starting height up to the
+ * product page's real (taller) height — during which the real, already-fully-
+ * laid-out document underneath doesn't yet show through the still-growing
+ * snapshot, reading as a blank gap between the header and the content until
+ * the snapshot finishes growing (or a scroll event forces the browser to
+ * settle/repaint, which is exactly the "disappears when I scroll" behavior
+ * reported). This was always inherent to Task 40's root cross-fade, not
+ * something Task 43's later sticky-bottle CSS introduced — it just wasn't
+ * noticed until this task's rounds of testing looked at product pages this
+ * closely.
+ *
+ * Fixed the standard, documented way for this exact "differing page heights
+ * make the default root transition look janky" case: disable the root
+ * snapshots' own animation entirely, so the header/footer/page background
+ * swap instantly (they're visually identical between the two pages anyway —
+ * same shared chrome — so an instant swap there isn't a visible loss) while
+ * leaving the *named* `wine-bottle-*` transition (the one actually asked
+ * for) completely untouched — this selector only targets `(root)`, not the
+ * wildcard `(*)` the reduced-motion rule above uses, so the bottle's own
+ * `::view-transition-group(wine-bottle-*)` still animates exactly as
+ * before. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+/* --- Task 43/44: wine product-page reorder. Built and approved for spumanti
+ * only across rounds 1-8 (kept below, unedited, as the design history), then
+ * extended to every wine category by explicit request ("implement the wine
+ * page layout on all the other categories... that which we worked on in the
+ * prosecchi e spumanti categories") once approved. All 28 wines across all 6
+ * categories carry the same `tastingNoteParagraphs`/`vinificazione` fields
+ * this layout needs (confirmed in wines.json, not assumed), so there was no
+ * remaining reason to keep this spumanti-only.
+ *
+ * Every selector below that used to read `.wine-spumanti` (the class only
+ * spumanti's `<article>` used to get) now reads `.single-wines` instead — the
+ * class *every* wine product `<article>` carries unconditionally, regardless
+ * of category (confirmed by grep across all 3 templates) — and the one rule
+ * that needed to reach an ancestor of `<article>` (`#site-content`'s
+ * `overflow` fix, since a body-level rule can't be scoped by a plain
+ * descendant class on a page it doesn't yet know contains a wine article)
+ * switched from a purpose-built `bodyClass="wine-spumanti"` prop to
+ * `body:has(article.single-wines)` — the same `:has()` technique already
+ * proven to work in this codebase (Task 43 round 7). The 3 templates no
+ * longer add any spumanti-specific class or `bodyClass` at all. Nothing in
+ * this block's actual values (spacing, sticky offsets, colors, italics)
+ * changed — only what it's scoped to.
+ *
+ * This round's changes, on top of the previous ones:
+ *
+ * (1) "Keep all info on the right side (the column of the title)" —
+ * `.wine-other-info` (the short remaining fields + PDF button) had been left
+ * as a genuinely full-width block *below* `.wine-container` after the
+ * previous round. It now renders inside `.description` too, right after
+ * `WineTastingSection` (see the 3 product-page templates), so the entire
+ * right-hand column — title, specs, flavor, process, remaining fields, PDF
+ * button — is one column, with nothing full-width left on the page.
+ *
+ * (2) "Make the bottle sticky" — `.wine-image` (the grid cell, not the `img`
+ * itself — sticky needs to apply to the actual grid item so it keeps its
+ * normal-flow placement/size and only its *painted position* pins) gets
+ * `position:sticky`, scoped under `.wine-spumanti` (new class on `<article>`,
+ * set by `isSpumanti` in the templates) since `.wine-image` is otherwise an
+ * unscoped selector shared by every category. This relies on a plain CSS
+ * Grid default: `.wine-container` has one row spanning both `.wine-image` and
+ * `.description` (`grid-template-rows:1fr`, both items `grid-row:1`), and
+ * `align-items:stretch` (Grid's own default, not overridden anywhere in this
+ * codebase) stretches every item's *box* to the row's height — which is now
+ * tall, since `.description` carries far more content post-(1). That gives
+ * `.wine-image` a tall cell to scroll through while its own sticky `img`
+ * (still capped by the existing `.wine-image img{max-height:780px}`) stays
+ * pinned inside it — the standard "sticky sidebar" pattern, no JS needed.
+ * `top:100px` estimates the fixed sticky header's real height (confirmed from
+ * twentytwenty-style.min.css: `.header-inner{padding:2rem 2rem 1rem}` +
+ * `.sticky .site-logo img{max-height:50px}` ≈ 20+50+10=80px) plus ~20px
+ * breathing room — flagged as an estimate since it can't be measured in a
+ * live browser here. Desktop/tablet only (`min-width:769px`, matching this
+ * page's own existing `max-width:768px` mobile-stack breakpoint) — below
+ * that, `.wine-container` already stacks bottle-then-description in one
+ * column, where a "sticky" bottle pinned above a long scrolling column would
+ * just eat mobile screen space for no benefit, consistent with how this
+ * project already turns off other desktop-only scroll/hover effects on
+ * mobile. Per live follow-up ("make sure the bottle sits fully vertically in
+ * the viewport... cannot be seen in full" otherwise), the image's own
+ * max-height is additionally capped to `min(780px, calc(100vh - 120px))` in
+ * this same scope/breakpoint — `100vh` is the real viewport height, so on any
+ * screen short enough that 780px wouldn't fully fit below the ~100px sticky
+ * offset, the image now scales down instead, guaranteeing the whole sticky
+ * bottle is always visible at once rather than being cropped by the top or
+ * bottom of the viewport.
+ *
+ * (3) "Make the flavor description sit on top of the V logo, not on its
+ * right" — reverses the previous round's `float:left` text-wrap approach.
+ * `.wine-tasting-section` is now `position:relative`; the logo is
+ * `position:absolute;top:0;left:0` (a decorative layer, `pointer-events:none`
+ * so it never intercepts clicks/selection on the text above it) and the text
+ * block is `position:relative;z-index:1` so normal in-flow text paints over
+ * the logo rather than wrapping beside it — the flavor paragraphs now overlap
+ * the (already low-opacity, per the previous round's `filter:invert(1)`
+ * fix) logo directly, matching "sit on top of" literally. No more float
+ * means no more clearfix — `overflow:hidden` on `.wine-tasting-section` is
+ * removed since it's no longer needed.
+ *
+ * (4) "Remove the grey background... leave the white background" —
+ * `.description{background:#f8f8f8}` is a pre-existing, unscoped vendor rule
+ * (twentytwenty-style.min.css) applied to every wine category's top section,
+ * not something this task added — but now that the *entire* right column
+ * lives inside `.description` (per (1)), that light-grey tint reads over much
+ * more content than before. Overridden to `#fff`, scoped to `.wine-spumanti
+ * .description` only — every other category keeps its `#f8f8f8` background
+ * exactly as before.
+ *
+ * (5) "Give the flavor descriptions italic font style" —
+ * `.wine-tasting-section__text p{font-style:italic}` added. Scoped to the
+ * flavor paragraphs specifically, per the literal wording ("descriptions of
+ * flavor") — `.wine-process-section p` (the winemaking-process paragraph)
+ * keeps its existing upright style, unchanged, matching the earlier-confirmed
+ * decision that the process text gets plain paragraph styling.
+ *
+ * `.wine-tasting-section__text p`/`.wine-process-section p` still reuse this
+ * page's own "conventional" body-text values (`.description p{font-size:18px;
+ * font-weight:400;color:#000;line-height:22px}`) as their base, per the
+ * original "conventional text used by the site" request — italics is the one
+ * deliberate departure from that base, per this round's explicit instruction.
+ *
+ * `.wine-other-info`'s padding is reduced from its previous full-width sizing
+ * (`40px 60px 60px`) to a much smaller top-margin-only spacer now that it's
+ * nested inside `.description` (which already supplies its own `padding:20px
+ * 20% 30px 60px`) — doubling both would over-indent it the same way
+ * `WineTastingSection`'s own padding was removed in the previous round for
+ * the same reason.
+ *
+ * Round 6 (live: "add some space between the title of the wine, the
+ * stickers and the text... just to give more of a premium feel"): modest
+ * (+10px each) increases to two existing gaps — `.description h1`'s own
+ * bottom margin (title → spec icons) and `.specs-row`'s own bottom margin
+ * (spec icons → flavor text) — both are pre-existing, unscoped vendor rules
+ * (twentytwenty-style.min.css) shared by every category, so both overrides
+ * are scoped to `.wine-spumanti` like every other change in this task; every
+ * other category's spacing is untouched. Deliberately small bumps, not a
+ * new spacing system — "not a lot" was explicit. --- */
+.single-wines .description h1 {
+  margin-bottom: 25px;
+}
+.single-wines .specs-row {
+  margin-bottom: 60px;
+}
+.wine-tasting-section {
+  position: relative;
+  padding-top: 20px;
+}
+.wine-tasting-section__logo {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  width: 140px;
+  z-index: 0;
+  pointer-events: none;
+}
+.wine-tasting-section__logo img {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: invert(1);
+  opacity: 0.2;
+}
+.wine-tasting-section__text {
+  position: relative;
+  z-index: 1;
+}
+.wine-tasting-section__text p {
+  font-size: 18px;
+  font-weight: 400;
+  font-style: italic;
+  color: #000;
+  line-height: 22px;
+  margin: 0 0 1em;
+}
+.wine-process-section {
+  padding: 20px 0 0;
+}
+.wine-process-section p {
+  font-size: 18px;
+  font-weight: 400;
+  color: #000;
+  line-height: 22px;
+  margin: 0;
+}
+.wine-other-info {
+  padding: 30px 0 0;
+}
+.single-wines .description {
+  background: #fff;
+}
+
+/* --- Task 45: serving-temp badge font, and hiding the remaining short fields +
+ * PDF button behind an "other info" toggle.
+ *
+ * (1) The serving-temp badge's text (`p.contenuto-specs`, `.wine-grado`'s only
+ * content) had its own leftover vendor font (`lustria`, weight 600,
+ * twentytwenty-style.min.css) that didn't match anything else on the page.
+ * Switched to `var(--body-font-family)` — the same variable the header menu
+ * itself resolves to (confirmed: `ul.primary-menu li{font-family:var(--body-
+ * font-family)}`, this file's own Task 34 comment above) — plus a normal
+ * `font-weight:400` to match the menu's own (unbolded) weight rather than the
+ * old 600. `.contenuto-specs` is confirmed unique to this one badge (grep
+ * across `src/`), so no other element is affected.
+ *
+ * Also asked whether badge content (this text, and the glass/food SVG icons
+ * in the other two badges) should switch to white when a category's own
+ * badge-background color is dark enough to need it. Measured all 6 category
+ * colors (twentytwenty-style.min.css: spumanti `#d0bca5`, bianchi `#dcc69f`,
+ * rossi `#dc8384`, affinati `#bb6f70`, frizzanti-e-rosati `#b07b8d`, passiti
+ * `#c89d84`) against the W3C contrast-ratio formula for both black and white
+ * text/icons: black wins on every single one, including the more saturated
+ * tones — none of them are actually "dark enough" in a strict accessibility
+ * sense. Presented this to the user directly; they chose to keep black
+ * everywhere over their own visual instinct. So no conditional-color rule
+ * exists here — there's nothing in today's palette for it to ever switch on,
+ * and a genuinely dark category color, if one's ever added, is its own future
+ * styling decision rather than speculative machinery to build now.
+ *
+ * (2) `.wine-other-info` is now a native `<details>` element (see the 3
+ * product-page templates) wrapping the short field list + "SCHEDA TECNICA"/
+ * "PRODUCT SHEET"/"WEINBESCHREIBUNG" button, collapsed by default — no JS
+ * needed, `<details>`/`<summary>` is a built-in, keyboard- and
+ * screen-reader-accessible disclosure widget, consistent with this project's
+ * general preference for native behavior over hand-rolled JS (see the sticky
+ * bottle, also CSS-only). Per explicit live follow-up on how the toggle
+ * should look ("minimal and elegant... just text, with an arrow that changes
+ * direction... like a closed and open folder"): plain text, no background
+ * fill, and a `>` character (round 2: swapped in for the original small
+ * filled-triangle glyph, live feedback "I do not like the triangle... a
+ * bigger icon that looks like this >" — literal `>`, sized up to 20px/700
+ * weight so it reads as a clear icon rather than punctuation) that rotates
+ * from pointing right (collapsed) to pointing down (expanded, a 90° turn) —
+ * the browser's own default disclosure marker is removed (`::marker` for
+ * Firefox, `::-webkit-details-marker` for Chrome/Safari) so only this one,
+ * custom arrow shows. Round 2 also dropped `text-transform:uppercase` (and
+ * the letter-spacing that went with it) per live feedback ("I do not want
+ * the text to be in caps lock") — plain sentence-case label now. --- */
+.contenuto-specs {
+  font-family: var(--body-font-family);
+  font-weight: 400;
+}
+.wine-other-info__toggle {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--body-font-family);
+  font-size: 14px;
+  color: #000;
+}
+.wine-other-info__toggle::marker {
+  content: "";
+}
+.wine-other-info__toggle::-webkit-details-marker {
+  display: none;
+}
+.wine-other-info__toggle::after {
+  content: ">";
+  display: inline-block;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+.wine-other-info[open] > .wine-other-info__toggle::after {
+  transform: rotate(90deg);
+}
+.wine-other-info > .tipologia-row {
+  margin-top: 20px;
+}
+/* --- Task 45 round 2 (live report: "the background of the button icon
+ * overflows" on the SCHEDA TECNICA/PRODUCT SHEET/WEINBESCHREIBUNG button's
+ * dark arrow square). Root cause: `.arrowBtn` (twentytwenty-style.min.css)
+ * only sets `padding-top:22px` and `height:100%` — the *other* 3 padding
+ * sides (right/bottom/left) fall through, unreset, to the theme's own
+ * generic `button{padding:1.1em 1.44em}` reset (parent-style.min.css, shared
+ * by every `<button>` on the site), sized for a *text* button, not a small
+ * square icon button. Inside `.scheda-wine` (`display:grid`, this button's
+ * only parent that actually gives `height:100%` a definite row height to
+ * resolve against — the same class is reused unscoped in the wine-card list,
+ * `WineCard.astro`, but there it sits in a plain, non-grid block, where
+ * `height:100%` is a no-op and this exact conflict can't occur, which is why
+ * this fix is scoped to `.scheda-wine .arrowBtn` only, not `.arrowBtn`
+ * itself), that explicit `height:100%` combined with the icon's own
+ * inherited padding/line-height needs more vertical room than the row
+ * provides, so the button's box — and with it, its `#403d3d` background —
+ * grows past the row it's meant to fit inside.
+ *
+ * Fixed by replacing the padding-top hack with `padding:0` (all 4 sides now
+ * explicit, nothing left to inherit) plus `display:flex;align-items:center;
+ * justify-content:center` to center the icon glyph regardless of the box's
+ * exact height — a structural fix, not a re-tuned number, so it can't
+ * reintroduce the same class of mismatch if the row's height ever changes
+ * again for an unrelated reason. --- */
+.scheda-wine .arrowBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+@media (min-width: 769px) {
+  /* Task 43 round 4: the sticky bottle wasn't sticking at all, live. Fixed
+   * one real bug (`#site-content{overflow:hidden}` clipping the sticky
+   * scrollport — see the removed comment below, still true and still
+   * needed) but that alone wasn't enough, confirmed by round 5's repeat
+   * report. The second, actual root cause: `.wine-container`'s default
+   * `align-items: stretch` (CSS Grid's own default, never overridden
+   * anywhere in this codebase) stretches `.wine-image`'s *own box* to match
+   * `.description`'s full height, since both share the grid's one row. A
+   * `position:sticky` element can only move within the *slack* between its
+   * own box height and its container's — and a stretched box, by
+   * definition, already equals its container's height, leaving zero slack.
+   * With zero slack, sticky has nothing to do: the (now very tall) box just
+   * scrolls normally with the page, and the image — rendered at the *top*
+   * of that tall box by ordinary block flow — visually behaves exactly
+   * like `position:static`. That's a precise match for "not sticky at
+   * all", and it's independent of the earlier `overflow` bug — fixing only
+   * the clip, as round 4 did, was necessary but not sufficient.
+   *
+   * Fixed with `align-self: start`, overriding the default stretch so
+   * `.wine-image`'s box keeps its own natural (content-driven) height
+   * instead of matching `.description`'s. Within the row's full height
+   * (still `.description`'s height — the row itself isn't shrunk, only
+   * this one item's box), that leaves real slack for sticky to move
+   * through: the short image box now has room to hover near the top of the
+   * viewport while the much taller `.description` column scrolls past it.
+   * This is the standard, widely-documented "sticky sidebar next to long
+   * content" pattern (Grid or Flexbox) — `align-items: flex-start` /
+   * `align-self: start` overriding stretch is *always* required for it,
+   * which earlier rounds missed. */
+  body:has(article.single-wines) #site-content {
+    overflow: visible;
+  }
+  .single-wines .wine-image {
+    position: sticky;
+    top: 100px;
+    align-self: start;
+  }
+  .single-wines .wine-image img {
+    max-height: min(780px, calc(100vh - 120px));
+  }
+}
+@media (max-width: 768px) {
+  .wine-tasting-section {
+    padding-top: 15px;
+  }
+  .wine-tasting-section__logo {
+    position: static;
+    width: 80px;
+    margin: 0 0 15px;
+    z-index: auto;
+  }
+  .wine-tasting-section__text {
+    z-index: auto;
+  }
+  .wine-other-info {
+    padding: 20px 0 0;
+
+/* --- Task 46: /it/contatti/ (+ /en/contatti/, /de/contacts/) team section
  * redesign — explicit request: white page background instead of the current
  * grey, the 3 team members turned into rounded "cards" carrying that same
  * grey as their own background, all 3 visible side by side on desktop, one

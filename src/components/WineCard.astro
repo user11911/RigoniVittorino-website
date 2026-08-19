@@ -24,6 +24,15 @@ export interface Props {
   // distinct enum value rather than splitting "which image" and "show title"
   // into two separate booleans, matching this prop's existing shape.
   imageVariant?: "bottle" | "bottle-large" | "label";
+  // Task 40: when set, applied as the image's `view-transition-name` so a
+  // click-through to the matching wine's product page (whose own bottle image
+  // carries the *same* name) gets a native cross-document View Transition —
+  // the browser morphs this card's image smoothly into the product page's
+  // larger one instead of an instant cut. Omitted (undefined) for every caller
+  // that doesn't pass it, which renders byte-identical markup to before this
+  // task — inert either way unless the page also opts in via
+  // `BaseLayout`'s `enableViewTransitions`, see that prop's own comment.
+  viewTransitionName?: string;
 }
 // Task 39: `cardImageSrcset`/`sizes` removed (was previously an optional prop
 // forwarded to the `<img>`'s `srcset`/`sizes` attributes) — every wine's own
@@ -40,6 +49,7 @@ const {
   cardImageHeight,
   lang = "it",
   imageVariant = "bottle",
+  viewTransitionName,
 } = Astro.props;
 // Confirmed live: product slugs are identical across it/en/de; only the route's
 // base segment differs ("i-nostri-vini" vs the confirmed-live "wines").
@@ -57,6 +67,7 @@ const href = `/${lang}/${PRODUCT_BASE[lang]}/${slug}/`;
         class="img-responsive wp-post-image"
         alt={title}
         loading="lazy"
+        style={viewTransitionName ? `view-transition-name: ${viewTransitionName}` : undefined}
       />
     </a>
   </div>

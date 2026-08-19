@@ -23,6 +23,8 @@ const categoryWines = wines.filter((w) => w.category === category.key);
 // category now uses the same bigger-bottle-photo, no-text, 2-per-row treatment
 // Task 38 introduced for rossi.
 const imageVariant = "bottle-large";
+// Task 40: see the IT version of this template for the full reasoning.
+const isSpumanti = category.key === "spumanti";
 ---
 
 <BaseLayout
@@ -31,6 +33,7 @@ const imageVariant = "bottle-large";
   bodyClass="singular missing-post-thumbnail"
   lang="en"
   otherLangUrls={(localeEquivalents.categories as Record<string, { it: string; en: string; de: string }>)[category.key]}
+  enableViewTransitions={isSpumanti}
 >
   <article class={`page type-page status-publish hentry wines-category-${category.slug}`}>
     <header class="entry-header has-text-align-center header-footer-group">
@@ -56,6 +59,7 @@ const imageVariant = "bottle-large";
                   cardImageHeight={wine.cardImageHeight}
                   lang="en"
                   imageVariant={imageVariant}
+                  viewTransitionName={isSpumanti ? `wine-bottle-${wine.slug}` : undefined}
                 />
               ))
             }
