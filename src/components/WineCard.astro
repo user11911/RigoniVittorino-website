@@ -6,14 +6,51 @@ export interface Props {
   slug: string;
   title: string;
   cardImageSrc: string;
-  cardImageSrcset?: string;
   cardImageWidth?: string;
   cardImageHeight?: string;
   // Task 9: defaults to "it" so every existing caller (all of which omit this
   // prop) renders the exact same href as before this task.
   lang?: string;
+  // Task 36: "label" swaps the bottle photo + name-text display for a label-only
+  // one (image only, no .wine-title underneath — the label already shows the
+  // name). Defaults to "bottle" so every existing caller (every category this
+  // task didn't touch) renders byte-identical markup to before. See site.css's
+  // own Task 36 comment for why the image itself also needs a different CSS
+  // treatment in this variant, not just the missing text block.
+  // Task 38: "bottle-large" is a *third* variant, not a combination of the other
+  // two — real bottle photos (not labels), but also with no .wine-title (per
+  // explicit request "the buttons should only feature the wine bottle image")
+  // and a bigger image box (see site.css's own Task 38 comment). Kept as a
+  // distinct enum value rather than splitting "which image" and "show title"
+  // into two separate booleans, matching this prop's existing shape.
+  imageVariant?: "bottle" | "bottle-large" | "label";
+  // Task 40: when set, applied as the image's `view-transition-name` so a
+  // click-through to the matching wine's product page (whose own bottle image
+  // carries the *same* name) gets a native cross-document View Transition —
+  // the browser morphs this card's image smoothly into the product page's
+  // larger one instead of an instant cut. Omitted (undefined) for every caller
+  // that doesn't pass it, which renders byte-identical markup to before this
+  // task — inert either way unless the page also opts in via
+  // `BaseLayout`'s `enableViewTransitions`, see that prop's own comment.
+  viewTransitionName?: string;
 }
-const { slug, title, cardImageSrc, cardImageSrcset, cardImageWidth, cardImageHeight, lang = "it" } = Astro.props;
+// Task 39: `cardImageSrcset`/`sizes` removed (was previously an optional prop
+// forwarded to the `<img>`'s `srcset`/`sizes` attributes) — every wine's own
+// `cardImageSrcset` field in wines*.json was deleted once every category's
+// `cardImageSrc` was repointed at a single higher-resolution `productImage`
+// file (no responsive-size variants exist for those), so no caller has passed
+// this prop since. `sizes` alone, with no matching `srcset`, has no effect per
+// the HTML spec, so it was dead markup, not just an unused prop.
+const {
+  slug,
+  title,
+  cardImageSrc,
+  cardImageWidth,
+  cardImageHeight,
+  lang = "it",
+  imageVariant = "bottle",
+  viewTransitionName,
+} = Astro.props;
 // Confirmed live: product slugs are identical across it/en/de; only the route's
 // base segment differs ("i-nostri-vini" vs the confirmed-live "wines").
 const PRODUCT_BASE: Record<string, string> = { it: "i-nostri-vini", en: "wines", de: "wines" };
@@ -21,7 +58,7 @@ const href = `/${lang}/${PRODUCT_BASE[lang]}/${slug}/`;
 ---
 
 <div class="single-wine-container hvr-grow">
-  <div class="wine-image">
+  <div class={`wine-image${imageVariant === "bottle" ? "" : ` wine-image--${imageVariant}`}`}>
     <a href={href}>
       <img
         width={cardImageWidth ?? "191"}
@@ -29,15 +66,18 @@ const href = `/${lang}/${PRODUCT_BASE[lang]}/${slug}/`;
         src={cardImageSrc}
         class="img-responsive wp-post-image"
         alt={title}
-        srcset={cardImageSrcset}
-        sizes="(max-width: 191px) 100vw, 191px"
         loading="lazy"
+        style={viewTransitionName ? `view-transition-name: ${viewTransitionName}` : undefined}
       />
     </a>
   </div>
-  <div class="wine-title text-center">
-    <a href={href}>{title}</a>
-  </div>
+  {
+    imageVariant === "bottle" && (
+      <div class="wine-title text-center">
+        <a href={href}>{title}</a>
+      </div>
+    )
+  }
   <div class="wine-link text-center">
     <a href={href}>
       <button class="arrowBtn arrow-list"><span class="icon"><i class="fal fa-arrow-right"></i></span></button>

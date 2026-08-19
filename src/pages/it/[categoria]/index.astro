@@ -15,13 +15,59 @@ export function getStaticPaths() {
 
 const { category } = Astro.props;
 const categoryWines = wines.filter((w) => w.category === category.slug);
+// Task 37: this template never set bodyClass, unlike every other content page
+// (chi-siamo/cantina/contatti/dati-societari all pass "singular missing-post-
+// thumbnail"). Two separate vendor rules key off exactly those two classes'
+// *absence* to add 8rem (80px) of top padding each: `body:not(.singular)
+// main>article:first-of-type{padding:8rem 0 0}` and the base (unscoped)
+// `.post-inner{padding-top:8rem}`, only zeroed by `.reduced-spacing.missing-
+// post-thumbnail .post-inner{padding-top:0}` — "reduced-spacing" is already
+// sitewide (BaseLayout's own hardcoded body class), so only "missing-post-
+// thumbnail" was ever missing for that half. Stacked, that's up to 160px of
+// unwanted gap between the header and this page's real content (confirmed by
+// reading the actual cascade, not guessed) — this page's own `.entry-header` is
+// separately hidden entirely (`header.entry-header...{display:none}`, geppa
+// CSS) since the colored category banner already shows the title, so none of
+// that missing padding was ever serving a visible purpose here. Adding the same
+// "singular missing-post-thumbnail" pair every other content page already uses
+// removes both paddings; checked every other rule scoped to either class for
+// side effects first (`.singular .featured-media`/`.intro-text`, and
+// `.missing-post-thumbnail`'s only other consumer) — none of them match
+// anything this template renders. Applies to every category via this shared
+// template, not just spumanti/bianchi: the missing bodyClass was a template-wide
+// gap from the start, not specific to the 2 categories Task 36 happened to be
+// touching.
+// Task 36 introduced label-image cards for spumanti/bianchi specifically; Task 38
+// then gave rossi bigger, higher-resolution bottle photos with no text and a
+// 2-per-row grid instead. Task 39 (explicit request, after confirming via
+// AskUserQuestion that this should *replace* Task 36's labels rather than
+// coexist with them) extends Task 38's treatment to every remaining category —
+// so every category now renders identically and this is no longer a per-
+// category branch. See site.css's own Task 38 comment for the CSS side, and
+// wines.json's own per-wine cardImageSrc/Width/Height (now pointing at the same
+// `productImage` each wine's own detail page already uses, not the older
+// low-res thumbnail, for every category). WineCard.astro's "label" and plain
+// "bottle" variants are unused by any caller as of this task but were left in
+// place, not deleted — see .claude/TODO.md Task 39 for why.
+const imageVariant = "bottle-large";
+// Task 40: native cross-document View Transition, scoped to spumanti only for
+// now (explicit request — other categories can follow later). See
+// BaseLayout.astro's own `enableViewTransitions` comment for why this is an
+// explicit per-page opt-in rather than sitewide, and WineCard.astro's
+// `viewTransitionName` comment for the matching per-image half on the product
+// page. `wine-bottle-${slug}` (not just the slug alone) namespaces this in
+// case some other, unrelated feature ever wants its own `view-transition-name`
+// scheme on this same page.
+const isSpumanti = category.slug === "spumanti";
 ---
 
 <BaseLayout
   title={`${category.title} - Rigoni Vittorino`}
   ogTitle={category.title}
+  bodyClass="singular missing-post-thumbnail"
   lang="it"
   otherLangUrls={(localeEquivalents.categories as Record<string, { it: string; en: string; de: string }>)[category.slug]}
+  enableViewTransitions={isSpumanti}
 >
   <article class={`page type-page status-publish hentry wines-category-${category.slug}`}>
     <header class="entry-header has-text-align-center header-footer-group">
@@ -36,16 +82,17 @@ const categoryWines = wines.filter((w) => w.category === category.slug);
             <img class="category-logo-ico logo-rigoni-ico ico-color" src={category.categoryLogo} />
             <h1 class="category-title">{category.title}</h1>
           </div>
-          <div class="wine-list-container">
+          <div class="wine-list-container wine-list-container--large">
             {
               categoryWines.map((wine) => (
                 <WineCard
                   slug={wine.slug}
                   title={wine.title}
                   cardImageSrc={wine.cardImageSrc}
-                  cardImageSrcset={wine.cardImageSrcset}
                   cardImageWidth={wine.cardImageWidth}
                   cardImageHeight={wine.cardImageHeight}
+                  imageVariant={imageVariant}
+                  viewTransitionName={isSpumanti ? `wine-bottle-${wine.slug}` : undefined}
                 />
               ))
             }

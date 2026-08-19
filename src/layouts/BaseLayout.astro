@@ -23,6 +23,19 @@ export interface Props {
   // Task 13: opt-in per-page loading screen. Defaults to false so every existing
   // caller (all of which omit this prop) renders byte-identically to before this task.
   showLoadingScreen?: boolean;
+  // Task 40: opt-in native cross-document View Transition (the browser-level
+  // API, not Astro's ClientRouter — this stays a fully static multi-page site,
+  // no client-side routing). Emits the one `<meta>` tag the spec requires a
+  // document to carry for it to participate in a transition at all. Defaults to
+  // false so every existing caller renders byte-identically to before this
+  // task. Scoped per-page rather than sitewide on purpose: adding this
+  // unconditionally would give *every* same-origin navigation a default
+  // whole-page cross-fade the instant two opted-in pages were linked, which is
+  // a real, visible, sitewide animation change well beyond what was asked —
+  // only pages that actually want to participate in a specific transition
+  // should opt in. See site.css's own Task 40 comment for the shared-element
+  // styling this pairs with.
+  enableViewTransitions?: boolean;
 }
 
 const {
@@ -35,6 +48,7 @@ const {
   lang = "it",
   otherLangUrls = {},
   showLoadingScreen = false,
+  enableViewTransitions = false,
 } = Astro.props;
 
 const chromeDir = lang === "it" ? "src/content/chrome" : `src/content/chrome/${lang}`;
@@ -70,6 +84,7 @@ const canonical = new URL(Astro.url.pathname, "https://rigonivittorino.com").toS
     <link rel="canonical" href={canonical} />
     <meta property="og:title" content={ogTitle ?? title} />
     <meta property="og:url" content={canonical} />
+    {enableViewTransitions && <meta name="view-transition" content="same-origin" />}
 
     <link rel="icon" href="/wp-content/uploads/2020/12/cropped-rigoni-favicon-32x32.png" sizes="32x32" />
     <link rel="icon" href="/wp-content/uploads/2020/12/cropped-rigoni-favicon-192x192.png" sizes="192x192" />
