@@ -556,6 +556,40 @@ before editing" step 4.
   languages) show the new markup and zero old low-res image sources remain sitewide; fresh preview +
   23-route smoke test all pass. **Not yet confirmed live by the user.**
 
+- Task 40: `/it/contatti/` (+ `/en/contatti/`, `/de/contacts/`) team section redesign, explicit request: white
+  page background instead of the current grey, the 3 team members (Stefano/Michele/Annamaria) turned into
+  rounded cards carrying that same grey as their own background, all 3 visible side by side on desktop, one
+  at a time with a horizontal swipe on mobile (viewport "sticking" to the current card, i.e. scroll-snap), and
+  more breathing room between each card's photo/name/role/description. CSS-only — no content-HTML changes on
+  any of the 3 pages. The background lives in a WordPress Grids-plugin custom property
+  (`--_gs-bg-desktop`/`-tablet`/`-mobile`, read by a `::before` pseudo-element, set inline in the scraped
+  HTML) on a `.titolo-pagine` section — that class is shared with chi-siamo/cantina's own title sections, so
+  the override is scoped by each language's own unique WordPress post ID (`#post-953` IT, `#post-1566` EN,
+  `#post-1770` DE), confirmed via grep, with `!important` since inline styles otherwise beat any external
+  stylesheet rule. The 3 team-member blocks (`.wp-block-uagb-team.uagb-team__outer-wrap` and everything
+  inside) are confirmed unique to this section sitewide and identical (generic class names) across all 3
+  languages, so the actual card styling — `background:#ede9e4`, `border-radius:20px`, `padding:50px 30px`,
+  plus modest spacing bumps between image/name/role/description — needed no per-page scoping at all, one
+  shared rule set. Card equal-height relies on a structural guarantee already in the Grids plugin (all 3
+  cells share `--_ga-row:1/7`, the plugin's own `align-self:stretch;height:100%}` already forces equal
+  height) rather than a re-tuned min-height — `height:100%` on the card itself just carries that down onto
+  its own visible box. Mobile (`max-width:768px`, matching this project's own established breakpoint)
+  overrides the vendor's own `.grids-s-w_i{flex-direction:column}` mobile stacking — scoped via
+  `.grids-s-w_i:has(> .contatti-team)`, the one grid wrapper directly containing the 3 cards, since
+  `.grids-s-w_i` itself is the plugin's generic wrapper class reused dozens of times sitewide — to
+  `flex-direction:row` plus `scroll-snap-type:x mandatory`/`scroll-snap-align:center` on each card: native
+  CSS scroll-snap, not a JS port of Hero.astro's vertical scroll-jacking brake (a different mechanism solving
+  a different problem, a fixed full-viewport hero) — a horizontal swipe-through-cards carousel is the
+  textbook scroll-snap use case, needs no JS, and gets correct touch/trackpad/keyboard behavior for free.
+  `check`/`test:unit`/`build` all pass (0 errors/warnings, the one pre-existing unrelated `locale` hint).
+  Confirmed in compiled `dist/`: each language's own post ID present and matched, 3
+  `uagb-team__outer-wrap` blocks per page across all 3 languages; confirmed chi-siamo/cantina's own
+  `.titolo-pagine` sections are unaffected (different Grids variant, no `#ede9e4` inline background to begin
+  with, so the scoped override was a safe no-op there regardless). Fresh preview + 10-route smoke test (all 3
+  contact pages, chi-siamo/cantina as controls, both other homepages, dati-societari/privacy-policy) all
+  pass. **Not yet confirmed live by the user** — a visual/responsive-interaction redesign, and this sandbox
+  cannot screenshot or swipe-test it, consistent with every other visual task this session.
+
 ## Completed / frozen project state
 
 The rebuilt Italian website is approved work. Do not reopen, refactor, redesign, or modify completed work unless the active task strictly requires it.

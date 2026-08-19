@@ -5517,3 +5517,93 @@ and only this round's own PIDs were killed afterward.
 2-column layout at real tablet/laptop viewport widths, across every category, needs to be seen.
 
 Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.
+
+## Task 40: /it/contatti/ (+ EN/DE) team section — white background, card layout, mobile swipe carousel
+
+Explicit request: turn the greyish page background white, turn the 3 team members (Stefano/Michele/
+Annamaria) into rounded cards carrying that grey as their own background, keep all 3 visible side by side on
+desktop, show one at a time on mobile with a horizontal swipe that snaps to whichever card the viewport is
+nearest (described as "the same way as the landing page animation"), and add more breathing room between
+each card's photo/name/role/description. Confirmed via `AskUserQuestion` wasn't needed here — the request
+was fully understood and the implementation is a standard responsive card pattern, no exotic mechanism
+required.
+
+**Investigation first.** This section, like the homepage's own sections (Task 17/18/20), is one of the
+WordPress Grids plugin's scraped layouts: `src/content/main/contatti.html` (IT), `src/content/main/en/
+contatti.html` (EN), `src/content/main/de/contacts.html` (DE) — no per-page Astro template markup, just
+raw HTML read and injected via `<Fragment set:html={...}>`. The section's visible background isn't a plain
+CSS property; it's read from a CSS custom property (`--_gs-bg-desktop`, `grids-frontend.min.css`'s
+`::before{background:var(--_gs-bg,var(--_gs-bg-desktop,none))}`) set *inline* in the scraped HTML's own
+`style` attribute — confirmed by reading the plugin's compiled CSS directly, not assumed. Inline styles beat
+any external stylesheet rule of equal-or-lower specificity, so overriding it needs `!important`.
+
+The class carrying that background, `.titolo-pagine`, is *not* unique to contatti — `chi-siamo.html` and
+`cantina.html` both reuse it for their own title sections (confirmed via grep across every `src/content/
+main/*.html`) — so a bare `.titolo-pagine` override would have whitened those pages too, well outside scope.
+Each language's own content file does have a unique WordPress post ID on its outermost `<article>` though
+(`post-953` IT, `post-1566` EN, `post-1770` DE, confirmed via grep), which scopes the override to exactly
+these 3 pages.
+
+The 3 team-member blocks (`.wp-block-uagb-team.uagb-team__outer-wrap`, and every generic class nested inside
+it — `.uagb-team__image-wrap`, `.uagb-team__title`, `.uagb-team__prefix`, `.uagb-team__desc`) are, by
+contrast, confirmed unique to this one section sitewide (grep across every content file), and every one of
+those generic class names is identical across all 3 languages — only each block's own per-instance
+`uagb-block-<hash>` class differs between languages/instances, and nothing here needs to target those. So
+the actual card styling needed zero per-page or per-language scoping: one shared rule set in `site.css`
+reaches all 9 cards (3 people × 3 languages) at once.
+
+**Card styling:** `background:#ede9e4` (the exact grey being removed from the section background — literally
+"the current greyish background... on that part of the page," per the request), `border-radius:20px`,
+`padding:50px 30px` for the premium/rounded feel asked for, plus three modest spacing bumps (image→name,
+name→role, role→description) rather than a full spacing-system rewrite, matching this project's established
+"not a lot, just noticeable" convention for this category of request (see Task 43 round 6 for the earlier
+precedent).
+
+**Equal card height** relies on a structural guarantee already present in the Grids plugin rather than a
+re-tuned `min-height`: all 3 team `.grids-area` cells share the exact same `--_ga-row:1/7` (spans the
+section's full 6-row grid track), and the plugin's own `.grids-area{align-self:stretch;height:100%}` rule
+(confirmed by reading `grids-frontend.min.css` directly) already forces the 3 cells to equal height
+regardless of how long each person's bio text runs — `height:100%` on `.uagb-team__outer-wrap` (the cell's
+sole child) just carries that same full height down onto the card's own visible, rounded box, so the
+background actually fills the cell rather than hugging its content tightly.
+
+**Mobile swipe carousel:** overrides the vendor's own mobile rule (`.grids-s-w_i{display:flex;flex-
+direction:column;height:100%}`, `grids-frontend.min.css` — what stacks every other Grids section vertically
+on phones) to `flex-direction:row` plus `scroll-snap-type:x mandatory` on the container and `scroll-snap-
+align:center` on each card, at the project's established `max-width:768px` mobile breakpoint. Scoped via
+`.grids-s-w_i:has(> .contatti-team)` — the one grid wrapper that directly contains the 3 team cards
+(`.contatti-team` is a second, pre-existing class already present only on the first card's own `.grids-area`
+in the scraped HTML, but `:has()` only needs one matching child to select the shared parent) — rather than
+bare `.grids-s-w_i`, which the plugin reuses as its generic wrapper class dozens of times across every page
+on the site.
+
+Deliberately used native CSS scroll-snap rather than porting Hero.astro's JS-driven vertical scroll-jacking
+brake (Task 18) to a horizontal axis: that mechanism exists to hold a *fixed, full-viewport* hero in place
+while a specific trigger section approaches — a genuinely different problem from "let the user swipe between
+three cards and have it settle on whichever one is closest." `scroll-snap-type`/`scroll-snap-align` is the
+standard, textbook, zero-JS way to build exactly that swipe-and-settle interaction, and it gets correct
+touch-gesture, trackpad, and keyboard-scroll behavior for free — something a hand-rolled JS port would have
+to reimplement and would risk getting subtly wrong on some input method, all without this sandbox being able
+to test any of it. Flagged here explicitly as a deliberate simpler-mechanism-same-visual-idea choice, not a
+misreading of "same way as the landing page animation" — the *result* (viewport settles on one card) matches
+what was asked; the *implementation* doesn't need to match Hero.astro's specific machinery to get there.
+
+No content-HTML changes were made to any of the 3 `contatti.html`/`contacts.html` files — this is entirely a
+`site.css` addition, consistent with how every other Grids-section visual override in this project has been
+done.
+
+Verification: `npm run check` (0 errors/warnings, the one pre-existing unrelated `locale` hint), `npm run
+test:unit` (42/42), `npm run build` (clean). Confirmed in compiled `dist/`: each language's own post ID
+(`post-953`/`post-1566`/`post-1770`) present and correctly matched to its own page; exactly 3
+`uagb-team__outer-wrap` occurrences per page across all 3 languages. Confirmed chi-siamo's and cantina's own
+`.titolo-pagine` sections are unaffected live: fetched both, neither has an inline `#ede9e4` background to
+begin with (they use the Grids plugin's `grids-is-stretch` variant, not `grids-is-advanced`), so the scoped
+override targeting only the 3 contatti post IDs was confirmed to be a safe no-op there regardless — not just
+safe by construction, but empirically checked. Fresh preview + 10-route smoke test (all 3 contact pages,
+chi-siamo/cantina as controls, both other homepages, dati-societari/privacy-policy as further frozen-work
+controls) — all 200 OK. Own preview process killed afterward; process hygiene maintained throughout.
+
+**Not yet confirmed live by the user** — this is a visual redesign plus a touch/scroll interaction
+(the mobile swipe carousel), and this sandbox has no way to render, screenshot, or gesture-test either.
+
+Not committed, per this project's standing convention of only committing/pushing when explicitly instructed.

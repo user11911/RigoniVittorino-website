@@ -1074,3 +1074,104 @@ html {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* --- Task 40: /it/contatti/ (+ /en/contatti/, /de/contacts/) team section
+ * redesign — explicit request: white page background instead of the current
+ * grey, the 3 team members turned into rounded "cards" carrying that same
+ * grey as their own background, all 3 visible side by side on desktop, one
+ * at a time with a horizontal swipe-to-reveal on mobile, and more breathing
+ * room between each card's photo/name/role/description.
+ *
+ * This section is one of the WordPress Grids-plugin's scraped layouts (same
+ * mechanism as the homepage sections — see Task 17/18/20's own comments):
+ * the visible background isn't a plain CSS property but a CSS custom
+ * property (`--_gs-bg-desktop`, read by a `::before` pseudo-element in
+ * grids-frontend.min.css) set *inline* on the section's own `style`
+ * attribute in the scraped HTML — inline styles beat any external
+ * stylesheet rule at equal-or-lower specificity, so overriding it needs
+ * `!important`, not just a plain declaration.
+ *
+ * `.titolo-pagine` (the class carrying that grey) is *not* unique to this
+ * page — chi-siamo.html and cantina.html both reuse it for their own title
+ * sections — so a bare `.titolo-pagine` override would also whiten those
+ * pages' backgrounds, well outside this task's scope. Each language's own
+ * content file *does* have a unique WordPress post ID on its outermost
+ * `<article>` (confirmed via grep: `post-953` IT, `post-1566` EN, `post-1770`
+ * DE), which is used here to scope the override to exactly these 3 pages.
+ *
+ * `.wp-block-uagb-team.uagb-team__outer-wrap` (the 3 team-member blocks) and
+ * everything nested inside it (`.uagb-team__image-wrap`, `.uagb-team__title`,
+ * `.uagb-team__prefix`, `.uagb-team__desc`) *are* unique to this section
+ * across the whole site (confirmed via grep — no other page's scraped
+ * content uses this WordPress block), and every generic class name inside it
+ * is identical across all 3 languages (only each instance's own
+ * `uagb-block-<hash>` class differs, which nothing here needs to target) —
+ * so the actual card styling below needs no per-language or per-post
+ * scoping at all, just one set of rules shared by every card in every
+ * language.
+ *
+ * Card sizing relies on a structural guarantee already built into the Grids
+ * plugin rather than a re-tuned min-height: all 3 team `.grids-area` cells
+ * share the exact same `--_ga-row:1/7` (spans the section's full 6-row grid
+ * track) and the plugin's own `.grids-area{align-self:stretch;height:100%}`
+ * rule, so the 3 cells are already forced to equal height by the grid
+ * itself, regardless of how long each person's bio text is — `height:100%`
+ * on `.uagb-team__outer-wrap` (its sole child) just carries that same full
+ * height down onto the card's own visible box, so the rounded/colored
+ * background actually fills the cell instead of hugging its content. --- */
+#post-953 .titolo-pagine,
+#post-1566 .titolo-pagine,
+#post-1770 .titolo-pagine {
+  --_gs-bg-desktop: #fff !important;
+  --_gs-bg-tablet: #fff !important;
+  --_gs-bg-mobile: #fff !important;
+}
+.wp-block-uagb-team.uagb-team__outer-wrap {
+  background: #ede9e4;
+  border-radius: 20px;
+  padding: 50px 30px;
+  height: 100%;
+  box-sizing: border-box;
+}
+.wp-block-uagb-team.uagb-team__outer-wrap .uagb-team__image-wrap {
+  margin-bottom: 20px;
+}
+.wp-block-uagb-team.uagb-team__outer-wrap h3.uagb-team__title {
+  margin-bottom: 16px;
+}
+.wp-block-uagb-team.uagb-team__outer-wrap p.uagb-team__desc {
+  margin-top: 20px;
+}
+/* Mobile: swipe-to-reveal one card at a time, matching the visual idea of
+ * the landing page's own scroll interaction ("the viewport sticks to that
+ * one") via native CSS scroll-snap rather than reproducing Hero.astro's
+ * JS-driven vertical scroll-jacking — that mechanism exists for a fixed,
+ * full-viewport vertical hero, a genuinely different problem; a horizontal
+ * swipe-through-cards is the textbook use case `scroll-snap-type` was
+ * designed for, needs no JS, and behaves natively/correctly with touch
+ * gestures, trackpads, and keyboard scrolling alike.
+ *
+ * `.grids-s-w_i:has(> .contatti-team)` targets specifically the one grid
+ * wrapper that directly contains the 3 team cards (`.contatti-team` is a
+ * second class already present, scraped as-is, only on the first card's own
+ * `.grids-area`, but `:has()` needs just one matching child to select the
+ * shared parent) — not `.grids-s-w_i` generally, which the Grids plugin
+ * reuses as its generic wrapper class dozens of times across every page.
+ * `!important` on `flex-direction` for the same inline-vs-stylesheet
+ * reasoning as the background override above: the vendor's own mobile rule
+ * (`.grids-s-w_i{display:flex;flex-direction:column;height:100%}`,
+ * grids-frontend.min.css) is what stacks every other Grids section
+ * vertically on mobile, and this is a deliberate, targeted exception to
+ * just that one rule for just this one section. --- */
+@media (max-width: 768px) {
+  .grids-s-w_i:has(> .contatti-team) {
+    flex-direction: row !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .grids-s-w_i:has(> .contatti-team) > .grids-area {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+  }
+}
