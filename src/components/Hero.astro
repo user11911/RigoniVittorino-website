@@ -7,10 +7,19 @@
 // video: with a single continuous video there's nothing left to paginate
 // between, and /en/ and /de/ never actually diverged from /it/'s slide set
 // (Task 9's own comment on the old prop confirmed they were byte-identical),
-// so there's no per-language content this loses either. The first of the old 4
-// slide photos is kept on as the <video>'s `poster` (shown before the video's
-// own first frame paints, and if it fails to load at all) rather than dropped.
+// so there's no per-language content this loses either.
 //
+// Task 42: the `poster` attribute (originally the first of the old 4 slide
+// photos, shown before the video's own first frame paints) was removed per
+// explicit request — a recognizable leftover carousel photo flashing up before
+// the video took over read as "the carousel is still there," not as a loading
+// state. Replaced with a plain white fallback instead (site.css's own Task 42
+// comment on `.hero-slider__video`), which reads as "still loading" rather
+// than "a different, older piece of content" — and, paired with Task 42's
+// other half (LoadingScreen.astro's reveal now waiting on this video's own
+// readiness), should rarely even be visible on a first homepage load anymore.
+//
+
 // Task 17: `.hero-fixed-wrapper` reserves real document-flow height equal to the
 // viewport minus the header's own rendered height, while `.hero-slider` itself
 // becomes `position: fixed`, pinned to start exactly below the header (never
@@ -28,7 +37,6 @@
     <video
       class="hero-slider__video"
       data-hero-video
-      poster="/wp-content/uploads/2021/01/rigoni-s2-bottiglie.jpg"
       muted
       loop
       playsinline

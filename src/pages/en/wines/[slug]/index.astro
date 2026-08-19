@@ -1,8 +1,8 @@
 ---
 export const prerender = true;
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import WineTastingSection from "../../../../components/WineTastingSection.astro";
 import wines from "../../../../data/wines.en.json";
-import localeEquivalents from "../../../../data/locale-equivalents.json";
 
 export function getStaticPaths() {
   return wines.map((wine) => ({
@@ -14,20 +14,41 @@ export function getStaticPaths() {
 const { wine } = Astro.props;
 // Confirmed live: product slugs are identical across it/en/de.
 const otherLangUrls = { it: `/it/i-nostri-vini/${wine.slug}/`, de: `/de/wines/${wine.slug}/` };
-const categoryHref = (localeEquivalents.categories as Record<string, { it: string; en: string; de: string }>)[wine.category].en;
 // Task 11: the "SHOP ONLINE" button (.buy-wine) was removed by explicit user request.
 // Per the user's own explicit decision, .specs-row's 6-column grid is intentionally left
 // unchanged — the 3 icons below stay in their original position/size in columns 1-3, and
 // columns 4-6 are now empty at desktop widths (≥1024px). This is a deliberate, accepted
 // outcome, not an oversight — see .claude/TODO.md Task 11 for the full reasoning. Below
 // 1024px this row already collapses to a 3-column layout with no such gap.
+// Task 40: see the IT version of this template for the full reasoning.
+const isSpumanti = wine.category === "spumanti";
+// Task 40: `isSpumanti` is kept around solely to gate the cross-document View
+// Transition, unrelated to Task 44's layout below, which now applies to
+// every category.
+// Task 43/44: see the IT version of this template for the full reasoning —
+// the reordered layout, built and approved for spumanti only, is now applied
+// to every category by explicit request; the "Type" line is dropped from
+// every category's info list, not just spumanti's; CSS scopes by
+// `.single-wines` (present unconditionally) instead of the old
+// spumanti-only `.wine-spumanti` class, which is no longer added anywhere.
 ---
 
-<BaseLayout title={`${wine.title} - Rigoni Vittorino`} ogTitle={wine.title} lang="en" otherLangUrls={otherLangUrls}>
+<BaseLayout
+  title={`${wine.title} - Rigoni Vittorino`}
+  ogTitle={wine.title}
+  lang="en"
+  otherLangUrls={otherLangUrls}
+  enableViewTransitions={isSpumanti}
+>
   <article class="wines-template-default single single-wines hentry">
     <div class="wine-container">
       <div class="wine-image">
-        <img class="zoooom" src={wine.productImage} alt={wine.title} />
+        <img
+          class="zoooom"
+          src={wine.productImage}
+          alt={wine.title}
+          style={isSpumanti ? `view-transition-name: wine-bottle-${wine.slug}` : undefined}
+        />
       </div>
       <div class="description">
         <h1>{wine.title}</h1>
@@ -43,45 +64,30 @@ const categoryHref = (localeEquivalents.categories as Record<string, { it: strin
           </div>
         </div>
 
-        <div class="tipologia-row">
-          <span class="wine-specs">
-            <strong>Type:</strong> <a class="category-link" href={categoryHref}>{wine.typologyLabel}</a>
-          </span>
-          <hr class="wine-separator" />
-          <span class="wine-specs"><strong>Degree:</strong> {wine.gradazione}</span>
-          <hr class="wine-separator" />
-          <span class="wine-specs"><strong>Cultivation:</strong> {wine.coltivazione}</span>
-          <hr class="wine-separator" />
-          <span class="wine-specs"><strong>Winemaking Process:</strong> {wine.vinificazione}</span>
-          <hr class="wine-separator" />
-          <span class="wine-specs"><strong>Average Yield:</strong> {wine.resaMedia}</span>
-          <hr class="wine-separator" />
-          <span class="wine-specs"><strong>Pairings:</strong> {wine.abbinamenti}</span>
-          <hr class="wine-separator" />
-          <span class="wine-specs"><strong>Serving Temperature:</strong> {wine.servizio}</span>
-        </div>
-
-        <div class="buttons-row">
-          <div class="info-wine">
-            <a class="scheda-wine" target="_blank" rel="noopener" href={wine.pdfUrl}>
-              <button class="hvr-sweep-to-right info-wine-btn">PRODUCT SHEET</button>
-              <button class="arrowBtn"><span class="icon"><i class="fal fa-arrow-right" /></span></button>
-            </a>
+        <WineTastingSection tastingNoteParagraphs={wine.tastingNoteParagraphs} vinificazione={wine.vinificazione} />
+        <details class="wine-other-info">
+          <summary class="wine-other-info__toggle">Other info</summary>
+          <div class="tipologia-row">
+            <span class="wine-specs"><strong>Degree:</strong> {wine.gradazione}</span>
+            <hr class="wine-separator" />
+            <span class="wine-specs"><strong>Cultivation:</strong> {wine.coltivazione}</span>
+            <hr class="wine-separator" />
+            <span class="wine-specs"><strong>Average Yield:</strong> {wine.resaMedia}</span>
+            <hr class="wine-separator" />
+            <span class="wine-specs"><strong>Pairings:</strong> {wine.abbinamenti}</span>
+            <hr class="wine-separator" />
+            <span class="wine-specs"><strong>Serving Temperature:</strong> {wine.servizio}</span>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="text-wine-container">
-      <div class="wine-color-logo">
-        <span class=""><img class="v-ico-wine" src={wine.categoryLogo} /></span>
-      </div>
-      <div class="wine-description">
-        <div>
-          <span class="wine-description-text">
-            {wine.tastingNoteParagraphs.map((p: string) => <p>{p}</p>)}
-          </span>
-        </div>
+          <div class="buttons-row">
+            <div class="info-wine">
+              <a class="scheda-wine" target="_blank" rel="noopener" href={wine.pdfUrl}>
+                <button class="hvr-sweep-to-right info-wine-btn">PRODUCT SHEET</button>
+                <button class="arrowBtn"><span class="icon"><i class="fal fa-arrow-right" /></span></button>
+              </a>
+            </div>
+          </div>
+        </details>
       </div>
     </div>
   </article>

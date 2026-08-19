@@ -1,6 +1,7 @@
 ---
 export const prerender = true;
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import WineTastingSection from "../../../../components/WineTastingSection.astro";
 import wines from "../../../../data/wines.json";
 
 export function getStaticPaths() {
@@ -19,13 +20,54 @@ const otherLangUrls = { en: `/en/wines/${wine.slug}/`, de: `/de/wines/${wine.slu
 // columns 4-6 are now empty at desktop widths (≥1024px). This is a deliberate, accepted
 // outcome, not an oversight — see .claude/TODO.md Task 11 for the full reasoning. Below
 // 1024px this row already collapses to a 3-column layout with no such gap.
+// Task 40: native cross-document View Transition from the spumanti category
+// card into this page's own bottle image, scoped to spumanti only for now
+// (explicit request). See BaseLayout.astro's `enableViewTransitions` and
+// WineCard.astro's `viewTransitionName` comments for the matching category-
+// page half; `wine-bottle-${slug}` must be the exact same string on both ends
+// for the browser to treat them as the same transitioning element.
+const isSpumanti = wine.category === "spumanti";
+// Task 40: `isSpumanti` is kept around solely to gate the cross-document View
+// Transition (`enableViewTransitions` below, and the bottle `<img>`'s own
+// `view-transition-name`) — that feature is still explicitly scoped to
+// spumanti only, unrelated to Task 44's layout below, which now applies to
+// every category.
+// Task 43/44: the reordered product-page layout (flavor + process prose
+// beside the bottle, sticky bottle, white background, etc. — see site.css's
+// own Task 43/44 comment for the full design history) was built and approved
+// for spumanti only across rounds 1-8, then, once approved, extended to every
+// other category by explicit request ("implement the wine page layout on all
+// the other categories... the wine page layout is that which we worked on in
+// the prosecchi e spumanti categories"). All 28 wines across all 6 categories
+// carry the same `tastingNoteParagraphs`/`vinificazione` fields this layout
+// needs (confirmed directly in wines.json, not assumed), so there was no
+// per-category branching left to keep — the old, pre-Task-43 layout (a flat
+// label:value list including "Tipologia", plus a separate full-width
+// `.text-wine-container` flavor box below) is removed outright rather than
+// kept as a second, now-unused code path. The "Tipologia" line is dropped
+// from every category's info list, not just spumanti's, for the same reason
+// it was dropped there — redundant given the category page you arrived from.
+// CSS in site.css now scopes this layout by `.single-wines` (present on every
+// wine product `<article>` unconditionally) instead of the old,
+// spumanti-only `.wine-spumanti` class, which is no longer added anywhere.
 ---
 
-<BaseLayout title={`${wine.title} - Rigoni Vittorino`} ogTitle={wine.title} lang="it" otherLangUrls={otherLangUrls}>
+<BaseLayout
+  title={`${wine.title} - Rigoni Vittorino`}
+  ogTitle={wine.title}
+  lang="it"
+  otherLangUrls={otherLangUrls}
+  enableViewTransitions={isSpumanti}
+>
   <article class="wines-template-default single single-wines hentry">
     <div class="wine-container">
       <div class="wine-image">
-        <img class="zoooom" src={wine.productImage} alt={wine.title} />
+        <img
+          class="zoooom"
+          src={wine.productImage}
+          alt={wine.title}
+          style={isSpumanti ? `view-transition-name: wine-bottle-${wine.slug}` : undefined}
+        />
       </div>
       <div class="description">
         <h1>{wine.title}</h1>
@@ -41,45 +83,30 @@ const otherLangUrls = { en: `/en/wines/${wine.slug}/`, de: `/de/wines/${wine.slu
           </div>
         </div>
 
-        <div class="tipologia-row">
-          <span class="wine-specs">
-            <strong>Tipologia:</strong> <a class="category-link" href={`/it/${wine.category}/`}>{wine.typologyLabel}</a>
-          </span>
-          <hr class="wine-separator" />
-          <span class="wine-specs"><strong>Gradazione:</strong> {wine.gradazione}</span>
-          <hr class="wine-separator" />
-          <span class="wine-specs"><strong>Coltivazione:</strong> {wine.coltivazione}</span>
-          <hr class="wine-separator" />
-          <span class="wine-specs"><strong>Vinificazione:</strong> {wine.vinificazione}</span>
-          <hr class="wine-separator" />
-          <span class="wine-specs"><strong>Resa Media:</strong> {wine.resaMedia}</span>
-          <hr class="wine-separator" />
-          <span class="wine-specs"><strong>Abbinamenti:</strong> {wine.abbinamenti}</span>
-          <hr class="wine-separator" />
-          <span class="wine-specs"><strong>Servizio:</strong> {wine.servizio}</span>
-        </div>
-
-        <div class="buttons-row">
-          <div class="info-wine">
-            <a class="scheda-wine" target="_blank" rel="noopener" href={wine.pdfUrl}>
-              <button class="hvr-sweep-to-right info-wine-btn">SCHEDA TECNICA</button>
-              <button class="arrowBtn"><span class="icon"><i class="fal fa-arrow-right" /></span></button>
-            </a>
+        <WineTastingSection tastingNoteParagraphs={wine.tastingNoteParagraphs} vinificazione={wine.vinificazione} />
+        <details class="wine-other-info">
+          <summary class="wine-other-info__toggle">Altre informazioni</summary>
+          <div class="tipologia-row">
+            <span class="wine-specs"><strong>Gradazione:</strong> {wine.gradazione}</span>
+            <hr class="wine-separator" />
+            <span class="wine-specs"><strong>Coltivazione:</strong> {wine.coltivazione}</span>
+            <hr class="wine-separator" />
+            <span class="wine-specs"><strong>Resa Media:</strong> {wine.resaMedia}</span>
+            <hr class="wine-separator" />
+            <span class="wine-specs"><strong>Abbinamenti:</strong> {wine.abbinamenti}</span>
+            <hr class="wine-separator" />
+            <span class="wine-specs"><strong>Servizio:</strong> {wine.servizio}</span>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="text-wine-container">
-      <div class="wine-color-logo">
-        <span class=""><img class="v-ico-wine" src={wine.categoryLogo} /></span>
-      </div>
-      <div class="wine-description">
-        <div>
-          <span class="wine-description-text">
-            {wine.tastingNoteParagraphs.map((p: string) => <p>{p}</p>)}
-          </span>
-        </div>
+          <div class="buttons-row">
+            <div class="info-wine">
+              <a class="scheda-wine" target="_blank" rel="noopener" href={wine.pdfUrl}>
+                <button class="hvr-sweep-to-right info-wine-btn">SCHEDA TECNICA</button>
+                <button class="arrowBtn"><span class="icon"><i class="fal fa-arrow-right" /></span></button>
+              </a>
+            </div>
+          </div>
+        </details>
       </div>
     </div>
   </article>
