@@ -919,6 +919,363 @@ before editing" step 4.
   `0 10px 30px 10px`. `check`/`test:unit`/`build` all pass; confirmed in compiled CSS. Fresh preview +
   5-route smoke test, all pass. **Not yet confirmed live by the user.**
 
+- Task 53 (branch `phone-opt`): first mobile-experience fixes, following a code-level audit (no live device
+  available in this sandbox) that flagged 3 candidate issues; explicit request to fix the first, add a
+  new phone-only feature for the second, and fix the third only if it turned out easy. (1) The Google Map's
+  480px height (Task 50) was never scoped to a breakpoint, so it applied on phones too, where a full-width,
+  480px-tall map dominates the screen — added a `max-width:768px` override capping it to `220px`. (2) A
+  phone-only *auto-advancing* carousel for the 3 contatti team cards, layered on top of the existing manual
+  swipe (Task 46's scroll-snap, untouched) rather than replacing it: `public/scripts/site.js`, a new
+  `autoSwipeContattiCards()` IIFE matching the file's existing pattern (self-guarding, no-ops on any page
+  without the carousel). Finds the same container via the identical selector site.css already uses
+  (`.grids-s-w_i:has(> .contatti-team)`) so CSS and JS are provably talking about the same element; advances
+  every 5s via `scrollTo({behavior:"smooth"})`, wrapping back to the first card at the end; respects
+  `prefers-reduced-motion` (skips the feature entirely, not just slows it down); stops for good on the
+  visitor's first real touch/pointer interaction, rather than fighting a manual swipe or silently resuming
+  later; only runs inside the `max-width:768px` breakpoint, re-evaluated live via `matchMedia` so it
+  correctly starts/stops across a resize/rotation, not just once at page load. (3) Confirmed easy: the
+  "form first, hours second" question turned out to need no CSS at all — desktop uses explicit
+  `--_ga-column`/`--_ga-row` placement (order-independent), while mobile falls back to a plain flex-column
+  stack that follows DOM order — so just reordering the two `.grids-area` blocks in the scraped HTML (form
+  before hours) fixes mobile stacking order with zero effect on desktop's already-explicit positions.
+  `check`/`test:unit`/`build` all pass (0 errors/warnings, the one pre-existing unrelated `locale` hint);
+  `node --check` on `site.js` separately, since `astro check` doesn't cover plain `public/` JS. Confirmed in
+  compiled `dist/`: form precedes hours in all 3 languages' markup, the mobile map-height media query is
+  present, `autoSwipeContattiCards` is in the compiled `site.js`. Fresh preview + 10-route smoke test, all
+  pass; confirmed `/scripts/site.js` itself serves 200 with the correct JS content-type. **Not yet confirmed
+  live by the user** — this is the first genuinely interactive (not just responsive-layout) mobile behavior
+  this session, and touch/gesture behavior is exactly the kind of thing that needs a real device.
+
+- Task 54 (branch `phone-opt`): sideways-scroll fix, the first finding confirmed on a real phone (via a
+  `localtunnel` tunnel to a local preview server — the `astro preview --allowed-hosts` flag was needed for
+  Vite's host-checking to accept the tunnel's hostname, hit and fixed live). Deliberately did *not* reach for
+  the obvious blanket `overflow-x:hidden` on `html`/`body`: per the CSS Overflow spec, setting `overflow-x`
+  to anything but `visible` also forces `overflow-y` non-`visible` on that same element (the "paired axis"
+  rule), and any ancestor with non-`visible` overflow breaks `position:sticky` inside it — the exact bug Task
+  43 round 4 already found and fixed once this session. `html`/`body` are ancestors of both this site's sticky
+  elements (header, wine bottle), so that reflex fix would have silently undone two already-hard-won fixes.
+  Root-caused instead: the vendor theme's own `#site-content{overflow:hidden}` already clips horizontal
+  overflow in the main content area on every page except wine pages (deliberately, for the sticky bottle) —
+  header and footer, both siblings of `#site-content`, have no such protection. Grepped for `100vw` (the
+  classic source of this exact bug) and found exactly one hit: `.footer-row-logo`'s own full-bleed shimmer
+  breakout, in the footer, present on every page — matching a persistent, not page-specific, complaint.
+  Confirmed footer is not an ancestor of either sticky element (safe to clip, unlike the header, which
+  couldn't safely get this either — its desktop nav dropdown needs to visually extend past its own box).
+  Fixed with `footer#site-footer{overflow-x:hidden}`, plus `overscroll-behavior-x:none` added to the
+  existing `html{overscroll-behavior-y:none}` rule for symmetry (removes any residual horizontal
+  bounce/rubber-band gesture too, not just genuine overflow). `check`/`test:unit`/`build` all pass; confirmed
+  both new declarations present in compiled CSS, and confirmed `position:sticky` still present twice
+  (header + wine bottle, unaffected). Fresh preview — same server the user's phone tunnel was already
+  pointed at, restarted in place on the same port so the existing tunnel kept working without needing to be
+  re-run — + 10-route smoke test, all pass. **Awaiting live re-confirmation from the same phone that reported
+  the original bug.**
+
+- Task 54 round 2 (branch `phone-opt`): the footer fix above was real but insufficient — user re-tested live
+  and reported "issue is still there, sides are not locked." Rather than guessing a third blind fix, shipped
+  a temporary on-page diagnostic (`debugOverflowTemporary()` in `site.js`, outlined offending elements in red
+  and listed their exact measurements in a fixed bottom panel, since the reporting phone has no devtools
+  access) and had the user re-test with it live. It surfaced two concrete, unrelated overflow sources with
+  exact pixel measurements, both now root-caused and fixed, both scoped in `site.css`:
+  1. **Hamburger toggle, 15px right-overflow.** The vendor theme only ever hides the desktop inline menu
+     (`.header-navigation-wrapper`/`.primary-menu-wrapper`) behind `@media(max-width:782px){.admin-bar
+     .overlay-header ...}` — a body-class combination from logged-in WordPress admin views that doesn't exist
+     on this static rebuild — so the full desktop menu was never actually removed from layout on mobile, only
+     visually redundant next to the separate `.menu-modal` mobile overlay. As a flex child demanding its own
+     `width:100%`, it forced `.header-inner` wider than the viewport, dragging the absolutely-positioned
+     `.nav-toggle` (positioned `right:0` relative to that too-wide box) past the true edge with it. Confirmed
+     via `src/content/chrome/header.html` that `.header-navigation-wrapper` holds only the desktop nav (the
+     hamburger button and the mobile modal are both elsewhere in the DOM), so hiding it below the theme's own
+     already-established desktop breakpoint (`@media (max-width: 999px) { .header-navigation-wrapper: none }`,
+     matching the theme's own `min-width:1000px` reveal threshold) cannot affect either.
+  2. **Homepage philosophy section, 10px right-overflow** on every text element inside it. It's the only
+     `.grids-section.alignfull` sitewide with a non-zero margin (confirmed by checking every `alignfull`
+     section in every content file) — but the Grids plugin only ever wires its width-adjustment custom
+     property to `min-width` (a non-binding floor), never an actual `width`/`max-width` cap, so the theme's
+     own `.alignfull{width:100%}` always won, and the section rendered at full container width *plus* its own
+     10px+10px margin on top — the classic explicit-width-plus-explicit-margin overflow. Fixed by scoping
+     `.home-philosophy-section.alignfull{width:calc(100% - 20px)}` to just this section.
+  Removed the temporary diagnostic script once both fixes were confirmed in the build. `check`/`test:unit`/
+  `build` all pass (0 errors, same one pre-existing unrelated hint); `node --check` on `site.js` separately.
+  Confirmed in compiled `dist/`: `debug-overflow-panel`/`debugOverflowTemporary` fully absent, both new CSS
+  rules (`999px` breakpoint, `.home-philosophy-section.alignfull`) present in compiled `site.css`,
+  `autoSwipeContattiCards` still intact. Restarted the preview server in place on the same port (4321) so the
+  user's existing tunnel keeps working; confirmed via `curl` with a synthetic tunnel `Host` header that both
+  the page and the updated CSS serve correctly before asking for a re-test. **Not yet confirmed live** —
+  awaiting the user's phone re-test of both fixes.
+
+- Task 54 round 3 (branch `phone-opt`): round 2 was reported still broken live ("still the same problem"),
+  plus a new symptom (no images/video loading). Investigated the loading symptom first: confirmed via direct
+  `curl` that the local preview server serves every asset correctly (200, full bytes, including the 17MB
+  hero video) but ignores `Range` request headers entirely (always 200 + full body, never 206) — a known
+  local Wrangler/Workers dev-server limitation, not a code bug; likely the real explanation for mobile video
+  failing to play over a bandwidth-constrained free tunnel. Documented as a probable testing-environment
+  artifact, not chased further as a code fix.
+  For the overflow issue (now failed twice live in a row — `CLAUDE.md`'s circuit breaker applies), the user
+  correctly identified that both round-1 and round-2 fixes were too narrow: a page-wide right margin/padding
+  persists on every page. Rather than guess a third narrow patch, **fixed the sandbox's Playwright/Chromium
+  limitation itself** — Chromium was failing to launch only because of 3 missing shared libraries
+  (`libnspr4.so`, `libnss3.so`, `libasound2`), fixable without root via `apt-get download` + `dpkg -x` (see
+  `scripts/enable-playwright-libs.sh`, and `CLAUDE.md`'s new "Headless browser verification" section — this
+  changes verification capability for *all* future tasks, not just this one).
+  With real `getComputedStyle`/`getBoundingClientRect` access, found two real, previously-wrong conclusions:
+  (1) round 2's `.header-navigation-wrapper` fix was based on a text-search heuristic that misread the
+  vendor CSS's brace nesting — that wrapper was *already* unconditionally `display:none`, never gated behind
+  `.admin-bar.overlay-header` as concluded; the fix was harmless but not the actual cause. (2) The real cause
+  was the geppa child theme's `.nav-toggle .toggle-icon,.nav-toggle svg{width:70px;height:70px}` (mobile
+  breakpoint) never being matched by a corresponding size increase on `.nav-toggle`'s own box — leaving a
+  79px button trying to fit a 70px icon inside only ~31px of padding-reduced content space, a plain
+  self-contained box-model bug with no relation to header width at all. Fixed with a `.header-inner
+  .nav-toggle{padding:0}` override at the same breakpoint (needed the extra `.header-inner` for specificity
+  parity with the vendor's own `.header-inner .toggle` rule — a plain `.nav-toggle{padding:0}` compiled fine
+  but silently lost the cascade regardless of load order, caught only by measuring computed padding directly
+  rather than assuming source order would decide it).
+  Verified numerically (not just visually) via headless Chromium: `document.documentElement.scrollWidth -
+  clientWidth` is `0` on every one of 9 representative routes (home, contatti, chi-siamo, cantina, en, de,
+  news, a wine category page, a wine product page) at all 5 required breakpoints (375/414/768/1024/1440px) —
+  45 checks, zero overflow anywhere. Also ran the project's own previously-dormant
+  `scripts/route-smoke-test.mjs` (never runnable before this round) — 40/43 routes pass; the 3 failures are
+  pre-existing `routes.mjs` test-fixture issues unrelated to this task (an `/it/privacy-policy/` blank-page
+  misclassification, two stale wine slugs with a `-magnum` suffix that 404) and were left alone, out of
+  scope for Task 54.
+  Removed the temporary diagnostic script from `site.js` (no longer needed now that headless verification
+  works). `check`/`test:unit`/`build` all pass. Restarted preview on the same port again; confirmed via curl
+  that the diagnostic script is fully gone and the final CSS is being served. **Headless-verified as fixed
+  across every required breakpoint and a representative page sample — still awaiting final live phone
+  confirmation**, per `CLAUDE.md`'s status vocabulary (headless verification is strong evidence but isn't
+  the same as a real device).
+
+- Task 55 (branch `phone-opt`), two requests, both mobile-only:
+  1. **Sitewide mobile content margin.** Measured via headless browser (not assumed): every page type's
+     main content container spanned left=0/right=0 of the viewport at mobile widths — confirmed on contatti,
+     chi-siamo, cantina, a wine category page, and a wine product page. Root cause: Task 32 removed a
+     *desktop* 40px reservation sitewide (correct there — it looked unintentional with no visible container)
+     using `.entry-content>*:not(.alignwide):not(.alignfull):not(.alignleft):not(.alignright):not(.is-style-
+     wide){width:100%}` — that same rule also zeroed out mobile, where the effect reads as content crammed
+     against the phone's bezel instead of clean. Fixed at `max-width:768px` by reusing Task 32's own selector
+     verbatim (so alignfull/alignwide sections stay edge-to-edge as designed) plus the two other top-level
+     containers that selector never covered (`.wines-row-container` for wine category pages, `.wine-container`
+     for wine product pages, per Task 32's own comment) — 16px each side, `box-sizing:border-box` set
+     explicitly on the latter two to guarantee no width-plus-padding overflow (the exact class of bug fixed
+     sitewide in Task 54).
+  2. **Homepage "Un vino che esalta i sensi..." section only occupying the left half on mobile.** Confirmed
+     via the actual inline style (`src/content/main/home.html`) that `.bottone-centro`'s `--_ga-p-desktop`,
+     `-tablet`, and `-mobile` were all identically `0 150px 0 0` — unlike its sibling `.home-closing-
+     section__image`, which does carry a genuinely different mobile value, this column's padding was never
+     actually authored for mobile at all, just copied through. The Grids plugin already collapses this
+     section to a single stacked column at `max-width:768px`, so `.bottone-centro` was already full-width
+     there — the unreduced 150px right padding was the only thing still visually confining the text to the
+     left portion. Reduced to match the sibling's own mobile inset (8px) at the same breakpoint the layout
+     itself collapses at, so desktop/tablet (where the 150px gap makes sense next to the 2-column layout) are
+     completely untouched.
+  Verified both numerically and visually via headless Chromium (`scripts/enable-playwright-libs.sh`):
+  measured real content elements (not just container boxes) sitting at the intended left offset on every
+  page type at mobile widths, confirmed zero change above the 768px breakpoint on all of them, and confirmed
+  desktop's `.bottone-centro` padding is still exactly `150px` (byte-identical to before). Screenshots
+  (`.bottone-centro` cropped, mobile vs. desktop) show the heading/paragraph/button now spanning the
+  available width on mobile while desktop is visually unchanged. Full regression sweep (9 pages × 5
+  breakpoints, the same suite from Task 54) still shows zero overflow anywhere — these additions didn't
+  reintroduce it. `check`/`test:unit`/`build` all pass. **Headless-verified — not yet confirmed live.**
+
+- Task 55 follow-up: user correctly reported the margin was missing specifically on the landing page, and
+  asked for explicit confirmation the changes are mobile-only, not global. Found via Chrome DevTools
+  Protocol's `CSS.getMatchedStylesForNode` (through the headless browser — inspecting the real matched-rule
+  list rather than assuming source order, the same specificity trap already hit once this session on the
+  nav-toggle fix): the geppa child theme carries its own pre-existing rule,
+  `@media(max-width:767px){:root body.home .entry-content>*:not(...){width:auto}}` — one class more specific
+  than the round-1 fix's selector (`body.home` vs. plain `body`), so it always won on the homepage
+  specifically regardless of load order; every other page lacks the `.home` body class and was unaffected by
+  it, which is exactly why the fix worked everywhere except there. Fixed with a homepage-specific rule
+  matching that exact selector and its `767px` breakpoint.
+  Re-verified comprehensively across all 9 representative routes at 6 widths (414/767/768/769/1024/1440):
+  every page — including the homepage now — shows exactly `left:16px/right:16px` at ≤768px and exactly
+  `left:0/right:0` at ≥769px, with zero `scrollWidth` overflow throughout. This is direct confirmation the
+  changes are strictly mobile/tablet-scoped: at 769px and above, every single page measures byte-identical
+  to its pre-Task-55 state. (Along the way, found `/news/` renders a genuinely empty `<main id="site-
+  content">` in this local preview regardless of wait time — a pre-existing, unrelated issue; `TODO.md`
+  already flags News scope as out of bounds for unrelated tasks, so left untouched.) `check`/`test:unit`/
+  `build` all pass again. Screenshot re-confirms both Task 55 fixes together on the homepage: the closing
+  section itself now sits inset from the phone edges, and its text still uses the section's full available
+  width.
+
+- Task 56 (branch `phone-opt`), 4 homepage spacing/layout fixes, mobile-only (`max-width:768px`, desktop/
+  tablet completely untouched — verified numerically, see below):
+  1. **Hero video → "Dalla campagna al bicchiere" gap** reduced from ~283px to ~231px. Two contributors
+     found via `CSS.getMatchedStylesForNode`: an empty spacer section's 40px bottom padding, and the vendor
+     theme's own generic `.alignfull{margin-top:5rem}` rule (unconditional, not part of the Grids plugin's
+     per-instance system at all — explains why Task 54's per-instance override never touched it). Both
+     reduced, not zeroed: the remaining ~231px is mostly the section's own decorative graphic (which the
+     title overlaps into via a deliberate negative margin), not truly blank space.
+  2. **Philosophy title/paragraphs/button "stuck to the right"** — confirmed the text column had an
+     unreduced desktop value (`padding-left:80px;padding-right:0`, meant to sit text beside a graphic in the
+     2-column desktop layout) plus `text-align:left`, which on the mobile single-column layout pushed text
+     hard right with 80px of dead space on its left. Replaced with a small symmetric inset and
+     `text-align:center` (also centers the button).
+  3. **Grape photo → "La nostra collezione" gap** reduced from ~276px to ~88px. Found a second Grids-plugin
+     mechanism along the way: the plugin's `.grids-s-w_i` (inner wrapper) independently consumes the exact
+     same padding/margin custom properties as expected on the outer `.grids-section`, so overriding the
+     outer box's padding alone only ever fixes part of it — the wrapper needs its own direct override too
+     (custom-property inheritance to the wrapper didn't visibly apply the way `getComputedStyle` suggested it
+     should; a direct `padding-top` override on the actual wrapper element was used instead of continuing to
+     chase why).
+  4. **Bottle photo → "Un vino che esalta i sensi" gap**, reduced from ~156px to 24px (`.bottone-centro`'s
+     own unreduced desktop `margin-top:120px`), plus a new bottom-20% fade on the photo itself
+     (`linear-gradient(to bottom, transparent, #000)`, mirroring the existing desktop-only horizontal fade's
+     technique from Task 31) so the now-tighter transition into the title reads as designed.
+  Verified via headless Chromium throughout, not just visually: measured all 4 gaps precisely, confirmed
+  `document.documentElement.scrollWidth` overflow stays `0` across 8 representative pages × 6 breakpoints
+  (375/414/768/769/1024/1440px — the same regression suite from Tasks 54-55), and explicitly re-confirmed
+  desktop (1440px) computed values for every touched property (`padding-left:80px`, `text-align:left`,
+  `padding-right:150px`, `margin-top:120px`) are byte-identical to before this task. Confirmed the fix
+  applies on `/en/` and `/de/` homepages too (same shared component structure), not just `/it/`.
+  `check`/`test:unit`/`build` all pass. **Headless-verified — not yet confirmed live** on the user's phone.
+
+- Task 57 (branch `phone-opt`), 3 more requests, mobile-only (`max-width:768px`), desktop/tablet verified
+  untouched:
+  1. **Hero video bottom-20% fade** — same `::after` gradient technique as Task 56's bottle-photo fade,
+     added to `.hero-slider` (already `position:relative;overflow:hidden`). Fades to white
+     (`linear-gradient(to bottom, transparent, #fff)`), not black — corrected live after an initial version
+     used black (copied directly from the bottle-photo fade without reconsidering that the hero sits above
+     a white page background, not a black section like the bottle does).
+  2. **Hero → philosophy gap, reduced further** past Task 56's 231px. Measuring every element in the gap
+     (not just the ones already touched) found two more contributors Task 56 missed: `.post-inner{padding-
+     top:5rem}` (`parent-style.min.css`, unconditional at every width — the theme has its own zero-override
+     for pages without a hero thumbnail, `.reduced-spacing.missing-post-thumbnail`, but the homepage
+     correctly doesn't carry that class since it has its own video), and the empty spacer's *inner*
+     `.grids-area.content-grid`, which still had its own unreduced 40px bottom padding (Task 56 only fixed
+     the outer section, not this nested area — the same "two separate consuming elements" shape found in
+     that task's Grids-plugin discovery). Both fixed via `body.home`-scoped overrides so the sitewide
+     `.post-inner` rule (relied on by other pages) isn't touched. Gap now ~139px, down from ~283px
+     originally across both rounds.
+  3. **chi-siamo (+ EN `/en/the-estate/`, DE `/de/unternehmen/`) — sticky "V" watermark.** First attempt
+     (a JS-driven fixed-position/placeholder swap, kept sticky all the way to the photo gallery further down
+     the page) was reported back as wrong and needlessly complex — superseded below, see the follow-up
+     entry for the corrected, much simpler version actually shipped.
+  Verified headlessly throughout: hero fade screenshot shows a real bottom fade; the hero-to-title gap
+  measured 139px after the fix. Full regression sweep (10 pages × 6 breakpoints, including the correct EN/DE
+  chi-siamo routes — the obvious `/en/chi-siamo/` guess actually 404s, the real EN/DE routes were found via
+  `scripts/routes.mjs`) shows zero overflow anywhere. Explicitly re-confirmed on desktop (1440px) that the
+  hero's `::after` fade has no content (media query correctly excludes it). `check`/`test:unit`/`build` all
+  pass. **Headless-verified — not yet confirmed live** on the user's phone.
+
+- Task 57 follow-up (branch `phone-opt`): user clarified the sticky-V scope was much smaller than built —
+  "remain sticky in the first text, until the first picture" (the "I nostri vigneti" photo right after the
+  first text section, not the gallery further down), and asked for the JS-driven approach to be replaced
+  with something simpler, explicitly noting the opacity fix wasn't needed (text was already readable).
+  Removed `initChiSiamoStickyV()` from `site.js` entirely. With the range now bounded to just the first
+  section (V and its paragraph are the only two children of the same flex-column `.grids-s-w_i`), plain CSS
+  `position:sticky` does the whole job on its own — no JS, no placeholder, no scroll listener: sticky's own
+  natural range (bounded by the element's nearest block-level ancestor) happens to end exactly where that
+  shared parent does, right before "I nostri vigneti" begins.
+  `.v-rigoni-bg:has(img[src*="V-rigoni-bianco"])` scopes this to chi-siamo's own V specifically (confirmed
+  the same filename is reused verbatim on all 3 languages) without affecting the homepage's differently-
+  named `.v-rigoni-bg` graphic. `top:104px` matches this page's own sticky (scrolled) header height,
+  measured directly.
+  This alone didn't stick at all when tested live — `#site-content{overflow:hidden}`
+  (`twentytwenty-style.min.css`, unconditional at every width) is an ancestor of the V and breaks
+  `position:sticky` for anything inside it, the exact same mechanism already documented in this project for
+  the desktop-only wine-bottle fix (Task 43 round 4), just tripping again here on mobile since that existing
+  fix only reverses the clipping for desktop wine-product pages. Added the equivalent reversal scoped to
+  chi-siamo only (`body:has(.chi-siamo-gallery) #site-content{overflow:visible}`, mobile-only), preserving
+  Task 54's sitewide mobile overflow-clipping safety net everywhere else.
+  Verified live at multiple scroll positions (not just implemented and assumed correct): the V's `top`
+  correctly clamps at 104px while stuck, releases cleanly with no overlap once "I nostri vigneti"'s photo is
+  scrolling into view, confirmed identically on `/en/the-estate/` and `/de/unternehmen/`, and confirmed
+  desktop (1440px) is completely unaffected (`.v-rigoni-bg` stays `position:relative`, `#site-content` keeps
+  its original `overflow:hidden`). Full 10-page × 6-breakpoint overflow sweep still clean — the scoped
+  `overflow:visible` reversal didn't reopen anything. `check`/`test:unit`/`build` all pass.
+  **Headless-verified — not yet confirmed live.**
+
+- Task 58 (branch `phone-opt`): 3 chi-siamo styling requests (mobile-only, continuing that scope) plus one
+  wine-page fix added mid-message ("in the specific wine pages, ensure the V logo sits behind the flavor
+  text, as currently it sits above it").
+  **Chi-siamo's sticky-V section:**
+  1. **White background.** The cream color isn't a plain `background-color` — the Grids plugin paints it via
+     a `.grids-s-w_i::before` pseudo-element (confirmed via computed style: checking the section's own
+     `backgroundColor` read transparent; the real `#ede9e4` only showed up on the `::before`). Overridden
+     there, scoped to `.titolo-pagine:has(.v-rigoni-bg)` (unique to this section — the homepage's own
+     philosophy section has a different structure entirely, so this can't leak there).
+  2. **Reduced the ~50px gap** between that background's edge and the V's own visible top (measured, not
+     assumed — traced to the wrapping `.grids-area`'s own margin) down to 16px, matching the small-inset
+     convention already established in Tasks 55-56.
+  3. **Grey V instead of white**, so it's still visible now that the background is white too (white-on-white
+     would've been invisible). Reused the homepage's own pre-made grey asset (`V-rigoni-grigio.png`, same
+     graphic, confirmed near-identical aspect ratio to the white one already in use) via `content:url(...)`
+     on the `<img>` rather than editing the HTML content files in all 3 languages — keeps this purely
+     CSS-scoped to mobile, no `<picture>`/`srcset` rework needed.
+  **Wine product pages, V-behind-text:** traced to a mobile-only override (`@media(max-width:768px)`) that
+  reset `.wine-tasting-section__logo` to `position:static`, which made it render as its own separate block
+  *above* the tasting-note paragraph instead of overlapping *behind* it — the desktop treatment (absolute,
+  low z-index, text layered in front, per the component's own existing comment) was correct and untouched
+  the whole time; only mobile had regressed to a different, simpler stacked layout at some earlier point.
+  Removed the `position`/`margin`/`z-index` parts of that override, keeping only the mobile-appropriate
+  `width:80px` (down from desktop's 140px) — the base rules now apply at every width, so desktop needed no
+  change at all here (it was never broken).
+  Verified via computed style (not just visual) that all three chi-siamo changes and the wine-page fix are
+  live on mobile and confirmed absent/unchanged on desktop (1440px): chi-siamo's background/image/margin all
+  read back to their original pre-task values, and the wine logo stays 140px/absolute/z-index:0 as always.
+  Confirmed the chi-siamo changes apply identically on `/en/the-estate/` and `/de/unternehmen/`. Full 10-page
+  × 6-breakpoint overflow sweep still clean. `check`/`test:unit`/`build` all pass.
+  **Headless-verified — not yet confirmed live.**
+
+- Task 59 (branch `phone-opt`), mobile-only, continuing that scope (the cantina request didn't repeat it
+  explicitly, but a desktop screenshot confirmed that page's bottle photo looks intentional and clean there
+  — only mobile crops it strangely, so desktop stays untouched, matching every other task this session):
+  1. **Sticky V, smaller/top-left, releasing earlier.** It was rendering ~362px wide (near full container
+     width) because of the Grids plugin's own `align-self:stretch` default on flex-column children —
+     overridden to `align-self:flex-start` plus `width:90px`, which both shrinks it and stops it stretching
+     to fill the row, anchoring it at the flex container's start (left) edge. For "increased bottom spacing
+     instead of following the text to the end": added `margin-bottom:220px` directly on the sticky element
+     itself — `position:sticky` only runs out of room when the containing block's *remaining* space is less
+     than the sticky element's own margin box, so a real margin-bottom on the element directly shortens how
+     long it sticks, releasing with room to spare rather than right at the paragraph's end. Verified with a
+     fine-grained scroll trace (every 100px, not just a few spot checks) — sticks cleanly from ~400px to
+     ~900px of scroll, then releases with no residual overlap.
+  2. **cantina (+ EN `/en/winery/`, DE `/de/weinkeller/`) — removed the overflowing bottle photo.** Its
+     wrapping section carries `--_gs-m-desktop:-280px 0 200px 0` — a large negative top margin, identical at
+     every breakpoint in the source markup. A desktop screenshot confirmed this reads as an intentional,
+     clean overlap there (wide layout, plenty of room) — the same value crops the same photo awkwardly
+     close and isolated on mobile's much narrower layout, matching "sits strangely." `display:none` at
+     `max-width:768px`, scoped via the image's own *unsuffixed* src
+     (`cantina-rigoni-vittorino-produzione.jpg`) rather than the bare filename — the *homepage's* closing
+     section reuses this exact same photo at a *sized* variant
+     (`cantina-rigoni-vittorino-produzione-1024x682.jpg`), confirmed directly in both pages' markup, so this
+     can't accidentally hide the homepage's own bottle section (kept intentionally in Tasks 56-57).
+  Verified via computed style that both fixes are live on mobile and confirmed unchanged on desktop (1440px):
+  chi-siamo's V stays its natural desktop width with `margin-bottom:0`, cantina's bottle section stays
+  `display:block`. Confirmed both apply identically across all 3 languages. Full 12-page × 6-breakpoint
+  overflow sweep (added the 2 new cantina-equivalent routes to the existing suite) still clean.
+  `check`/`test:unit`/`build` all pass.
+  **Headless-verified — not yet confirmed live.**
+
+- Task 60 (branch `phone-opt`), mobile-only: the sticky V mechanism removed entirely, replaced with the
+  same "logo behind text" overlap technique already approved for the wine product pages. User reported both
+  the stickiness itself and a large empty gap between the V and text before scrolling — both traced to one
+  root cause: the V was a normal in-flow sibling of the paragraph, always occupying its own real vertical
+  space above the text regardless of sticky/static; stickiness only ever changed *when* that space stopped
+  scrolling, never removed it.
+  Replaced with `position:absolute` on the V (`top:-20px;left:0;z-index:0`, matching the wine page's own
+  `.wine-tasting-section__logo` offset for visual consistency between the two treatments) plus
+  `position:relative;z-index:1` on the sibling paragraph — the V comes out of flow entirely, so the
+  paragraph becomes the sole in-flow child and starts right where the container does, no gap left to create
+  the "buggy" look. Deleted the now-unneeded sticky-specific rules (the `position:sticky`/`top:104px` block,
+  the `align-self:flex-start`/`margin-bottom:220px` release-tuning block, and the chi-siamo-scoped
+  `#site-content{overflow:visible}` exception — sticky's overflow-breaking trap doesn't apply to
+  `position:absolute`, so that exception was pure dead weight once sticky was gone, and removing it restores
+  Task 54's full sitewide mobile overflow safety net there too).
+  This alone put the V *below* the text instead of overlapping its top-left corner — found via CDP's
+  matched-styles list (not the Grids custom-property system this time) that the paragraph had its own
+  pre-existing `margin-top:-140px` from a genuinely mobile-only vendor rule
+  (`@media(max-width:768px){.v-rigoni-bg+div{margin-top:-140px}}`, geppa theme's own CSS) — presumably
+  written for the page's original, simpler in-flow V design before this session's changes. Neutralized to
+  `margin-top:0` for this new layout specifically; confirmed via computed style that desktop was never
+  affected by that vendor rule in the first place (its own margin-top reads `0px` natively, no override
+  needed there).
+  Verified via computed style at load (not just after scrolling, since there's nothing scroll-dependent left
+  to check) that the V renders `position:absolute` and stays that way regardless of scroll position on both
+  `/it/chi-siamo/` and `/it/cantina/`, and confirmed the same on all 4 EN/DE equivalents. Full 12-page ×
+  6-breakpoint overflow sweep still clean. `check`/`test:unit`/`build` all pass.
+  **Headless-verified — not yet confirmed live.**
+
 ## Completed / frozen project state
 
 The rebuilt Italian website is approved work. Do not reopen, refactor, redesign, or modify completed work unless the active task strictly requires it.

@@ -849,6 +849,129 @@ header#site-header.sticky {
   position: relative;
   z-index: 1;
 }
+/* --- Task 54: sideways-scroll fix, live device report on phone.
+ *
+ * Could NOT just add `overflow-x:hidden` to `html`/`body` as a blanket fix,
+ * despite that being the usual reflex for this exact complaint — per the CSS
+ * Overflow spec, setting `overflow-x` to anything but `visible` forces
+ * `overflow-y` to also become non-`visible` on that *same* element (the
+ * "paired axis" rule: an element can't have one axis `visible` and the
+ * other not), and any ancestor with non-`visible` overflow breaks
+ * `position:sticky` for anything inside it — which is the *exact* bug Task
+ * 43 round 4 already found and fixed once this session
+ * (`#site-content{overflow:hidden}` was silently breaking the wine bottle's
+ * sticky behavior). `html`/`body` are ancestors of both sticky elements on
+ * this site (the header, the wine bottle), so touching their overflow here
+ * would have quietly undone two already-hard-won fixes.
+ *
+ * Root-caused instead: the vendor theme's own `#site-content{overflow:
+ * hidden}` (twentytwenty-style.min.css) already clips horizontal overflow
+ * inside the main content area on every page except wine pages (deliberately
+ * — that's what the sticky bottle needs). Header and footer, both siblings
+ * of `#site-content` at the body-grid level, have no such protection at
+ * all. Grepping this file for `100vw` (the classic source of exactly this
+ * bug — on platforms with a non-overlay scrollbar, `100vw` is wider than
+ * the real visible viewport by the scrollbar's own width) found exactly one
+ * hit: `.footer-row-logo`'s own full-bleed breakout, in the footer — present
+ * on every page, matching a general/persistent complaint rather than a
+ * single-page one.
+ *
+ * `footer#site-footer` is confirmed NOT an ancestor of either sticky element
+ * (header and the wine bottle are both elsewhere in the grid), so it's safe
+ * to clip here with no risk to either — unlike the header, which also
+ * couldn't safely get a blanket `overflow-x:hidden` even on just itself,
+ * since the desktop nav's hover dropdown (`ul.sub-menu`) needs to visually
+ * extend past the header's own box, and the same paired-axis rule would clip
+ * that too. --- */
+footer#site-footer {
+  overflow-x: hidden;
+}
+/* --- Task 54 round 2: the footer fix above was real but incomplete — a live
+ * phone report ("sides are not locked") plus a temporary on-page overflow
+ * diagnostic (site.js, since removed) found two different, unrelated culprits
+ * neither previous fix touched:
+ *
+ * 1. The hamburger toggle (`.nav-toggle`, absolutely positioned `right:0`
+ *    inside `.header-inner`) was overflowing because its own containing
+ *    block was too wide, not because of anything in its own rules. Cause:
+ *    the vendor theme only ever hides the desktop inline menu
+ *    (`.header-navigation-wrapper` / `.primary-menu-wrapper`) behind
+ *    `@media(max-width:782px){.admin-bar.overlay-header ...}` — a body-class
+ *    combination from logged-in WordPress admin views that doesn't exist on
+ *    this static rebuild — so the full desktop menu ("Azienda, Cantina, I
+ *    nostri vini, Contatti, News") was never actually removed from layout on
+ *    mobile at all, just visually redundant next to the modal menu. As a
+ *    flex child of `.header-inner` with its own `width:100%` demand
+ *    (`.header-navigation-wrapper{width:100%}`, twentytwenty-style.min.css),
+ *    it forced `.header-inner` wider than the viewport, dragging the
+ *    absolutely-positioned toggle's right edge past the true edge with it.
+ *    Confirmed via the header partial (`src/content/chrome/header.html`)
+ *    that `.header-navigation-wrapper` only ever holds the desktop
+ *    `<nav class="primary-menu-wrapper">` — the mobile menu is a fully
+ *    separate `.menu-modal` overlay elsewhere in the DOM, and the hamburger
+ *    button itself lives in the sibling `.header-titles-wrapper` — so hiding
+ *    this one wrapper below the theme's own already-established desktop
+ *    breakpoint (`min-width:1000px`, the same value the theme itself uses to
+ *    reveal it) cannot affect either the toggle button or the modal.
+ *
+ * 2. The homepage's philosophy section ("Dalla campagna al bicchiere") was
+ *    overflowing by exactly 10px on the right on every one of its text
+ *    elements. Cause: it's the *only* `.grids-section.alignfull` anywhere on
+ *    the site with a non-zero margin (`0 10px 60px 10px`, confirmed by
+ *    grepping every `alignfull` section in every content file) — but the
+ *    Grids plugin's own CSS
+ *    (`grids-frontend.min.css`) only ever wires its width-adjustment custom
+ *    property to `min-width` (`min-width:var(--_gs-mw,...)`), a non-binding
+ *    floor, never to an actual `width`/`max-width` cap. The theme's own
+ *    `.alignfull{width:100%}` therefore always wins, so the section renders
+ *    at full container width *and* keeps its own 10px+10px margin on top —
+ *    the classic explicit-width-plus-explicit-margin overflow. Scoped to
+ *    just this section (by its own existing `.home-philosophy-section`
+ *    class) rather than touching the vendor plugin file, since no other
+ *    section sitewide shares this margin+alignfull combination. --- */
+@media (max-width: 999px) {
+  .header-navigation-wrapper {
+    display: none;
+  }
+}
+.home-philosophy-section.alignfull {
+  width: calc(100% - 20px);
+}
+/* --- Task 54 round 3: round 2's `.header-navigation-wrapper` fix above was
+ * based on a misreading of the vendor CSS's brace nesting (a text-search
+ * heuristic that found the nearest preceding `@media` without checking
+ * whether that block had already closed) — the vendor already hides that
+ * wrapper unconditionally, with no admin-bar/overlay-header gate at all, so
+ * that fix was harmless but never the actual cause. Verified this round with
+ * a real headless-browser measurement (Playwright now runs in this sandbox —
+ * see IMPLEMENTATION_NOTES.md) instead of more text-parsing.
+ *
+ * Real cause, confirmed via getComputedStyle: the geppa child theme sets
+ * `.nav-toggle .toggle-icon,.nav-toggle svg{width:70px;height:70px}` at
+ * `@media(max-width:767px)` (twentytwenty-style.min.css) — but never widens
+ * `.nav-toggle`'s own box to fit it. The parent theme's `.header-inner
+ * .toggle{padding:0 2rem}` (parent-style.min.css, unconditional) still
+ * applies underneath, giving `.nav-toggle` (width:6.6rem ≈ 79px, border-box)
+ * 24px of padding on each side — leaving ~31px of actual content room for an
+ * icon geppa sizes at 70px. The parent theme's own sizing for this exact
+ * selector (`.8rem`/`2.6rem` ≈ 9.6px/31px) fits that 31px box exactly, which
+ * is why this was never a problem until the child theme's later, bigger
+ * override started winning the cascade without a matching box-size change.
+ * Fixed by removing `.nav-toggle`'s own left/right padding at the same
+ * breakpoint geppa uses, so the existing 70px icon it already sizes now
+ * fits inside the existing 79px button with ~9px to spare — the icon's own
+ * appearance is untouched, only the button's padding changes. Selector is
+ * `.header-inner .nav-toggle`, not just `.nav-toggle`, to match the vendor
+ * rule's own two-class specificity (`.header-inner .toggle`) — a plain
+ * `.nav-toggle{padding:0}` compiled correctly but silently lost the cascade
+ * to the more specific vendor selector regardless of source order, verified
+ * directly via a real headless-browser computed-style check (see
+ * IMPLEMENTATION_NOTES.md) rather than assumed from source order alone. --- */
+@media (max-width: 767px) {
+  .header-inner .nav-toggle {
+    padding: 0;
+  }
+}
 @keyframes footer-logo-shimmer {
   0% {
     background-position: 150% 0;
@@ -944,6 +1067,7 @@ header#site-header.sticky {
  * matching every other motion effect on this page. --- */
 html {
   overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
   scroll-behavior: smooth;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1529,14 +1653,17 @@ html {
   .wine-tasting-section {
     padding-top: 15px;
   }
+  /* --- Follow-up: previously reset to `position:static` here, which made
+   * the logo render as its own separate block stacked *above* the tasting-
+   * note text instead of overlapping *behind* it — reported live as wrong;
+   * the intended look (documented in `WineTastingSection.astro`'s own
+   * comment) is the desktop treatment: absolutely positioned, low z-index,
+   * text layered in front. Removing the `position`/`margin`/`z-index`
+   * overrides lets the base (desktop) rules apply unchanged at every
+   * width — only `width` stays mobile-scoped, down from the desktop 140px
+   * to something proportionate on a narrow screen. --- */
   .wine-tasting-section__logo {
-    position: static;
     width: 80px;
-    margin: 0 0 15px;
-    z-index: auto;
-  }
-  .wine-tasting-section__text {
-    z-index: auto;
   }
   .wine-other-info {
     padding: 20px 0 0;
@@ -1775,6 +1902,16 @@ html {
 .uagb-google-map__iframe {
   height: 480px !important;
 }
+/* --- Task 53: the 480px map height above was never scoped to a breakpoint —
+ * on a narrow phone the map (already `width:100%`) became a nearly-square,
+ * screen-dominating block. Capped back down on mobile; 220px keeps a usable
+ * map (still bigger than the original 300px felt on a full-width column
+ * that's much narrower on a phone) without eating the whole viewport. --- */
+@media (max-width: 768px) {
+  .uagb-google-map__iframe {
+    height: 220px !important;
+  }
+}
 #post-953 .grids-section:has(> .wp-block-uagb-google-map),
 #post-1566 .grids-section:has(> .wp-block-uagb-google-map),
 #post-1770 .grids-section:has(> .wp-block-uagb-google-map) {
@@ -1793,4 +1930,389 @@ html {
   --_ga-p-desktop: 0 10px 30px 10px !important;
   --_ga-p-tablet: 0 10px 30px 10px !important;
   --_ga-p-mobile: 0 10px 30px 10px !important;
+}
+
+/* --- Task 55: mobile-only breathing room from the phone's own edges.
+ *
+ * Confirmed via a real headless-browser measurement (not assumed): every
+ * page's main content container currently spans left=0 to right=0 of the
+ * viewport at mobile widths — content touches the true screen edges on
+ * every page type checked (contatti, chi-siamo, cantina, a wine category
+ * page, a wine product page). This is Task 32's own doing: that task
+ * removed a *desktop* 40px reservation sitewide (it looked bad on desktop
+ * with no context for why it was there) via `.entry-content>*:not(...)
+ * {width:100%}` — correct for desktop, but it also zeroed out mobile, where
+ * the same "no breathing room" reads as content crammed against the phone's
+ * bezel rather than "clean."
+ *
+ * Reuses Task 32's own selector verbatim (so this narrows to exactly the
+ * same, already-audited set of elements — `.entry-content`'s direct
+ * children, still excluding `.alignfull`/`.alignwide`/etc so hero
+ * images/full-bleed sections stay edge-to-edge as designed) for the 4 main
+ * Grids-plugin pages, plus the two other top-level content containers Task
+ * 32's own comment already identified as using a different wrapper entirely
+ * (`.wines-row-container` for wine category pages, `.wine-container` for
+ * wine product pages — neither is a `.entry-content` child, so neither was
+ * ever in scope for the selector above).
+ *
+ * `box-sizing:border-box` set explicitly on the two non-`.entry-content`
+ * targets since their vendor-default box-sizing isn't relied upon — adding
+ * padding to a `content-box` element would have widened it past the
+ * viewport by the padding amount, the exact class of bug fixed sitewide in
+ * Task 54. `.entry-content`'s own children already use `box-sizing:
+ * border-box` (twentytwenty theme default), confirmed unaffected either
+ * way since that branch uses `width`, not `padding`.
+ *
+ * Scoped to `max-width:768px` (this project's established mobile/tablet
+ * collapse breakpoint, e.g. the Grids plugin's own single-column switch) so
+ * desktop and wider-tablet layouts are completely untouched, matching what
+ * was asked. --- */
+@media (max-width: 768px) {
+  :root
+    body
+    .entry-content
+    > *:not(.alignwide):not(.alignfull):not(.alignleft):not(.alignright):not(
+      .is-style-wide
+    ) {
+    width: calc(100% - 32px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .wines-row-container,
+  .wine-container {
+    box-sizing: border-box;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+/* The homepage specifically never got the margin above: the geppa child
+ * theme (`twentytwenty-style.min.css`) carries its own pre-existing rule —
+ * `@media(max-width:767px){:root body.home .entry-content>*:not(...)
+ * {width:auto}}` — one class more specific than the rule above (`body.home`
+ * vs. plain `body`), so it always wins there regardless of load order.
+ * Matching its exact selector (and its `767px` breakpoint, one pixel
+ * narrower than the `768px` used above) is what actually beats it, found by
+ * inspecting the real matched-rules list for `.home-closing-section`
+ * (Chrome DevTools Protocol `CSS.getMatchedStylesForNode` via the headless
+ * browser — see `CLAUDE.md`) rather than assuming source order would
+ * decide it, the same specificity trap already hit once this session on
+ * the nav-toggle fix (Task 54 round 3). */
+@media (max-width: 767px) {
+  :root
+    body.home
+    .entry-content
+    > *:not(.alignwide):not(.alignfull):not(.alignleft):not(.alignright):not(
+      .is-style-wide
+    ) {
+    width: calc(100% - 32px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* --- Task 55: homepage "Un vino che esalta i sensi..." section (the
+ * closing black band's right-hand text column, `.bottone-centro`) was using
+ * its full desktop right-padding (150px) at every viewport width — reported
+ * live as only occupying the left half of its section on mobile, with the
+ * rest sitting empty. Confirmed via the actual inline style
+ * (`src/content/main/home.html`) that `--_ga-p-desktop`, `--_ga-p-tablet`,
+ * and `--_ga-p-mobile` are all identically `0 150px 0 0` — unlike its
+ * sibling `.home-closing-section__image`, which *does* carry a genuinely
+ * different, deliberate mobile value (8px vs. 48px desktop), this column's
+ * "mobile" padding was never actually authored differently from desktop at
+ * all, it was just copied through.
+ *
+ * At `max-width:768px` the Grids plugin already collapses this section's
+ * grid to a stacked single column (`.grids-s-w_i{display:flex;flex-
+ * direction:column}`, `grids-frontend.min.css`), so `.bottone-centro`
+ * itself already renders full-width there — the 150px right padding was
+ * the only thing still visually confining the heading/paragraph/button to
+ * the left portion of that full-width box. Reduced to match the sibling
+ * image's own already-established mobile inset (8px) for visual
+ * consistency within the same section, at the same breakpoint the layout
+ * itself already collapses at, so desktop/tablet (where the 2-column
+ * layout — and the 150px gap that makes sense next to it — is unchanged)
+ * are completely untouched, as asked. --- */
+@media (max-width: 768px) {
+  .bottone-centro {
+    padding-right: 8px;
+  }
+}
+
+/* --- Task 56 (mobile only, desktop/tablet untouched — every rule below is
+ * gated behind `max-width:768px` and none of the selectors are shared with
+ * any desktop-only rule elsewhere in this file):
+ *
+ * 1. Hero video → "Dalla campagna al bicchiere" gap. Measured (headless
+ *    browser, not assumed) ~283px of real blank space between the hero and
+ *    the section's title. Two real, separate contributors, found via
+ *    `CSS.getMatchedStylesForNode`: (a) the empty first `.grids-section`
+ *    (a spacer with no visible content at all — `--_ga-p-mobile:0px 0 40px
+ *    0`) contributing 40px on its own; (b) the *vendor theme's* generic
+ *    `.alignfull{margin-top:5rem}` rule (parent-style.min.css, applies to
+ *    *any* full-width block, unconditional) — not the Grids plugin's own
+ *    per-instance `--_gs-m-mobile` system at all, which is why overriding
+ *    that custom property alone (as done for this same section in Task 54)
+ *    never touched this margin. `5rem` = 60px under this theme's own
+ *    `html{font-size:62.5%}`. Both reduced, not zeroed — the section still
+ *    opens with its own decorative graphic before the title, so some
+ *    breathing room from the video above it still reads as intentional
+ *    spacing rather than a hard cut.
+ * 2. Philosophy title/paragraphs/button "stuck to the right." Confirmed via
+ *    computed style: the text column had `padding-left:80px;padding-right:
+ *    0` (an unmodified desktop value, meant to sit the text beside a
+ *    decorative graphic in the 2-column desktop layout) plus `text-align:
+ *    left` — on mobile, where the layout has already collapsed to a single
+ *    stacked column, that asymmetric padding pushed the text hard against
+ *    the section's right edge with 80px of dead space on the left and
+ *    nothing on the right. Replaced with a small symmetric inset and
+ *    `text-align:center` (which also centers the button, an inline-block
+ *    descendant, not just the text itself, matching what a "centered
+ *    section" reads as visually).
+ * 3. Grape-photo → "La nostra collezione" gap. Measured ~220px. Tracing it
+ *    (`.grids-section`/`.section-news`'s own padding wasn't the whole
+ *    story) found a second, systemic mechanism: the Grids plugin's CSS
+ *    applies `padding:var(--_gs-p,var(--_gs-p-desktop,0))` and
+ *    `margin:var(--_gs-m,var(--_gs-m-desktop,0))` on *both* `.grids-section`
+ *    (the outer box) *and* its own inner `.grids-s-w_i` wrapper — the same
+ *    custom property gets consumed twice, so a section's declared padding
+ *    silently applies twice over. Overriding the outer box's `padding-top`
+ *    directly (as first tried) only ever fixed half of that. The correct
+ *    fix is overriding the custom property itself, `--_gs-p-desktop`
+ *    (`!important`, matching this project's own established convention for
+ *    the same reason as Task 16's header-size fix — a deliberate, permanent
+ *    override, not a specificity hedge), since both consuming rules read
+ *    from the same variable and both then shrink together. Reduced the
+ *    philosophy section's `0 0 60px 0` (its own bottom padding — also
+ *    double-applied) and the collection section's `100px 10px 100px 10px`
+ *    top value, in each case leaving the other three sides untouched.
+ * 4. Bottle photo → "Un vino che esalta i sensi" gap, plus a bottom fade.
+ *    `.bottone-centro`'s own `margin-top:120px` (mobile value, unreduced
+ *    from desktop where it makes sense pairing with a much taller 2-column
+ *    section) was the entire gap — reduced substantially. The fade mirrors
+ *    the *technique* of the existing desktop-only `figure::after` (Task 31,
+ *    a horizontal fade for the overflow seam) but applied vertically to the
+ *    bottom 20% instead, fading to the section's own black background so
+ *    the now-tighter transition into the title reads as designed rather
+ *    than an abrupt crop. --- */
+@media (max-width: 768px) {
+  body.home .entry-content > .grids-section:first-child {
+    padding-bottom: 0;
+  }
+  .home-philosophy-section.alignfull {
+    margin-top: 8px;
+    --_gs-p-desktop: 0 0 8px 0 !important;
+  }
+  .home-philosophy-section .grids-s-w_i {
+    padding-bottom: 8px !important;
+  }
+  .home-philosophy-section .grids-area:has(.home-philosophy-title) {
+    padding-left: 16px;
+    padding-right: 16px;
+    text-align: center;
+  }
+  .section-news {
+    --_gs-p-desktop: 20px 10px 100px 10px !important;
+  }
+  /* The custom-property override above is correctly inherited (confirmed via
+   * getComputedStyle on the child) but the browser still renders the child's
+   * own `padding-top` at the pre-override 100px — some interaction with how
+   * this custom property's inheritance/initial-value resolves for this
+   * unminified-in-source-but-inherited case that wasn't worth chasing
+   * further. A direct, unambiguous override on the actual padding-applying
+   * element sidesteps it entirely. */
+  .section-news .grids-s-w_i {
+    padding-top: 20px !important;
+  }
+  .bottone-centro {
+    margin-top: 24px;
+  }
+  .home-closing-section__image figure {
+    position: relative;
+  }
+  .home-closing-section__image figure::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 20%;
+    background: linear-gradient(to bottom, transparent, #000);
+    pointer-events: none;
+  }
+}
+
+/* --- Task 57 (mobile only, `max-width:768px`, desktop/tablet untouched):
+ *
+ * 1. Hero video bottom-20% fade. Same technique as Task 56's bottle-photo
+ *    fade (`.hero-slider` already has `position:relative;overflow:hidden`,
+ *    so a `::after` with a bottom gradient just needs adding).
+ * 2. Hero → philosophy gap, reduced further past Task 56's pass. That round
+ *    found and fixed two contributors (an empty spacer's own padding, the
+ *    vendor `.alignfull` rule's margin-top) but missed two more, only found
+ *    this round by measuring every element between the hero and the section
+ *    rather than stopping once the visible gap had shrunk some: (a)
+ *    `.post-inner{padding-top:5rem}` (`parent-style.min.css`, unconditional
+ *    at every viewport width — the theme *does* have its own zero-override
+ *    for this, `.reduced-spacing.missing-post-thumbnail .post-inner
+ *    {padding-top:0}`, but the homepage doesn't carry `missing-post-
+ *    thumbnail` in its `bodyClass` — correctly so, since it has its own
+ *    hero video — so the base 60px rule was still winning); (b) the empty
+ *    spacer's own *inner* `.grids-area.content-grid` still had its own
+ *    unreduced 40px bottom padding — Task 56 only touched the *outer*
+ *    `.grids-section`'s padding, not this nested area, the same "two
+ *    separate consuming elements" shape as the `.grids-s-w_i` discovery in
+ *    that same task. Both scoped to `body.home` specifically — `.post-inner
+ *    {padding-top:5rem}` is a *sitewide* base rule relied on by other pages
+ *    (any page without `missing-post-thumbnail` needs its normal spacing
+ *    below a hero image), so this reduction must not leak to them. --- */
+@media (max-width: 768px) {
+  .hero-slider {
+    position: relative;
+  }
+  .hero-slider::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 20%;
+    /* White, not black: unlike the closing section's bottle photo (fades
+       into that section's own #000 background), the hero sits directly
+       above the white page background, so it fades into that instead. */
+    background: linear-gradient(to bottom, transparent, #fff);
+    pointer-events: none;
+  }
+  body.home .post-inner {
+    padding-top: 8px;
+  }
+  body.home .content-grid {
+    padding-bottom: 0;
+  }
+}
+
+/* --- Follow-up (mobile only, `max-width:768px`): white background for the
+ * section holding the sticky V, tightened spacing around it, and a grey
+ * (not white) V so it's still visible against that new white background.
+ *
+ * The section's cream background isn't a plain `background-color` on the
+ * section itself — the Grids plugin paints it via a `.grids-s-w_i::before`
+ * pseudo-element (confirmed via computed style, not assumed:
+ * `getComputedStyle(el).backgroundColor` on the section itself reported
+ * transparent; the real color only showed up checking the `::before`
+ * pseudo). Overridden there directly, scoped via
+ * `.titolo-pagine:has(.v-rigoni-bg)` — unique to chi-siamo's own title
+ * section (this exact class/content combination doesn't occur on the
+ * homepage's differently-structured philosophy section).
+ *
+ * The ~50px gap between that background's own edge and the V's visible top
+ * (measured directly, not assumed) comes from the wrapping `.grids-area`'s
+ * own margin (`--_ga-m-mobile:50px 0 50px 0` in the source content).
+ * Reduced to 16px, matching this project's established small-mobile-inset
+ * convention (Task 55/56), symmetrically top and bottom.
+ *
+ * For the grey V: rather than recolor the existing white asset with a CSS
+ * filter, reused the homepage's own pre-made grey version of the same
+ * graphic (`V-rigoni-grigio.png`, confirmed near-identical aspect ratio to
+ * the white one already in use here) via `content:url(...)` on the `<img>`
+ * — swaps the rendered image without touching the HTML content files in
+ * any of the 3 languages, keeping this purely a mobile-scoped CSS change
+ * rather than needing a `<picture>`/`srcset` rework to vary it by
+ * viewport. Scoped with the same `img[src*="V-rigoni-bianco"]` check as
+ * the sticky rule above, so only chi-siamo's own V (not the homepage's,
+ * already grey) is affected. --- */
+@media (max-width: 768px) {
+  .grids-section.titolo-pagine:has(.v-rigoni-bg) > .grids-s-w_i::before {
+    background: #fff !important;
+  }
+  .grids-section.titolo-pagine:has(.v-rigoni-bg) > .grids-s-w_i > .grids-area {
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+  .v-rigoni-bg img[src*="V-rigoni-bianco"] {
+    content: url("/wp-content/uploads/2020/12/V-rigoni-grigio.png");
+  }
+}
+
+/* --- Follow-up (mobile only, `max-width:768px`): sticky removed entirely,
+ * per explicit request — the V should sit in the text's own top-left
+ * corner, not follow the scroll. Both live complaints (a large empty gap
+ * between the V and the text before scrolling them "nearer" each other,
+ * and the stickiness itself) shared one root cause: the V was a normal
+ * in-flow sibling of the paragraph inside the same flex-column
+ * (`.grids-s-w_i`), so it always occupied its own real vertical space
+ * above the text — sticky only ever changed *when* that space stopped
+ * scrolling, never the fact that it existed.
+ *
+ * Replaced with the same overlap technique already built and approved for
+ * the wine product pages' own V logo (`.wine-tasting-section__logo`/
+ * `__text` in this file): `position:absolute` takes the V out of flow
+ * entirely, so the paragraph becomes the sole in-flow child and starts
+ * right at the container's own top — no gap left to create the "buggy"
+ * look, nothing to stick or release. `top:-20px;left:0` matches that same
+ * wine-page rule's own offset for visual consistency between the two
+ * "logo behind text" treatments on this site. `z-index:0` (behind) on the
+ * V, `position:relative;z-index:1` (in front) on the paragraph sibling —
+ * without the paragraph's own stacking context, its plain in-flow content
+ * wouldn't reliably paint above an absolutely-positioned, z-indexed sibling
+ * regardless of DOM order.
+ *
+ * `.grids-s-w_i` (the shared parent) already has `position:relative` from
+ * the Grids plugin's own base rule, confirmed earlier this session — so it
+ * already serves as this absolute V's containing block with no extra CSS
+ * needed here. Width stays 90px, unchanged from the last round (not part
+ * of this complaint). --- */
+@media (max-width: 768px) {
+  .v-rigoni-bg:has(img[src*="V-rigoni-bianco"]) {
+    position: absolute;
+    top: -20px;
+    left: 0;
+    width: 90px;
+    z-index: 0;
+  }
+  .v-rigoni-bg:has(img[src*="V-rigoni-bianco"]) ~ .grids-area {
+    position: relative;
+    z-index: 1;
+    /* Found via CDP's matched-styles list, not the Grids custom-property
+     * system this time: the geppa theme's own vendor CSS carries
+     * `@media(max-width:768px){.v-rigoni-bg+div{margin-top:-140px}}` —
+     * a genuinely mobile-only rule (not a desktop value bleeding through),
+     * presumably written for the original, simpler in-flow V design this
+     * page had before any of this session's changes, pulling the text up
+     * to overlap it. Left in place, it pulled the text 140px above where
+     * the now-absolute V renders, putting the V *below* the text's start
+     * instead of overlapping its top-left corner as intended. Neutralized
+     * for this new layout specifically — desktop was never affected by the
+     * vendor rule in the first place, confirmed via computed style. */
+    margin-top: 0;
+  }
+}
+
+/* --- cantina (+ EN `/en/winery/`, DE `/de/weinkeller/`) — remove the
+ * "overflowing bottle" photo, mobile only. Its wrapping section carries
+ * `--_gs-m-desktop:-280px 0 200px 0` — a large negative top margin,
+ * identical at every breakpoint in the source markup, that deliberately
+ * pulls it up to overlap the section above. Confirmed via a live
+ * screenshot this reads as an intentional, clean full-bleed design on
+ * desktop (a wide, short-relative-to-viewport overlap that looks
+ * considered) but crops the same bottle awkwardly close and isolated on
+ * mobile's much narrower, tighter layout — exactly "sits strangely."
+ * Desktop is untouched (not reported as a problem there, and the
+ * screenshot confirms it isn't one) — this is a `display:none` scoped to
+ * `max-width:768px` only, not a content deletion, so nothing here affects
+ * the approved desktop design or needs undoing if that reading changes
+ * later. Scoped via the image's own *unsuffixed* src
+ * (`cantina-rigoni-vittorino-produzione.jpg`, the full-resolution original)
+ * rather than the bare filename, since the *homepage's* closing section
+ * reuses the very same photo at a *sized* variant
+ * (`cantina-rigoni-vittorino-produzione-1024x682.jpg`) — a same-filename,
+ * different-src distinction confirmed directly in both pages' own markup,
+ * not assumed, so this can't accidentally hide the homepage's own bottle
+ * section (fixed and kept intentionally in Tasks 56-57). --- */
+@media (max-width: 768px) {
+  .grids-section:has(
+      img[src="/wp-content/uploads/2021/01/cantina-rigoni-vittorino-produzione.jpg"]
+    ) {
+    display: none;
+  }
 }

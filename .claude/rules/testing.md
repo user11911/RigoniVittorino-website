@@ -61,8 +61,10 @@ At completion, provide:
 * Confirmation that frozen work (`TODO.md`) is unchanged, unless explicitly reauthorized.
 * Commands run and results.
 * For visible changes: a description precise enough for the user to review and approve, or a link to a
-  local/deployed preview — since Playwright/screenshot verification is unavailable in this sandbox. Be
-  explicit that this substitutes for, and does not equal, actual pixel-level visual confirmation.
+  local/deployed preview. Headless Chromium is available in this sandbox (see `CLAUDE.md`'s "Headless
+  browser verification") for real layout/overflow/computed-style checks and screenshots — use it, but be
+  explicit that it's not the same as live confirmation on a real device (touch/gesture, animation timing,
+  network/tunnel behavior).
 * Known differences or limitations, if any.
 
 For each page type touched by the active task, confirm (against the site's own prior state, not the

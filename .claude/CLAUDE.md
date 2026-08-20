@@ -46,10 +46,10 @@ sync. Read it before starting any work.
 
 ## Design decisions require explicit approval before implementation
 
-This is the central rule of Phase 2, and it exists for two reasons: (1) with no live site to match, visual
-and UX choices are now genuinely subjective — only the user can decide taste; (2) Playwright/Chromium
-cannot launch in this sandbox (confirmed, permanent limitation), so there is no way to self-verify a visual
-change actually looks right before the user sees it.
+This is the central rule of Phase 2, and it exists because with no live site to match, visual and UX
+choices are now genuinely subjective — only the user can decide taste. (Playwright/Chromium *can* now
+launch in this sandbox with a one-time library fix — see "Headless browser verification" below — so this
+rule is about taste, not about an inability to self-verify.)
 
 - For any change that affects layout, styling, color, typography, imagery, animation, spacing, or new UI
   patterns: propose the change (what will change, why, and how — described precisely, with a text mock,
@@ -64,13 +64,29 @@ change actually looks right before the user sees it.
   attributes, code cleanup, refactors) do not require this approval step, but still follow the normal scope
   and regression rules below.
 
+## Headless browser verification
+
+Chromium fails to launch out of the box in this sandbox (missing `libnspr4.so`, `libnss3.so`,
+`libasound2` — confirmed in earlier sessions and long treated as a permanent limitation), but there's no
+passwordless `sudo` needed to fix it: `apt-get download <pkg>` fetches a `.deb` without root, and `dpkg -x`
+extracts it locally. `scripts/enable-playwright-libs.sh` automates this (downloads once per fresh
+sandbox/job, a few seconds) — `source` it, then any script using Playwright's `chromium.launch()` works,
+including the project's own dormant `scripts/route-smoke-test.mjs`. Found and fixed live during Task 54
+round 3 (see `IMPLEMENTATION_NOTES.md`) — use this for real layout/overflow measurements
+(`getBoundingClientRect`, `scrollWidth`/`clientWidth`, `getComputedStyle`) instead of hand-parsing CSS
+cascade order by text search, which is slow and error-prone (a text-search heuristic for "nearest preceding
+`@media`" produced a wrong conclusion that round — see that entry). Screenshots work too
+(`page.screenshot()`) for a quick visual sanity check, though this is still not the same as a real device
+for touch/gesture behavior, font rendering quirks, or anything network/tunnel-related.
+
 ## Verification rigor for behavior that can't be screenshot-tested
 
 This project has repeatedly shipped scroll/animation/stacking code that looked correct on paper and turned
 out not to work only after the user tested it live (see `IMPLEMENTATION_NOTES.md`'s hero-fade history for
-the concrete case this section is drawn from). Playwright/Chromium cannot launch in this sandbox — that
-limitation is permanent and no rule here changes it — but these practices catch more of that class of bug
-before it ships, rather than after a live bug report:
+the concrete case this section is drawn from). Headless Chromium now works in this sandbox (see above) for
+layout/CSS verification, which closes off a lot of that failure class — but it still isn't a real device,
+so treat these practices as still applying to anything touch/gesture/animation-timing/network-dependent,
+where a headless check can look right and still not be what a real device does:
 
 - **Prefer correct-by-construction over correct-if-reasoning-holds.** When two implementations achieve the
   same visible result, prefer the one whose correctness follows from a structural guarantee (e.g. an
@@ -155,10 +171,11 @@ Before changing code for any task:
 - "Regression" in Phase 2 means an unintended change to something outside the active task's scope — not
   divergence from the old live site, which is now expected wherever a task intends it.
 - Preserve the current, approved appearance and behavior of everything not named in the active task.
-- Since Playwright/Chromium cannot launch in this sandbox, non-trivial visible changes cannot be
-  self-verified with a screenshot here. Substitute markup/CSS diffs precise enough to review, and say so
-  plainly rather than claiming a visual confirmation that wasn't actually performed. Encourage the user to
-  check the change locally (`npm run dev`/`preview`) or on a deployed preview before merging.
+- Headless Chromium can verify layout/overflow/computed-style facts directly (see "Headless browser
+  verification" above) — use it for non-trivial visible changes rather than reasoning from CSS text alone.
+  It's still not a real device: say plainly when something is headless-verified vs. confirmed live, and
+  still encourage the user to check touch/gesture/animation-dependent changes locally (`npm run dev`/
+  `preview`) or on a deployed preview.
 - Detailed regression and testing requirements live in `.claude/rules/testing.md` — follow that file's
   requirements for any task touching visible pages, for every implemented language, rather than duplicating
   the specifics here.
@@ -180,7 +197,8 @@ At completion, report:
 - Files or folders touched that were not obviously task-related, with reasons.
 - Backend or integration choices, environment variables, and setup steps, if the active task touched backend or integrations.
 - Tests and commands run, with results.
-- For visible changes: a precise enough description of the result for the user to review and approve,
-  since automated screenshot verification is unavailable here.
+- For visible changes: a precise enough description of the result for the user to review and approve, and
+  the headless-verified facts (measurements, screenshots) where used — still distinct from live
+  confirmation on a real device.
 - Confirmation that work outside the active task's scope, and all frozen work, was not modified.
 - Known limitations, risks, or unresolved configuration items.
