@@ -6443,3 +6443,321 @@ rule exists) — the card-list variant is untouched. Fresh preview + the same 95
 confirmation, since its root cause (a percentage-height/inherited-padding interaction specific to the
 `.scheda-wine` grid context) is exactly the kind of layout detail that's easy to get subtly wrong without
 being able to render it.
+
+## Task 46: contatti team section — white background, card layout, mobile swipe carousel
+
+(Re-documented after a branch reset — this task's implementation was rebuilt from scratch on a clean base
+after an earlier, confusing round where the working state and what the user could actually see got out of
+sync across git branches; see the session's own back-and-forth for that history. The implementation itself
+is unchanged in substance from the first attempt.)
+
+Explicit request: turn the greyish page background white, turn the 3 team members (Stefano/Michele/
+Annamaria) into rounded cards carrying that grey as their own background, keep all 3 visible side by side on
+desktop, show one at a time on mobile with a horizontal swipe that snaps to whichever card the viewport is
+nearest, and add more breathing room between each card's photo/name/role/description.
+
+This section, like the homepage's own sections (Task 17/18/20), is one of the WordPress Grids plugin's
+scraped layouts: `src/content/main/contatti.html` (IT), `src/content/main/en/contatti.html` (EN),
+`src/content/main/de/contacts.html` (DE) — raw HTML read and injected via `<Fragment set:html={...}>`, no
+per-page Astro template markup. The section's visible background is a CSS custom property
+(`--_gs-bg-desktop`, read by `grids-frontend.min.css`'s `::before{background:var(--_gs-bg,var(--_gs-bg-
+desktop,none))}`) set *inline* in the scraped HTML — inline styles beat any external stylesheet rule of
+equal-or-lower specificity, so overriding it needs `!important`.
+
+`.titolo-pagine` (the class carrying that grey) is shared with chi-siamo/cantina's own title sections, so a
+bare override would have whitened those too — scoped instead by each language's own unique WordPress post ID
+on its outermost `<article>` (`post-953` IT, `post-1566` EN, `post-1770` DE, confirmed via grep).
+
+The 3 team-member blocks (`.wp-block-uagb-team.uagb-team__outer-wrap` and every generic class nested inside
+— `.uagb-team__image-wrap`, `.uagb-team__title`, `.uagb-team__prefix`, `.uagb-team__desc`) are confirmed
+unique to this one section sitewide, and identical (generic class names) across all 3 languages — only each
+block's own per-instance `uagb-block-<hash>` class differs, unused here — so the card styling needed no
+per-page scoping: `background:#ede9e4` (the exact grey removed from the section background), `border-
+radius:20px`, `padding:50px 30px`, plus modest spacing bumps between image/name/role/description.
+
+Equal card height relies on a structural guarantee already in the Grids plugin: all 3 team `.grids-area`
+cells share `--_ga-row:1/7` (the section's full 6-row grid track), and the plugin's own
+`.grids-area{align-self:stretch;height:100%}` already forces equal height regardless of bio length —
+`height:100%` on `.uagb-team__outer-wrap` just carries that down onto the card's own visible box.
+
+Mobile swipe carousel overrides the vendor's `.grids-s-w_i{display:flex;flex-direction:column;height:100%}`
+mobile rule to `flex-direction:row` plus `scroll-snap-type:x mandatory`/`scroll-snap-align:center`, at this
+project's established `max-width:768px` breakpoint, scoped via `.grids-s-w_i:has(> .contatti-team)` (the one
+grid wrapper directly containing the 3 cards) rather than bare `.grids-s-w_i`, the plugin's generic wrapper
+class reused dozens of times sitewide.
+
+Deliberately used native CSS scroll-snap rather than porting Hero.astro's JS-driven vertical scroll-jacking
+brake (Task 18) — that mechanism holds a *fixed, full-viewport* hero in place for a specific approach
+trigger, a different problem from letting the user swipe between three cards. `scroll-snap-type`/
+`scroll-snap-align` is the standard, zero-JS way to get exactly that swipe-and-settle interaction with
+correct touch/trackpad/keyboard behavior for free.
+
+No content-HTML changes — entirely a `site.css` addition.
+
+Verification: `npm run check` (0 errors/warnings, the one pre-existing unrelated `locale` hint), `npm run
+test:unit` (42/42), `npm run build` (clean). Confirmed in compiled `dist/`: each language's own post ID
+present and correctly matched; exactly 3 `uagb-team__outer-wrap` occurrences per page across all 3
+languages. Confirmed chi-siamo's and cantina's own `.titolo-pagine` sections are unaffected (different Grids
+variant, no `#ede9e4` inline background to begin with). Fresh preview + 10-route smoke test — all 200 OK.
+
+**Confirmed working live by the user** ("Everything works as intended. good.") after a lengthy diagnostic
+detour covering local dev-server staleness, a wrong Cloudflare-deployment theory (corrected — this project
+verifies locally only, no deploy at this stage; saved to memory), and a git-branch mixup where `main` had
+never actually received this work (also corrected). The implementation itself was right on the first
+attempt; the friction was entirely in getting the right build in front of the right person to look at.
+
+## Task 47: contatti page polish — email alignment, photo visibility + replacement, professional copy, remove social block
+
+Five-part follow-up, all confirmed understood directly (no `AskUserQuestion` needed except one scope check
+on the copy rewrite).
+
+**1. Email alignment.** The email is the last line of each bio `<p class="uagb-team__desc">`, after a
+`<br>` — not its own element — so its vertical position varied with each person's bio length. Pulled out of
+flow via `position:absolute;bottom:30px` on `.uagb-team__desc a[href^="mailto:"]`, which only lines up
+identically across all 3 cards *because* Task 46 already forces equal card height; matching
+`padding-bottom:76px` on the card reserves room so bio text of any length can't run into it, and a
+`border-top` gives it a quiet "footer" separation from the bio above.
+
+**2. Photo visibility, root-caused.** The photo between the team cards and the contact-info/form section
+(`cantina-rigoni-outside.jpg`) had gone invisible. Its own `grids-section` carries a scraped
+`--_gs-m-desktop:-100px 0 0 0` — a WordPress block-editor overlap trick, tuned against Task 46's
+*predecessor* section (shorter, transparent background). Task 46 made that section visibly taller (card
+padding/radius/spacing) and gave it an opaque white background covering its full box, so the same -100px
+pull now drags the photo up *behind* that taller section instead of just tucking under a short one — hidden,
+not deleted, and a side effect of Task 46's own layout rather than a pre-existing or unrelated bug.
+
+Fixed by neutralizing *both* sides of the overlap — margins between adjacent block siblings collapse to the
+most-negative value of the two, so zeroing only one side wouldn't have been enough: the team section's own
+`.titolo-pagine` bottom margin (added to the same rule Task 46 already used for the white-background
+override) and the photo section's own top margin. The photo's `grids-section` carries no unique class (unlike
+the team section's `.contatti-team` marker), so it's targeted structurally —
+`:has(> .grids-s-w_i > .grids-area > figure.wp-block-image)` matches the exact scraped nesting — combined
+with each language's own post ID, since `figure.wp-block-image` alone is a generic WordPress core class
+likely reused by unrelated photos on chi-siamo/cantina. Treated as a bug fix of Task 46's own
+already-approved layout, not a new design decision, per `CLAUDE.md`'s exception for that case.
+
+**3. Photo replacement.** The user supplied a new photo (courtyard/buildings view) at a local path
+(`/mnt/c/Users/Pc/Desktop/winery-pic.png`) that turned out to be directly readable from this sandbox —
+confirmed before assuming any file-transfer step was needed. Converted PNG→JPEG (quality 88, 1448×1086,
+matching the original photo's format convention) and saved as
+`public/wp-content/uploads/2021/01/cantina-rigoni-cortile.jpg`. Swapped into all 3 content files' `<img>`
+`src`/`width`/`height`, dropping the old multi-size `srcset` (a single `src` with no `srcset` matches how
+other single-use photos in this project are already handled, and generating new resized variants for a
+brand-new image wasn't asked for).
+
+**4. Copy, professionalized.** Confirmed scope first via `AskUserQuestion` — general page copy only, or the
+team bios too — since rewriting real business/personal-bio content without asking felt presumptuous. Answer:
+both. Rewrote the intro paragraph next to the form and all 3 team members' bios, in all 3 languages,
+tightening register (dropping tagline-style openers like "Esperienza, passione e comunicazione:", self-
+praising adjectives like "Expert enologist" → "Winemaker", redundant phrasing) without changing any name,
+role, responsibility, or contact detail. Each language's own existing *meaning* was preserved rather than
+reconciled across languages — the German intro paragraph says something substantively different from
+IT/EN's (an invitation to visit and taste, vs. IT/EN's offer to answer enquiries) — unifying that would have
+been inventing a content change beyond "make the text more professional," so each language keeps its own
+message, just more polished.
+
+**5. "Be Social" removed.** The `<p><strong>Be Social</strong></p>` line and the entire following
+`<div class="wp-block-getwid-social-links">` (Facebook/Instagram/LinkedIn icons) deleted outright from all 3
+content files — real removal, not `display:none`, matching this project's existing preference (see Task
+39's own dead-code cleanup). Footer's own, separate social icons (`src/content/chrome/footer.html`) are a
+different file entirely, untouched, confirmed still present in compiled output.
+
+Verification: `npm run check` (0 errors/warnings, the one pre-existing unrelated `locale` hint), `npm run
+test:unit` (42/42), `npm run build` (clean). Confirmed in compiled `dist/`, all 3 languages: new photo
+present, old photo reference fully gone, "Be Social"/`getwid-social-links` gone, all 3 mailto links present
+with the new anchored markup, footer social icons still present (3 matches, unaffected). Confirmed chi-
+siamo's own `wp-block-image` figures render normally, unaffected by the structural `:has()` selector. Fresh
+preview + 10-route smoke test, new image confirmed loading (HTTP 200) at its new path.
+
+**Not yet confirmed live by the user.**
+
+## Task 48: contatti spacing/photo follow-up — trimmed two blank-space gaps, added a fade, resized the photo
+
+Live follow-up: reduce the blank space between the team cards and the photo below them, reduce the blank
+space between the top of the page and the cards ("some padding which has remained from the initial version
+of the site" — a correct hunch), add a fade effect to the top edge of the photo, and make the photo 10%
+smaller.
+
+**Both gaps traced to specific pre-existing values**, read directly from the scraped HTML rather than
+guessed at:
+
+- The `.titolo-pagine` section's own *direct-child* `.grids-area` (the wrapper spanning its entire real
+  content — the actual team cards live two nesting levels deeper, inside a further nested grids-section)
+  carries `--_ga-m-desktop:75px 0 75px 0` — original site content, untouched by Task 46 or 47. This
+  contributes to *both* reported gaps: its top margin is the space between the page's own title and the
+  cards; its bottom margin is part of the space between the cards and the photo. This element has no class
+  of its own, so it's targeted structurally: `#post-953 .titolo-pagine > .grids-s-w_i > .grids-area` (and
+  the EN/DE post-ID equivalents) — the direct-child combinator chain matches this one wrapper without also
+  catching the deeper, differently-classed `.grids-area`s nested further inside (like `.contatti-team`).
+  Reduced 75px → 20px on both sides.
+- The rest of the cards-to-photo gap turned out to be a *second, separate* value: `.titolo-pagine`'s own
+  bottom **padding** is `100px` (`--_gs-p-desktop:0 10px 100px 10px`) — not the negative-margin overlap
+  trick Task 47 already fixed (that one only made the photo invisible by pulling it up behind the section;
+  this padding is plain reserved empty space at the bottom of the section, entirely separate, and was never
+  touched by that fix). Reduced 100px → 20px, matching the margin trim above so neither gap ends up
+  noticeably tighter than the other.
+
+**Photo fade and resize**, both scoped the same way as every other Task 46/47/48 override (each language's
+own post ID, since `figure.wp-block-image` is a generic WordPress core block class chi-siamo/cantina's own
+unrelated photos also use):
+
+- The fade is a `linear-gradient(to bottom, #fff, transparent)` on a `::before` pseudo-element, 100px tall,
+  positioned over the photo's top edge — attached to `figure.wp-block-image`, not the `<img>` itself, since
+  generated-content pseudo-elements don't render on replaced elements like images.
+- The photo is resized by setting `figure.wp-block-image` to `width:90%;margin:0 auto` (the `img` inside
+  fills that box at `width:100%`) rather than a `transform:scale()`, which would risk blurring or overflow
+  clipping. `margin:0 auto` centers it correctly even though `.grids-area` (its parent) is a flex column —
+  auto margins center a flex item along the cross axis the same way they'd center a block element, per the
+  flexbox spec. Resizing the *figure* (not just the image) means the fade's own width automatically matches
+  the photo's real, now-smaller rendered edges instead of overhanging the blank white space beside it.
+
+Verification: `npm run check` (0 errors/warnings, the one pre-existing unrelated `locale` hint), `npm run
+test:unit` (42/42), `npm run build` (clean). Confirmed all 4 new rule blocks present in compiled
+`dist/client/styles/site.css`. Fresh preview + 10-route smoke test (all 3 contatti pages, chi-siamo/cantina
+as controls, both other homepages, a wine page and category page) — all 200 OK. A pre-existing, unrelated
+preview session was already running on this machine when this round started (not started by this session's
+own commands) — left untouched throughout, per this project's process-hygiene convention; only this round's
+own preview process was killed afterward.
+
+**Not yet confirmed live by the user.**
+
+## Task 49: removed the contatti photo entirely, tightened the cards-to-contact-section gap
+
+Live follow-up, superseding part of Task 48: remove the photo between the team cards and the contact-info/
+form section altogether, and make sure there's no blank space beyond what's necessary between the cards and
+that section.
+
+**Photo removal.** Deleted the whole `grids-section`/`grids-s-w_i`/`grids-area`/`figure` chain that held it
+from all 3 content files (`src/content/main/contatti.html`, `src/content/main/en/contatti.html`,
+`src/content/main/de/contacts.html`) — confirmed structurally identical across languages before removing, so
+the same removal logic applied to each. Also deleted the now-fully-unused
+`public/wp-content/uploads/2021/01/cantina-rigoni-cortile.jpg` (confirmed via grep it had no remaining
+references anywhere once the markup was gone), and removed Task 47's visibility fix and Task 48's fade/
+resize CSS for that photo outright rather than leaving rules that would now match nothing — this project
+prefers deleting genuinely-dead code over leaving orphaned selectors around (see Task 39's own precedent).
+
+**Tightened spacing, without stacking two paddings for one gap.** The contact-info/form section that now
+follows the cards directly already carries its own pre-existing `40px` top padding (original site content,
+serving its own purpose, unrelated to this task). Task 48 had trimmed `.titolo-pagine`'s own bottom padding
+to 20px specifically to make room for the (then-present) photo — with the photo gone, that 20px was pure
+redundant space stacked on top of the form section's own 40px. Reduced to `0`, so the one remaining gap
+between cards and the contact section is exactly that pre-existing 40px, not an added-together total. The
+separate top-of-page-to-cards margin fix from Task 48 (a different element, the `.titolo-pagine` direct-child
+`.grids-area`'s own margin) is untouched — unrelated to the photo's removal.
+
+Verification: `npm run check` (0 errors/warnings, the one pre-existing unrelated `locale` hint), `npm run
+test:unit` (42/42), `npm run build` (clean). Confirmed in compiled `dist/`, all 3 languages: the photo/figure
+markup and every `cantina-rigoni` reference are gone; the one remaining `<figure>` on the page is a completely
+unrelated footer element (an EU/rural-development funding-logos banner, confirmed by reading its own
+surrounding markup, not this task's photo); all 3 team cards still render correctly. Confirmed the dead CSS
+(fade gradient, 90%-width resize, negative-margin visibility fix) is gone from compiled `site.css`. Fresh
+preview + 10-route smoke test — all 200 OK. Own preview process killed afterward.
+
+**Not yet confirmed live by the user.**
+
+## Task 50: contatti contact-section reflow — full-width intro, address removed, hours centered, bigger map
+
+Live follow-up: make the intro paragraph next to the form span the full width instead of sitting in one
+column, remove the address from the left column and center the opening-hours block in what's left of it,
+end result being the intro text on top of both the form and the hours, and finally make the Google Map
+bigger with some separation from the section above it.
+
+**Restructuring, not just CSS.** This one genuinely needed markup changes — the intro paragraph and email
+line were children of the same `.grids-area` as the hours/address blocks, so repositioning them relative to
+the other columns via CSS Grid placement alone wasn't possible without first extracting them into their own
+element. Located all 3 languages' relevant markup structurally (never by matching each language's own
+translated text, which would be fragile and wouldn't generalize) — the left column's opening tag is uniquely
+identified by its own `--_ga-column:2/7;--_ga-row:1/4;` prefix in each file, and the two icon-boxes
+(hours, address) inside it are locatable by counting `wp-block-getwid-icon-box alignfull` occurrences (always
+exactly 2, in that order) rather than their own translated headings.
+
+Extracted the intro `<p>` + email `<p>` (dropping the now-orphaned `wp-block-spacer` that used to separate
+them from hours — its job doesn't exist once hours is the column's only remaining content) into a brand-new
+`.grids-area` with a hand-added marker class, `.contatti-intro` — the same pattern `.contatti-team` already
+established for a scraped element that needs a stable CSS hook. Positioned via `--_ga-column:2/12` (matching
+the combined span of the two columns below it: `2/7` + `8/12`) and `--_ga-row:1/2` (the grid's first row
+track). The address icon-box is deleted outright (the request said "remove... from the left column," not
+"move," and no other destination was named). The surviving hours-only column got its own marker class,
+`.contatti-hours`, and both the hours and form columns' own `--_ga-row` shifted from `1/4` to `2/5` so they
+sit in the row *after* the new intro row instead of overlapping it.
+
+**Centering the hours block** relies on a vendor rule already in place rather than adding new flex
+scaffolding: `.grids-area`'s own base rule (`grids-frontend.min.css`) is already
+`display:flex;flex-direction:column`, so `.contatti-hours{justify-content:center;align-items:center}` is
+the entire fix — vertical centering (`justify-content`, since flex-direction is column) happens within
+whatever height the row ends up being, which in practice is set by the *form* column sharing the same row
+span (the taller of the two), giving exactly the "remaining space" effect asked for without any explicit
+height calculation.
+
+**Google Map**: `.uagb-google-map__iframe` was already `width:100%` of its column (a vendor base rule) — the
+only fixed dimension was `height:300px` (a per-language, per-instance rule in each `contatti-extra-style*.css`
+file), overridden to `480px`. Confirmed via grep that `.wp-block-uagb-google-map` is unique to these 3 pages
+sitewide, so the height override needed no post-ID scoping — but the *section* it sits in carries no class of
+its own (same situation as Task 47's photo section), so the "give it some distance from the section above"
+fix (a real `40px` top padding, replacing a scraped, literal `0 0 0 0`) is scoped both by post ID and
+structurally via `:has(> .wp-block-uagb-google-map)`, matching the section that directly contains this one
+embed.
+
+Verification: `npm run check` (0 errors/warnings, the one pre-existing unrelated `locale` hint), `npm run
+test:unit` (42/42), `npm run build` (clean). Confirmed in compiled `dist/`, all 3 languages: `.contatti-intro`
+and `.contatti-hours` present with the correct `--_ga-row` values, the form column's own row shifted to
+match, every address-related string ("Indirizzo:"/"Address:"/"Adresse:") gone entirely. Confirmed the map's
+new CSS (480px height, 40px top padding on its section) present in compiled `site.css`. Fresh preview + the
+same 10-route smoke test as recent contatti tasks — all 200 OK. A pre-existing, unrelated preview session
+(again on `pts/4`) was already running when this round started — left untouched throughout; only this
+round's own preview process was killed afterward.
+
+**Not yet confirmed live by the user.**
+
+## Task 51: 3 quick follow-ups on Task 50's contact-section reflow
+
+Live follow-up, all small: remove the email line under the intro paragraph, swap hours and form to opposite
+columns, and move hours back to top-aligned instead of vertically centered.
+
+**Email removed.** Deleted the `<p>Email: <a href="mailto:...">...</a></p>` paragraph outright from all 3
+content files' `.contatti-intro` area — located via its own literal, unique string (safe here since it's the
+exact same `info@rigonivittorino.com` address across all 3 languages, unlike translated prose which this
+project always locates structurally instead). `.contatti-intro` now holds only the one intro paragraph.
+
+**Hours and form swapped sides.** Only the `--_ga-column` value on each element's own scraped `style`
+attribute was swapped — `.contatti-hours` from `2/7` to `8/12`, the form's own (unclassed) `.grids-area` from
+`8/12` to `2/7`. Deliberately left DOM order untouched (hours still comes first in source, now rendering on
+the right via Grid placement) rather than also reordering the markup — `.contatti-hours` has no focusable
+elements, so there's no confusing keyboard-tab-order side effect from visual position and source order
+disagreeing, which is the usual reason to avoid this pattern. Each element's own padding/spacing values
+stayed as they were; those were tuned for what they contain, not which side of the row they sit on, so
+nothing else needed to move with them.
+
+**Hours top-aligned again.** "Move back to the top, instead of center" reverses only the vertical half of
+Task 50's centering: `.contatti-hours`'s `justify-content:center` (flex-direction is `column` on this
+element, so `justify-content` is the vertical axis) is now `flex-start`, matching what the vendor's own base
+rule already defaults to when nothing overrides it. `align-items:center` (the horizontal axis) is
+deliberately kept — "top instead of center" only ever described a vertical position; the horizontal
+centering wasn't part of what changed.
+
+Verification: `npm run check` (0 errors/warnings, the one pre-existing unrelated `locale` hint), `npm run
+test:unit` (42/42), `npm run build` (clean). Confirmed in compiled `dist/`, all 3 languages: the email
+paragraph is gone, hours is at column `8/12`, the form is at column `2/7`, and `.contatti-hours`'s compiled
+rule reads `justify-content: flex-start`. Fresh preview + the same 10-route smoke test as recent contatti
+tasks — all 200 OK. The same pre-existing, unrelated preview session on `pts/4` was still running and was
+left untouched again; only this round's own preview process was killed afterward.
+
+**Not yet confirmed live by the user.**
+
+## Task 52: bottom padding under the contatti intro paragraph, for a more premium feel
+
+Quick live follow-up: "add some bottom padding to the text to give more of a premium feel" — read as
+referring to `.contatti-intro` (Task 50/51's new full-width intro paragraph area, the text most recently
+being discussed), since no other text element was named or otherwise implicated by the surrounding context.
+
+`.contatti-intro`'s own padding has been `0 10px 0 10px` (zero bottom) since Task 50 first created it as a
+new element. Added `30px` bottom, matching the same modest, "not a lot, just noticeable" spacing-bump
+convention already established for this exact stated reason elsewhere on the site (Task 43 round 6's
+title/specs spacing on the wine pages is the direct precedent).
+
+Verification: `npm run check` (0 errors/warnings, the one pre-existing unrelated `locale` hint), `npm run
+test:unit` (42/42), `npm run build` (clean). Confirmed the new padding value in compiled
+`dist/client/styles/site.css`. Fresh preview + a 5-route smoke test (all 3 contatti pages, chi-siamo/cantina
+as controls) — all 200 OK. Own preview process killed afterward.
+
+**Not yet confirmed live by the user.**
