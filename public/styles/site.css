@@ -1540,6 +1540,8 @@ html {
   }
   .wine-other-info {
     padding: 20px 0 0;
+  }
+}
 
 /* --- Task 46: /it/contatti/ (+ /en/contatti/, /de/contacts/) team section
  * redesign — explicit request: white page background instead of the current
@@ -1591,6 +1593,15 @@ html {
   --_gs-bg-desktop: #fff !important;
   --_gs-bg-tablet: #fff !important;
   --_gs-bg-mobile: #fff !important;
+  /* Task 47: this section's own scraped -100px bottom margin (part of the
+   * same overlap trick neutralized on the photo section further below) is
+   * zeroed here too — negative margins between adjacent siblings collapse
+   * by taking the most-negative value of the two, so zeroing only the
+   * photo's own top margin wouldn't have been enough on its own; this side
+   * needs the same treatment for the overlap to be fully gone. */
+  --_gs-m-desktop: 0px 0 0 0 !important;
+  --_gs-m-tablet: 0px 0 0 0 !important;
+  --_gs-m-mobile: 0px 0 0 0 !important;
 }
 .wp-block-uagb-team.uagb-team__outer-wrap {
   background: #ede9e4;
@@ -1607,6 +1618,33 @@ html {
 }
 .wp-block-uagb-team.uagb-team__outer-wrap p.uagb-team__desc {
   margin-top: 20px;
+}
+/* --- Task 47: pin each card's email to the same height across all 3 cards,
+ * "to give more of an ordered feeling" — explicit live follow-up. The email
+ * isn't its own element; it's the last line of the bio `<p class="uagb-team__
+ * desc">`, after a `<br>`. Rather than trying to equalize bio-text length
+ * (which would mean rewriting around a layout constraint), the mailto link
+ * is pulled out of flow entirely and anchored to a fixed `bottom` offset —
+ * this only reliably lines up across all 3 cards *because* Task 46 already
+ * forces the 3 cards to equal height (see that task's own comment on
+ * `--_ga-row:1/7` + the Grids plugin's `align-self:stretch`), so `bottom:
+ * 30px` resolves to the exact same real pixel position on every card
+ * regardless of how long each person's own bio happens to run.
+ * `padding-bottom` on the card reserves room so bio text of any length never
+ * runs into the anchored email; `border-top` gives the email a quiet visual
+ * separation from the bio above it, reading as the card's own "footer". --- */
+.wp-block-uagb-team.uagb-team__outer-wrap {
+  position: relative;
+  padding-bottom: 76px;
+}
+.wp-block-uagb-team.uagb-team__outer-wrap .uagb-team__desc a[href^="mailto:"] {
+  display: block;
+  position: absolute;
+  left: 30px;
+  right: 30px;
+  bottom: 30px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
 /* Mobile: swipe-to-reveal one card at a time, matching the visual idea of
  * the landing page's own scroll interaction ("the viewport sticks to that
@@ -1640,4 +1678,119 @@ html {
     flex: 0 0 100%;
     scroll-snap-align: center;
   }
+}
+/* --- Task 49: the photo between the team cards and the contact-info/form
+ * section is removed outright (explicit request) — the whole `grids-
+ * section`/`grids-s-w_i`/`grids-area`/`figure` chain that held it is deleted
+ * from all 3 content files, not just hidden, so Task 47's visibility fix and
+ * Task 48's fade/resize rules for it are dead code and removed here rather
+ * than left behind matching nothing.
+ *
+ * With the photo gone, "no blank space except for the necessary" between the
+ * cards and the contact-info/form section means not stacking two paddings
+ * for one gap: the form section's own `grids-section` already carries its
+ * own `40px` top padding (untouched, original site content, its own
+ * purpose independent of this task), so `.titolo-pagine`'s bottom padding
+ * — previously trimmed to 20px in Task 48 to make room for the
+ * now-removed photo — goes to 0. The one remaining gap is exactly the form
+ * section's own pre-existing 40px, not two paddings added together.
+ * `.titolo-pagine`'s direct-child `.grids-area` margin (top-of-page-to-
+ * cards, Task 48's other fix) is untouched — that gap is unrelated to the
+ * photo's removal. --- */
+#post-953 .titolo-pagine > .grids-s-w_i > .grids-area,
+#post-1566 .titolo-pagine > .grids-s-w_i > .grids-area,
+#post-1770 .titolo-pagine > .grids-s-w_i > .grids-area {
+  --_ga-m-desktop: 20px 0 20px 0 !important;
+  --_ga-m-tablet: 20px 0 20px 0 !important;
+  --_ga-m-mobile: 20px 0 20px 0 !important;
+}
+#post-953 .titolo-pagine,
+#post-1566 .titolo-pagine,
+#post-1770 .titolo-pagine {
+  --_gs-p-desktop: 0 10px 0 10px !important;
+  --_gs-p-tablet: 0 10px 0 10px !important;
+  --_gs-p-mobile: 0 10px 0 10px !important;
+}
+
+/* --- Task 50: contact-section reflow, live follow-up.
+ *
+ * The intro paragraph ("Per informazioni..."/"For information..."/"Besuchen
+ * Sie uns...") — originally moved out alongside the "Email:" line right
+ * after it, since removed outright by Task 51 (below) — is pulled out of
+ * the old left column and given its own full-width `.grids-area` (new
+ * `.contatti-intro` marker class, hand-added to the scraped HTML the same
+ * way `.contatti-team` already was) placed *before* the two-column row —
+ * `--_ga-column:2/12` matches the combined span of both columns below it
+ * (`2/7` + `8/12`), `--_ga-row:1/2` puts it in the grid's first row track,
+ * with the hours/form columns shifted from `row:1/4` to `row:2/5` so they
+ * sit in the row(s) after it instead of overlapping. The address block is
+ * deleted outright (not hidden), and the now-orphaned spacer that used to
+ * separate email/social from hours is dropped with it — its old job doesn't
+ * exist anymore now that hours is the column's only content. --- */
+
+/* --- Task 51: 3 follow-ups on Task 50's reflow.
+ *
+ * (1) The "Email:" paragraph under the intro is removed outright (deleted
+ * from all 3 content files, not hidden) — the intro `.contatti-intro` area
+ * now holds only the one paragraph.
+ *
+ * (2) Hours and form swap sides: only each element's own `--_ga-column`
+ * value is swapped in the scraped HTML (`.contatti-hours` from `2/7` to
+ * `8/12`, the form's own area from `8/12` to `2/7`) — DOM order is
+ * untouched (hours still comes first in source), which is fine here since
+ * `.contatti-hours` has no focusable content of its own to create a
+ * confusing tab-order jump ahead of the form. Each element keeps its own
+ * padding/spacing values as-is; those were tuned for the *content*, not
+ * the column position, so nothing else needed to move with them.
+ *
+ * (3) "Move opening hours back to the top, instead of center" reverses
+ * Task 50's `justify-content:center` (the vertical axis, the one "top" vs
+ * "center" actually describes) back to `flex-start` — matching the vendor
+ * base rule's own default (`grids-frontend.min.css`'s `justify-content:
+ * var(--_ga-va,flex-start)`) in effect, just declared directly rather than
+ * removing the override entirely, since this class still needs to exist for
+ * `align-items:center` (horizontal centering, kept — "top instead of
+ * center" only ever described the vertical position, not the horizontal
+ * one, so there's no reason to also undo that). --- */
+.contatti-hours {
+  justify-content: flex-start;
+  align-items: center;
+}
+
+/* --- Task 50: Google Map — bigger, and separated from the section above it.
+ * `.uagb-google-map__iframe` is already `width:100%` (vendor base rule,
+ * uagb-block-css.min.css) — its real displayed width already matches its
+ * column, so "bigger" here means height, the axis that's actually fixed
+ * (300px, a per-instance rule in each language's own extra-style CSS file);
+ * overridden up to 480px. `.wp-block-uagb-google-map` is confirmed unique to
+ * this one embed sitewide (no other page uses this WordPress block), so it
+ * needs no post-ID scoping to stay safely out of chi-siamo/cantina's own
+ * unrelated content — only the *section* it sits in needs that (it's an
+ * unclassed, generic `grids-section`, so scoped the same structural way as
+ * Task 47's own photo-section fix: `:has(> .wp-block-uagb-google-map)`
+ * matches the section that directly contains this specific embed). Its
+ * scraped `--_gs-p-desktop:0 0 0 0` (zero padding, top and bottom) is why
+ * it had no separation from the section above at all — given real top
+ * padding now. --- */
+.uagb-google-map__iframe {
+  height: 480px !important;
+}
+#post-953 .grids-section:has(> .wp-block-uagb-google-map),
+#post-1566 .grids-section:has(> .wp-block-uagb-google-map),
+#post-1770 .grids-section:has(> .wp-block-uagb-google-map) {
+  --_gs-p-desktop: 40px 0 0 0 !important;
+  --_gs-p-tablet: 40px 0 0 0 !important;
+  --_gs-p-mobile: 40px 0 0 0 !important;
+}
+
+/* --- Task 52: breathing room below the intro paragraph, "to give more of a
+ * premium feel" — live follow-up, same modest-bump convention already used
+ * for this reason elsewhere on the site (e.g. Task 43 round 6's title/specs
+ * spacing). `.contatti-intro`'s own padding was `0 10px 0 10px` (zero
+ * bottom) since Task 50 first created it — this just adds the bottom value,
+ * everything else unchanged. --- */
+.contatti-intro {
+  --_ga-p-desktop: 0 10px 30px 10px !important;
+  --_ga-p-tablet: 0 10px 30px 10px !important;
+  --_ga-p-mobile: 0 10px 30px 10px !important;
 }
