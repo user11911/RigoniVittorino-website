@@ -65,9 +65,29 @@
     video.play().catch(() => {});
   })();
 
-  // Task 17: sets `--header-height` (consumed by .hero-fixed-wrapper/.hero-slider
-  // in public/styles/site.css to keep the fixed hero starting exactly below the
-  // header) and toggles `is-hero-faded` on <html> once the user has scrolled past
+  // Task 61: `--header-height` is now needed at every width (mobile's hero
+  // height is `calc(100dvh - var(--header-height))`, matching desktop's own
+  // `.hero-fixed-wrapper` reservation, per explicit request) — measured here,
+  // once at load and on resize, decoupled from the desktop-only fade feature
+  // below (which still fully no-ops under prefers-reduced-motion; a plain
+  // layout measurement isn't itself a motion effect, so it shouldn't be
+  // gated by that preference the way the fade is).
+  (function initHeaderHeightVar() {
+    const header = document.querySelector<HTMLElement>("#site-header");
+    if (!header) return;
+
+    function measure() {
+      document.documentElement.style.setProperty(
+        "--header-height",
+        `${header!.getBoundingClientRect().height}px`,
+      );
+    }
+
+    measure();
+    window.addEventListener("resize", measure);
+  })();
+
+  // Task 17: toggles `is-hero-faded` on <html> once the user has scrolled past
   // a fixed point just before ".home-philosophy-title" ("Dalla campagna al
   // bicchiere") would enter the viewport from the bottom. See .claude/TODO.md
   // Task 17 for the full design.
@@ -106,14 +126,7 @@
 
     function measure() {
       active = desktopQuery.matches;
-      if (!active) {
-        document.documentElement.style.removeProperty("--header-height");
-        return;
-      }
-      document.documentElement.style.setProperty(
-        "--header-height",
-        `${header!.getBoundingClientRect().height}px`,
-      );
+      if (!active) return;
       triggerY = Math.max(
         MIN_TRIGGER_SCROLL_PX,
         docTop(titleEl!) - window.innerHeight - TRIGGER_BUFFER_PX,

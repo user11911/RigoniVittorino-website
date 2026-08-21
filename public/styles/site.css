@@ -241,8 +241,19 @@ header#site-header.sticky {
   background-color: #fff;
 }
 @media (max-width: 768px) {
+  /* Task 61: full-viewport hero on mobile, per explicit request — the video
+   * now fills the screen exactly the way the desktop `.hero-fixed-wrapper`
+   * calculation already does (screen height minus the header's own real
+   * rendered height, so header+hero together fill exactly one screen on
+   * load, with no extra scroll needed to see the video's bottom edge).
+   * `--header-height` is now measured at every width by Hero.astro's
+   * `initHeaderHeightVar()` (previously desktop-only) — the `0px` fallback
+   * only matters for the brief instant before that script runs. `dvh`, not
+   * `vh`, matching this project's established mobile-dynamic-toolbar
+   * convention (this same component's own Task 17 sizing, the loading
+   * screen's Task 30 reveal). Replaces the previous fixed 420px. */
   .hero-slider {
-    height: 420px;
+    height: calc(100dvh - var(--header-height, 0px));
   }
 }
 
@@ -972,6 +983,44 @@ footer#site-footer {
     padding: 0;
   }
 }
+
+/* --- Task 63: hamburger icon (mobile only), per explicit request for
+ * "black and more minimal, sleeker". The vendor's Font Awesome `fa-bars`
+ * glyph (gold #dcc59f, 48px, geppa/style-custom.min.css) is fully replaced,
+ * not just recolored — its `<i class="fas fa-bars">` markup was swapped for
+ * 3 plain `<span class="toggle-icon__bar">` elements in header.html (all 3
+ * languages, identical markup), so that vendor color/size rule now simply
+ * matches nothing rather than needing to be beaten in the cascade.
+ *
+ * `!important` on width/height: the vendor's `.nav-toggle .toggle-icon,
+ * .nav-toggle svg{width:70px;height:70px}` (same file, same breakpoint —
+ * see the padding fix's own comment just above) still matches this element
+ * too, since it keeps the base `.toggle-icon` class alongside the new
+ * `--minimal` modifier. Equal-specificity selector + later source order
+ * would likely already win, but this exact vendor rule has previously lost
+ * to source-order assumptions once already (see that same comment) — a
+ * deliberate, permanent override earns `!important` rather than trusting
+ * cascade order again. Matches the vendor rule's own `max-width:767px`
+ * breakpoint exactly, so there's no 1px gap where old/new sizing could both
+ * apply or neither could. --- */
+@media (max-width: 767px) {
+  .nav-toggle .toggle-icon--minimal {
+    width: 26px !important;
+    height: 26px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+  }
+  .toggle-icon--minimal .toggle-icon__bar {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background-color: #000;
+    border-radius: 1px;
+  }
+}
 @keyframes footer-logo-shimmer {
   0% {
     background-position: 150% 0;
@@ -1043,6 +1092,25 @@ footer#site-footer {
   .footer-icon-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* --- Task 62: WhatsApp/email icons (footer, every page, all 3 languages)
+ * removed on mobile only, per explicit request — text (phone number, email
+ * address) stays, only the icon graphic above it is hidden. `.footer-icon-
+ * image` is the wrapper div around each `<img>` (not the `<img>` itself),
+ * scoped to `.footer-icon-row` since that's the only place this class is
+ * used sitewide (confirmed via grep). Desktop/tablet (≥769px) untouched. --- */
+@media (max-width: 768px) {
+  .footer-icon-row .footer-icon-image {
+    display: none;
+  }
+  /* The vendor's own mobile rule (twentytwenty-style.min.css) gives
+   * .footer-icon-text a 10px left indent specifically to clear the icon that
+   * used to sit beside it — with the icon gone, that indent just reads as an
+   * unexplained offset, so it's zeroed to match. */
+  .footer-icon-text {
+    padding-left: 0;
   }
 }
 
@@ -2105,11 +2173,27 @@ html {
   }
   .home-philosophy-section .grids-s-w_i {
     padding-bottom: 8px !important;
+    /* Task 61: this wrapper also double-consumes --_gs-m-mobile's bottom
+     * value (60px, the same double-consumption mechanism Task 56 already
+     * found for padding — see that task's own comment above) as a real
+     * margin-bottom, on top of its padding-bottom. Zeroed as part of closing
+     * the grape-photo -> "La nostra collezione" gap down to ~90% smaller. */
+    margin-bottom: 0 !important;
   }
   .home-philosophy-section .grids-area:has(.home-philosophy-title) {
     padding-left: 16px;
     padding-right: 16px;
     text-align: center;
+  }
+  /* Task 61: the grape/vineyard photo's own bottom margin — 3rem (36px) from
+   * the theme's generic un-aligned-block spacing rule
+   * (.wp-block-image:not(.alignwide):not(.alignfull)...{margin-bottom:3rem}
+   * in parent-style.min.css, shared by many block types sitewide) — is the
+   * remaining contributor to the same gap the two rules above already
+   * shrink. Scoped to this specific figure (not all wp-block-image figures)
+   * so no other photo sitewide is affected. */
+  .home-philosophy-section figure.wp-block-image {
+    margin-bottom: 2px !important;
   }
   .section-news {
     --_gs-p-desktop: 20px 10px 100px 10px !important;

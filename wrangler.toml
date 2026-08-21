@@ -12,5 +12,5 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "rigonivittorino-contacts"
-database_id = "REPLACE_WITH_REAL_D1_DATABASE_ID"
+database_id = "e02a1b61-dbfa-44a2-a939-f3dd6e62a6cc"
 migrations_dir = "migrations"

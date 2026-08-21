@@ -1,0 +1,40 @@
+---
+export const prerender = true;
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+
+const contentHtml = await readFile(
+  path.join(
+    process.cwd(),
+    "src/content/main/complemento-di-sviluppo-rurale-per-il-veneto-2023-2027.html",
+  ),
+  "utf8",
+);
+---
+
+<!--
+  Task 64: internal copy of the EU/Veneto rural-development co-financing
+  disclosure page, replacing an external link to the live rigonivittorino.com
+  site — per explicit request, since this content has legal/compliance
+  importance (mandatory funding-disclosure text) and must not depend on an
+  external site staying up or unchanged. Content copied verbatim from the
+  live page (fetched directly, not paraphrased) — see IMPLEMENTATION_NOTES.md
+  Task 64 for the source capture. No EN/DE equivalent exists on the live site
+  either (its own footer links to this same /it/ URL from every language), so
+  none is invented here — `otherLangUrls` is intentionally omitted, matching
+  BaseLayout's existing fallback-to-homepage behavior for pages with no real
+  per-language counterpart.
+
+  bodyClass matches dati-societari's own convention (Task 5): "singular" gates
+  real layout CSS, "missing-post-thumbnail" (combined with the sitewide
+  "reduced-spacing" class) zeroes the vendor's default post-inner top padding.
+-->
+<BaseLayout
+  title="Complemento di sviluppo Rurale per il Veneto 2023-2027 - Rigoni Vittorino"
+  ogTitle="Complemento di sviluppo Rurale per il Veneto 2023-2027"
+  bodyClass="singular missing-post-thumbnail"
+  lang="it"
+>
+  <Fragment set:html={contentHtml} />
+</BaseLayout>
