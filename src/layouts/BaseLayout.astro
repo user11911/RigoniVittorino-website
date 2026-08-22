@@ -7,6 +7,21 @@ export interface Props {
   title: string;
   description?: string;
   ogTitle?: string;
+  // Task 66 (SEO): absolute or root-relative URL of a real image for social-
+  // share previews (og:image). Defaults to the site's own logo when a page
+  // doesn't supply anything more specific (e.g. a wine product page passing
+  // its own bottle photo) — never a placeholder/invented asset.
+  ogImage?: string;
+  // Task 66 (SEO): opt-in `<meta name="robots" content="noindex">` for pages
+  // that genuinely have no real content to index (e.g. /en/privacy-policy/,
+  // /de/privacy-policy/ — intentionally blank, see those pages' own comments).
+  // Defaults to false so every existing caller stays indexable, unchanged.
+  noindex?: boolean;
+  // Task 66 (SEO): additional per-page JSON-LD blocks (Product, BreadcrumbList,
+  // etc. — see src/lib/seo.ts's builders), rendered alongside the sitewide
+  // Organization schema below. Each array entry becomes its own
+  // <script type="application/ld+json"> tag.
+  extraJsonLd?: object[];
   extraStyleFile?: string; // e.g. "home-extra-style.css" (page-specific UAGB CSS)
   bodyClass?: string;
   // Extra class(es) on the shared <main id="site-content">, e.g. "columns-3" for
@@ -42,6 +57,9 @@ const {
   title,
   description,
   ogTitle,
+  ogImage = "/wp-content/uploads/2021/01/rigoni-vittorino.png",
+  noindex = false,
+  extraJsonLd = [],
   extraStyleFile,
   bodyClass = "",
   mainClass = "",
@@ -72,6 +90,60 @@ if (extraStyleFile) {
 }
 
 const canonical = new URL(Astro.url.pathname, "https://rigonivittorino.com").toString();
+const absoluteOgImage = new URL(ogImage, "https://rigonivittorino.com").toString();
+// og:locale expects an underscore-separated locale tag, not a bare "it"/"en"/"de".
+const ogLocale: Record<string, string> = { it: "it_IT", en: "en_US", de: "de_DE" };
+
+// Task 66 (SEO): hreflang alternate-language tags, built from the same
+// `otherLangUrls` prop already threaded through every real content page for
+// the language switcher (see above) — deliberately *not* reusing that same
+// block's homepage-fallback behavior (`?? langHomepages[other]`): the
+// switcher always needs *something* to link to, but hreflang must only ever
+// declare a page's true translated equivalent — falling back to "the other
+// language's homepage" would tell search engines a homepage is a translation
+// of, say, a wine product page, which is simply false and actively harmful
+// structured data. A page with no real `otherLangUrls` (e.g. the shared,
+// language-neutral /news/) correctly gets no hreflang tags at all.
+const hreflangUrls: Partial<Record<"it" | "en" | "de", string>> = { [lang]: canonical };
+for (const other of (["it", "en", "de"] as const).filter((l) => l !== lang)) {
+  const target = otherLangUrls[other];
+  if (target) hreflangUrls[other] = new URL(target, "https://rigonivittorino.com").toString();
+}
+// Only meaningful with at least one real alternate besides the page itself.
+const hreflangLangs = (["it", "en", "de"] as const).filter((l) => hreflangUrls[l]);
+const hasRealAlternates = hreflangLangs.length > 1;
+
+// Task 66 (SEO): sitewide Organization structured data (JSON-LD), every field
+// sourced from real, already-published facts elsewhere on this site — never
+// invented. name/vatID/legalName from /it/dati-societari/'s own real company
+// data (Task 5); telephone/email/sameAs from the shared footer (present on
+// every page already); address is deliberately partial (locality/region/
+// country only) — no street-level address is confirmed anywhere on this site
+// (the contatti page's own address block was removed, Task 50), and
+// schema.org's PostalAddress doesn't require every field, so omitting what
+// isn't verified is correct here, not a gap to guess at.
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Rigoni Vittorino",
+  legalName: "Az. Agr. Rigoni Vittorino Società Agricola SNC",
+  url: "https://rigonivittorino.com",
+  logo: "https://rigonivittorino.com/wp-content/uploads/2021/01/rigoni-vittorino.png",
+  vatID: "03225340268",
+  telephone: "+39 0422 746459",
+  email: "info@rigonivittorino.com",
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Malintrada",
+    addressRegion: "Veneto",
+    addressCountry: "IT",
+  },
+  sameAs: [
+    "https://www.facebook.com/vinirigonivittorino",
+    "https://www.instagram.com/rigonivittorino",
+    "https://linkedin.com/company/rigoni-vittorino-vini-cantina",
+  ],
+};
 ---
 
 <!DOCTYPE html>
@@ -81,9 +153,21 @@ const canonical = new URL(Astro.url.pathname, "https://rigonivittorino.com").toS
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
+    {noindex && <meta name="robots" content="noindex, follow" />}
     <link rel="canonical" href={canonical} />
+    {hasRealAlternates && hreflangLangs.map((l) => (
+      <link rel="alternate" hreflang={l} href={hreflangUrls[l]} />
+    ))}
+    {hasRealAlternates && hreflangUrls.it && (
+      <link rel="alternate" hreflang="x-default" href={hreflangUrls.it} />
+    )}
     <meta property="og:title" content={ogTitle ?? title} />
     <meta property="og:url" content={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={ogLocale[lang] ?? "it_IT"} />
+    <meta property="og:image" content={absoluteOgImage} />
+    {description && <meta property="og:description" content={description} />}
+    <meta name="twitter:card" content="summary_large_image" />
     {enableViewTransitions && <meta name="view-transition" content="same-origin" />}
 
     <link rel="icon" href="/wp-content/uploads/2020/12/cropped-rigoni-favicon-32x32.png" sizes="32x32" />
@@ -137,6 +221,10 @@ const canonical = new URL(Astro.url.pathname, "https://rigonivittorino.com").toS
         data-cf-beacon={JSON.stringify({ token: import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN })}
       />
     )}
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(organizationJsonLd)} />
+    {extraJsonLd.map((block) => (
+      <script type="application/ld+json" is:inline set:html={JSON.stringify(block)} />
+    ))}
   </head>
   <body class={`custom-background wp-custom-logo wp-theme-twentytwenty wp-child-theme-geppa reduced-spacing ${bodyClass}`}>
     {showLoadingScreen && <LoadingScreen />}

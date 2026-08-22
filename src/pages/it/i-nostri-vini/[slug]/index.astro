@@ -3,6 +3,9 @@ export const prerender = true;
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import WineTastingSection from "../../../../components/WineTastingSection.astro";
 import wines from "../../../../data/wines.json";
+import categories from "../../../../data/categories.json";
+import localeEquivalents from "../../../../data/locale-equivalents.json";
+import { buildBreadcrumbJsonLd, buildProductJsonLd, truncateDescription } from "../../../../lib/seo";
 
 export function getStaticPaths() {
   return wines.map((wine) => ({
@@ -14,6 +17,21 @@ export function getStaticPaths() {
 const { wine } = Astro.props;
 // Confirmed live: product slugs are identical across it/en/de.
 const otherLangUrls = { en: `/en/wines/${wine.slug}/`, de: `/de/wines/${wine.slug}/` };
+// Task 66 (SEO): built from this wine's own real data (typology + its actual
+// tasting-note text, already shown on the page itself), not invented copy.
+const description = truncateDescription(
+  `${wine.title} - ${wine.typologyLabel} Rigoni Vittorino. ${wine.tastingNoteParagraphs[0]}`,
+);
+// Task 66 (SEO): Product + BreadcrumbList structured data. `category` here is
+// this real category's own real page (found by matching wine.category, the
+// same field the category listing page itself filters on), not invented.
+const productJsonLd = buildProductJsonLd(wine);
+const wineCategory = categories.find((c) => c.slug === wine.category)!;
+const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+  { name: "Home", url: "/it/" },
+  { name: wineCategory.title, url: (localeEquivalents.categories as Record<string, { it: string }>)[wine.category].it },
+  { name: wine.title, url: `/it/i-nostri-vini/${wine.slug}/` },
+]);
 // Task 11: the "SHOP ONLINE" button (.buy-wine) was removed by explicit user request.
 // Per the user's own explicit decision, .specs-row's 6-column grid is intentionally left
 // unchanged — the 3 icons below stay in their original position/size in columns 1-3, and
@@ -54,10 +72,13 @@ const isSpumanti = wine.category === "spumanti";
 
 <BaseLayout
   title={`${wine.title} - Rigoni Vittorino`}
+  description={description}
+  ogImage={wine.productImage}
   ogTitle={wine.title}
   lang="it"
   otherLangUrls={otherLangUrls}
   enableViewTransitions={isSpumanti}
+  extraJsonLd={[productJsonLd, breadcrumbJsonLd]}
 >
   <article class="wines-template-default single single-wines hentry">
     <div class="wine-container">

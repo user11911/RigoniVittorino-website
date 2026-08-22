@@ -3,6 +3,7 @@ export const prerender = true;
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
+import localeEquivalents from "../../../data/locale-equivalents.json";
 
 const rawContentHtml = await readFile(
   path.join(process.cwd(), "src/content/main/contatti.html"),
@@ -21,9 +22,11 @@ const contentHtml = rawContentHtml.replace("__TURNSTILE_SITE_KEY__", turnstileSi
 -->
 <BaseLayout
   title="Contatti - Rigoni Vittorino"
+  description="Contatta Rigoni Vittorino: telefono, email e form di contatto per informazioni sui nostri vini e sulla cantina."
   ogTitle="Contatti"
   extraStyleFile="contatti-extra-style.css"
   bodyClass="singular missing-post-thumbnail"
+  otherLangUrls={localeEquivalents.pages.contact}
 >
   <Fragment set:html={contentHtml} />
 </BaseLayout>

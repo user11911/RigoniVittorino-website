@@ -3,6 +3,9 @@ export const prerender = true;
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import WineTastingSection from "../../../../components/WineTastingSection.astro";
 import wines from "../../../../data/wines.de.json";
+import categories from "../../../../data/categories.de.json";
+import localeEquivalents from "../../../../data/locale-equivalents.json";
+import { buildBreadcrumbJsonLd, buildProductJsonLd, truncateDescription } from "../../../../lib/seo";
 
 export function getStaticPaths() {
   return wines.map((wine) => ({
@@ -14,6 +17,18 @@ export function getStaticPaths() {
 const { wine } = Astro.props;
 // Confirmed live: product slugs are identical across it/en/de.
 const otherLangUrls = { it: `/it/i-nostri-vini/${wine.slug}/`, en: `/en/wines/${wine.slug}/` };
+// Task 66 (SEO): see the IT version of this template for the full reasoning.
+const description = truncateDescription(
+  `${wine.title} - ${wine.typologyLabel} Rigoni Vittorino. ${wine.tastingNoteParagraphs[0]}`,
+);
+// Task 66 (SEO): see the IT version of this template for the full reasoning.
+const productJsonLd = buildProductJsonLd(wine);
+const wineCategory = categories.find((c) => c.key === wine.category)!;
+const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+  { name: "Startseite", url: "/de/" },
+  { name: wineCategory.title, url: (localeEquivalents.categories as Record<string, { de: string }>)[wine.category].de },
+  { name: wine.title, url: `/de/wines/${wine.slug}/` },
+]);
 // Task 11: the "SHOP ONLINE" button (.buy-wine) was removed by explicit user request.
 // Per the user's own explicit decision, .specs-row's 6-column grid is intentionally left
 // unchanged — the 3 icons below stay in their original position/size in columns 1-3, and
@@ -35,10 +50,13 @@ const isSpumanti = wine.category === "spumanti";
 
 <BaseLayout
   title={`${wine.title} - Rigoni Vittorino`}
+  description={description}
+  ogImage={wine.productImage}
   ogTitle={wine.title}
   lang="de"
   otherLangUrls={otherLangUrls}
   enableViewTransitions={isSpumanti}
+  extraJsonLd={[productJsonLd, breadcrumbJsonLd]}
 >
   <article class="wines-template-default single single-wines hentry">
     <div class="wine-container">

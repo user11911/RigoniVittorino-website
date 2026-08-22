@@ -30,6 +30,13 @@ const allEntries = await getCollection("news");
 const posts = selectPublishedNews(allEntries);
 ---
 
-<BaseLayout title="News - Rigoni Vittorino" ogTitle="News" bodyClass="blog" mainClass="columns-3" lang="it">
+<BaseLayout
+  title="News - Rigoni Vittorino"
+  description="Le ultime notizie da Rigoni Vittorino: aggiornamenti sulla cantina, i vini e l'azienda."
+  ogTitle="News"
+  bodyClass="blog"
+  mainClass="columns-3"
+  lang="it"
+>
   {posts.map((post) => <NewsCard title={post.data.title} excerpt={post.data.excerpt} image={post.data.image} />)}
 </BaseLayout>

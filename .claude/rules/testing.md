@@ -18,6 +18,28 @@ live WordPress site — Phase 2 tasks are expected to diverge from that. Confirm
   touched, check every page that includes it, not just the page the task was aimed at.
 * Nothing in the frozen-work list (`TODO.md`) was altered, unless the active task explicitly names it.
 
+### Phase 3 (SEO) — additional required check: zero visual diff
+
+Phase 3's own rule (`CLAUDE.md`) is stricter than normal regression testing: **no visual/appearance change
+at all**, not just "nothing outside scope changed." For every page an SEO task touches:
+
+* Screenshot the page (headless Chromium, see `CLAUDE.md`'s "Headless browser verification") at all 4
+  required widths, before and after the change, and confirm they're visually identical — not just "close
+  enough." A `<meta>` tag, `<link rel="alternate">`, JSON-LD `<script>` block, or an `alt` attribute should
+  never alter `getBoundingClientRect()` for any visible element; if one does, something is wrong (e.g. a
+  structured-data script tag rendering as visible text because it's missing `type="application/ld+json"`, or
+  new markup accidentally interacting with an existing CSS selector) — treat that as a bug to fix, not a
+  minor side effect to accept.
+* Diff the page's rendered text content (what a visitor reads) before/after — it must be unchanged, since
+  Phase 3 excludes visible-copy rewrites even where they'd plausibly help SEO too.
+* New non-visual files (`sitemap.xml`, `robots.txt`) still get their own correctness check even though
+  there's nothing to screenshot: valid XML/format, real URLs that actually resolve (200), and — for
+  `sitemap.xml` — in sync with the site's actual route list (every implemented language/page present, no
+  stale/removed routes).
+* Structured data (JSON-LD) should be validated against its actual schema.org type's expected fields, not
+  just "valid JSON" — a `Product` or `Organization` block with a plausible-looking but wrong field name
+  silently fails to be picked up by search engines despite being syntactically fine.
+
 ## Content and functional accuracy requirements
 
 Before final delivery, verify, for every implemented language (`/it/`, `/en/`, `/de/`) touched by the

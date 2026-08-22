@@ -14,10 +14,36 @@ Task-specific instructions belong in `TODO.md`. Before starting work, read this 
 - **Phase 1 (Tasks 1-12, complete):** a faithful rebuild of the original WordPress site, reaching visual
   and content parity with the live `rigonivittorino.com` for `/it/`, `/en/`, `/de/`. The live site was the
   source of truth throughout.
-- **Phase 2 (current):** the improvement phase. The site may now intentionally diverge from the original
-  live WordPress site — that divergence is the point, not a defect. Phase 1's frozen-work list in
-  `TODO.md` still applies (see "Frozen work" below); Phase 2 tasks build on top of it rather than replacing
-  it wholesale.
+- **Phase 2 (Tasks 13-65, complete):** the improvement phase. The site intentionally diverged from the
+  original live WordPress site's design — homepage hero/video, chi-siamo/cantina, contatti, wine product
+  pages, footer, header/nav, loading screen, and a large mobile-experience pass. Phase 1's frozen-work list
+  in `TODO.md` still applies (see "Frozen work" below); Phase 2's own completed work is now frozen the same
+  way — see "Frozen work" below.
+- **Phase 3 (current, branch `SEO-opt`):** SEO optimization, with one hard constraint that overrides the
+  normal Phase 2 "propose a design, get approval" workflow: **no visual/appearance changes of any kind.**
+  Nothing a visitor sees on the rendered page — layout, spacing, color, typography, imagery, animation,
+  visible copy/wording — may change as part of this phase. This is achievable because real SEO work is
+  almost entirely non-visual:
+  - **In scope, and does not require design approval** (still follows the normal scope/regression/testing
+    rules elsewhere in this file): meta descriptions, canonical URLs, `hreflang` alternate-language tags,
+    `sitemap.xml`, `robots.txt`, structured data / JSON-LD (Organization, Product, BreadcrumbList, etc.),
+    Open Graph/Twitter Card tags, image `alt` text (renders nothing visually — read by screen readers and
+    crawlers only), semantic HTML corrections that don't change any element's applied CSS (e.g. fixing a
+    heading level while keeping its existing visual class/styling), and non-visual performance work (resource
+    hints like `preload`/`preconnect`, `robots`/indexing directives) — but not the same class of change this
+    project already did once for a genuinely different reason (Task: hero video compression), since that
+    touches a real user-facing asset and isn't itself an SEO deliverable.
+  - **Out of scope for this phase, even if it would plausibly help SEO too:** anything that changes how a
+    page looks or reads — restructuring visible content, rewording visible copy, adding/removing/resizing
+    visible elements, changing which heading level is used for something if that would change its rendered
+    size/weight, or "while I'm in here" content rewrites. If a genuine SEO fix seems to require a visual
+    change to work correctly, stop and ask rather than choosing the visual change unasked — do not silently
+    treat "it's for SEO" as pre-approval for a design change the way Phase 2's normal workflow would otherwise
+    require anyway.
+  - Content-accuracy rules from "Source of truth"/"Scope boundaries" below still apply in full — e.g. a meta
+    description must describe the page's real, current content; structured data must state real, accurate
+    facts (prices, addresses, org names) sourced from this project's own already-established data
+    (`src/data/*.json`, existing page content), not invented.
 
 ## Current project state
 
@@ -114,7 +140,11 @@ layout, styling, animation, scroll/interaction behavior — not to backend or co
 
 ## Frozen work
 
-Phase 1's completed tasks (see `TODO.md`) remain the frozen baseline in Phase 2 too:
+Phase 1's and Phase 2's completed tasks (see `TODO.md`) remain the frozen baseline in Phase 3 too — Phase
+3's own "no visual/appearance changes" rule above makes this closer to automatic than in prior phases (an
+SEO task shouldn't be touching visible layout/styling at all), but the scope rules below still apply to any
+non-visual behavior of frozen features (e.g. don't restructure a frozen page's HTML beyond what's needed for
+the active SEO task, even though that wouldn't visibly change anything):
 
 - Do not reopen, restyle, or functionally change frozen work unless the active task explicitly names it.
 - Reopening one frozen area for restyling does not imply permission to touch any other frozen area.

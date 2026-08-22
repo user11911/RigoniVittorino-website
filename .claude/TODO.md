@@ -8,6 +8,101 @@ before editing" step 4.
 
 ## Active tasks
 
+- **Task 66 (branch `SEO-opt`): SEO optimization — implemented, headless-verified, not yet confirmed live.**
+  Hard constraint (`CLAUDE.md` Phase 3): no visual/appearance changes — verified throughout via before/after
+  overflow sweeps and a visible-JSON-LD-text leak check, not just assumed safe. Discovery pass first
+  (confirmed the actual gaps directly, not from memory: 0 of ~120 pages had a meta description; zero
+  hreflang/sitemap/robots.txt/structured data anywhere; 94/103 `alt` attributes empty; `scripts/routes.mjs`
+  confirmed stale — 2 magnum slugs Task 41 removed are still listed there, so sitemap generation deliberately
+  does not depend on it). Six sub-parts, all landed:
+  1. **`sitemap.xml`** — `@astrojs/sitemap`, auto-discovers real prerendered routes (not a hand-maintained
+     list) rather than a custom endpoint, per `AskUserQuestion`. Excludes the root `/` and `/it/news/`
+     redirects (confirmed present in the raw route manifest despite `prerender:false`, needed explicit
+     filtering) and the intentionally-blank `/en/`+`/de/privacy-policy/`. 120 real URLs.
+  2. **`robots.txt`** — allows all, disallows `/api/`, references the sitemap.
+  3. **`hreflang`** — `<link rel="alternate">` tags in `BaseLayout`'s `<head>`, reusing the existing
+     `otherLangUrls` prop (language switcher) rather than new plumbing — deliberately *not* reusing that
+     prop's homepage-fallback behavior, so hreflang only ever declares true translated equivalents. Found and
+     fixed a real pre-existing bug along the way: `/it/contatti/` never passed `otherLangUrls` at all (its
+     EN/DE counterparts did), so its language switcher silently fell back to homepages.
+  4. **Meta descriptions** — every page. Hand-written for the ~15 main pages, sourced from each page's own
+     real content (caught an unverified "1950" founding-year claim before using it — the real content only
+     supports "the 1950s", used that instead). Category/product pages (102) built from real per-item data
+     (`wines*.json`, `categories*.json`) via a new tested helper, `src/lib/seo.ts`. Also completed Open Graph
+     (`og:type`/`og:locale`/`og:image` — bottle photos on product pages/`og:description`) and `twitter:card`;
+     added `noindex` to the 2 genuinely-blank privacy-policy pages only (confirmed IT's real one is excluded).
+  5. **Structured data (JSON-LD)** — sitewide `Organization` (every field traced to a real, already-published
+     fact; `address` deliberately partial — no street address is verified anywhere on the site, Task 50
+     removed the contatti page's own address block, so nothing was invented to fill it). `Product` on all 84
+     product pages (no `offers`/price — none exists, Task 11 removed shop links). `BreadcrumbList` on all 18
+     category + 84 product pages.
+  6. **Alt text** — 61 image instances across 16 files, all 3 languages. Actually looked at each real photo
+     (not guessed from filenames) so gallery images are correctly distinguished from each other instead of
+     duplicated generic text. Deliberately left empty: the decorative V-logo watermark, footer icon SVGs
+     (paired with visible "Tel."/"Email:" text), and the homepage's 6 category-button bottle images (paired
+     with adjacent category-name text) — filling these would itself be a WCAG anti-pattern (redundant alt
+     text), not a gap.
+  `check`/`test:unit` (47 passing, up from 42)/`build` all pass at every step. Cumulative visual-diff
+  regression across all 6 parts: 40+36+48 = well over 100 checks across a dozen+ distinct page types × all 4
+  required breakpoints, zero overflow, zero status issues, zero visible-JSON-LD-text leaks. **Not yet
+  confirmed live by the user** — needs `npm run build && npx wrangler deploy` and a real look, same as every
+  other visual/behavioral task this project.
+- Task 65: footer phone-number text color — tried white (explicit request), then reverted back to black
+  (default/original) after the user clarified their original report ("the phone number is black but should
+  be white") actually meant the copyright/P.IVA line, not the WhatsApp phone number, which had been correctly
+  readable (black on white) the whole time. Net code change: none — ends at the same state as before this
+  task. The copyright/P.IVA line itself was checked 3 separate ways (local build, live deployed site via
+  headless Chromium, screenshot) and found already correctly white/readable against the dark footer photo in
+  every check; the user's described "black on black" for that element could not be reproduced, and remains
+  genuinely unresolved/unconfirmed — revisit only if the user supplies their own screenshot showing the
+  actual problem.
+- Task 64: EU/Veneto rural-development funding-disclosure page, all 3 languages' footers — was an external
+  link to `rigonivittorino.com`'s own copy of this legally-required disclosure page; now an internal page at
+  `/it/complemento-di-sviluppo-rurale-per-il-veneto-2023-2027/` (same URL slug), per explicit request ("This
+  copy must have the same exact content as it has legal importance"). Content fetched directly from the live
+  page and verified byte-identical (every heading/paragraph compared programmatically, not eyeballed) before
+  use — not paraphrased, not summarized. No EN/DE version exists on the live site either (its own footer
+  links to this same `/it/` URL from every language), so none was invented here; all 3 language footers
+  (`src/content/chrome/{,en/,de/}footer.html`) now point at the new internal page. New files:
+  `src/content/main/complemento-di-sviluppo-rurale-per-il-veneto-2023-2027.html`,
+  `src/pages/it/complemento-di-sviluppo-rurale-per-il-veneto-2023-2027/index.astro` (follows the existing
+  `dati-societari` page's own established pattern). `check`/`test:unit`/`build` pass; confirmed headlessly
+  that the built page serves 200, the funding-logos image loads, and all 3 language footers' links resolve to
+  the new internal URL. **Confirmed via direct inspection, not yet explicitly signed off by the user as
+  "looks right."**
+- Task 63: hamburger/mobile-nav-toggle icon (site-wide, every page, all 3 languages) redesigned, mobile only
+  — was Font Awesome's `fa-bars` glyph, gold (`#dcc59f`), 48px in a 70x70px box; now a custom 3-line black
+  icon (26x26px box, 2px-thick bars), per explicit request ("black and more minimal... sleeker"), after an
+  `AskUserQuestion` resolved a real style ambiguity (shrink the same icon vs. a genuinely different thin-line
+  design — **user chose the thin-line redesign**). `<i class="fas fa-bars">` markup fully replaced with 3
+  plain `<span>` bars in `header.html`/`en/`/`de/` (identical across all 3, confirmed via diff before
+  editing) — old glyph markup is gone, not hidden. Desktop/tablet completely unaffected (this button is
+  `display:none` there regardless, confirmed unchanged). Verified: menu still opens on click (functionality
+  untouched), old FA glyph confirmed absent post-build, zero overflow across a multi-page/breakpoint sweep.
+  **Headless-verified — not yet confirmed live.**
+- Task 62: WhatsApp/email footer icons (site-wide, every page, all 3 languages) hidden on mobile only, text
+  (phone number, email address) stays — per explicit request. Also zeroed a vendor `10px` left-indent on the
+  text that existed only to clear the now-gone icon. Desktop/tablet confirmed unaffected (icons still
+  `display:block`). **Headless-verified — not yet confirmed live.**
+- Task 61: two mobile-only homepage changes, both measured (not assumed) before and after. (1) Hero video
+  now fills the full viewport on mobile — was a fixed `420px` (~50% of a typical phone screen); now
+  `calc(100dvh - header-height)`, so header+video together fill exactly one screen on load, matching the
+  desktop `.hero-fixed-wrapper` behavior (confirmed via `AskUserQuestion` — user chose this over the simpler
+  "video alone = 100dvh, ignoring the header" alternative). Required extending `Hero.astro`'s existing
+  desktop-only header-height-measuring script to also run on mobile, decoupled from the desktop-only fade
+  effect it used to be bundled with. Measured: header (129.75px) + hero (714.125px) = 843.875px against an
+  844px viewport, confirmed on `/it/`, `/en/`, `/de/`. (2) Grape-photo → "La nostra collezione" gap cut ~90%
+  per explicit request — measured the real gap first (104px, from 3 separate contributors: a photo's
+  theme-default bottom margin, plus a Grids-plugin wrapper's double-consumed padding+margin — the same
+  double-consumption mechanism Task 56 already found for padding, this time also present as margin), closed
+  to 10px (90.4% reduction). Both changes `max-width:768px`-only; desktop (1440px) confirmed byte-identical
+  to before. `check`/`test:unit`/`build` pass; zero overflow across a 7-page × 6-breakpoint sweep.
+  **Headless-verified — not yet confirmed live.**
+
+All of Tasks 21-60 below, plus Tasks 61-65 above, are now committed to `main` (`cdd8369`) and treated as
+**Phase 2, complete** (see `CLAUDE.md`) — frozen baseline for Phase 3 (Task 66) unless a task explicitly
+reopens one.
+
 - Task 21: "Un vino che esalta i sensi" closing section (homepage, last content block before the footer) —
   background changed from a photo to solid black, and the gap that used to sit between the group and the
   footer is filled (extends `#site-footer`'s own background upward via a measured

@@ -5,6 +5,7 @@ import WineCard from "../../../components/WineCard.astro";
 import categories from "../../../data/categories.en.json";
 import wines from "../../../data/wines.en.json";
 import localeEquivalents from "../../../data/locale-equivalents.json";
+import { buildBreadcrumbJsonLd } from "../../../lib/seo";
 
 export function getStaticPaths() {
   return categories.map((cat) => ({
@@ -15,6 +16,13 @@ export function getStaticPaths() {
 
 const { category } = Astro.props;
 const categoryWines = wines.filter((w) => w.category === category.key);
+// Task 66 (SEO): categoryWines.length is real, computed data (not invented).
+const description = `${category.title} by Rigoni Vittorino: explore our ${categoryWines.length} wines in this category, produced at our winery in Veneto.`;
+// Task 66 (SEO): BreadcrumbList structured data.
+const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+  { name: "Home", url: "/en/" },
+  { name: category.title, url: `/en/${category.slug}/` },
+]);
 // Task 37: see the IT version of this template for the full reasoning — this
 // page never set bodyClass, unlike every other content page, leaving up to
 // 160px of unwanted top padding (2 stacked vendor rules) that "singular
@@ -29,11 +37,13 @@ const isSpumanti = category.key === "spumanti";
 
 <BaseLayout
   title={`${category.title} - Rigoni Vittorino`}
+  description={description}
   ogTitle={category.title}
   bodyClass="singular missing-post-thumbnail"
   lang="en"
   otherLangUrls={(localeEquivalents.categories as Record<string, { it: string; en: string; de: string }>)[category.key]}
   enableViewTransitions={isSpumanti}
+  extraJsonLd={[breadcrumbJsonLd]}
 >
   <article class={`page type-page status-publish hentry wines-category-${category.slug}`}>
     <header class="entry-header has-text-align-center header-footer-group">
