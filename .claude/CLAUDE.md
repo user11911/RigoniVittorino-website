@@ -19,7 +19,7 @@ Task-specific instructions belong in `TODO.md`. Before starting work, read this 
   pages, footer, header/nav, loading screen, and a large mobile-experience pass. Phase 1's frozen-work list
   in `TODO.md` still applies (see "Frozen work" below); Phase 2's own completed work is now frozen the same
   way — see "Frozen work" below.
-- **Phase 3 (current, branch `SEO-opt`):** SEO optimization, with one hard constraint that overrides the
+- **Phase 3 (Task 66, complete per the user):** SEO optimization, with one hard constraint that overrides the
   normal Phase 2 "propose a design, get approval" workflow: **no visual/appearance changes of any kind.**
   Nothing a visitor sees on the rendered page — layout, spacing, color, typography, imagery, animation,
   visible copy/wording — may change as part of this phase. This is achievable because real SEO work is

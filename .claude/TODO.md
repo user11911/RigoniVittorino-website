@@ -8,6 +8,18 @@ before editing" step 4.
 
 ## Active tasks
 
+- **Task 67: removed the AI-drafted-content review disclaimer from `/it/privacy-policy/`.** User confirmed
+  Phase 3 finished and that the page's current legal text has been reviewed/approved, so the red "Nota per
+  il titolare del sito" callout box (flagging the text as AI-drafted, pending legal sign-off) and the two
+  inline `[DA CONFERMARE]` / `[DA CONFERMARE: ...]` bracketed tags were removed from
+  `src/content/main/privacy-policy.html`. The substantive sentences those tags were attached to were left
+  word-for-word unchanged (data-retention policy, Resend's non-EU transfer disclosure, the DPO-status
+  paragraph) — this task only strips the flagging markup, it does not rewrite or resolve any of the
+  underlying legal content, since that's the site owner's/legal counsel's call, not this project's to make.
+  `/en/privacy-policy/` and `/de/privacy-policy/` are untouched (still intentionally blank, Task 6/9).
+  Content-only change, no CSS/JS/routing touched; `check`/`test:unit`/`build` were not run (no Node.js
+  runtime available in this sandbox) — documented per `CLAUDE.md`'s "if a command is unavailable" rule
+  rather than assumed passing. Not yet confirmed live.
 - **Task 66 (branch `SEO-opt`): SEO optimization — implemented, headless-verified, not yet confirmed live.**
   Hard constraint (`CLAUDE.md` Phase 3): no visual/appearance changes — verified throughout via before/after
   overflow sweeps and a visible-JSON-LD-text leak check, not just assumed safe. Discovery pass first
@@ -1493,6 +1505,8 @@ Preserved constraints from completed work:
   `src/lib/email.ts`, `src/lib/turnstile.ts`, the D1 migration); Task 7's narrow authorization to touch
   `src/lib/contact-validation.ts` is complete and frozen along with it.
 - `/it/privacy-policy/` and Cloudflare Web Analytics are implemented (Task 6, frozen); do not modify unless
-  explicitly reactivated.
+  explicitly reactivated. Task 67 (frozen) reactivated it narrowly to remove the AI-drafted-content review
+  disclaimer/`[DA CONFERMARE]` tags now that the user has confirmed the legal text is reviewed/approved —
+  do not reopen its legal/factual content again without explicit reauthorization.
 - `/it/dati-societari/` (Task 5) is completed/frozen; do not modify it except to reuse its already-finalized company-identity text for reference.
 - Do not work on Task 3 visual bugs or further News scope as part of this task.
