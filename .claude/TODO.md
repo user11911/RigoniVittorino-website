@@ -8,6 +8,23 @@ before editing" step 4.
 
 ## Active tasks
 
+- **Task 68: pinned `vite` to `8.0.16` via an `overrides` entry in `package.json` — fixes a broken fresh
+  install.** Discovered while verifying an unrelated content change: `npm ci && npm run build` (and
+  `npm run check`) failed on a completely clean install with the exact version already resolved in the
+  committed `package-lock.json` (`vite@8.1.3`) — `astro sync` couldn't resolve Astro's own
+  `astro/tsconfigs/strict` package export, breaking `build`/`check` entirely, for anyone, on any machine,
+  independent of Node version or any source-file change. Root-caused to a Vite 8.1.x regression (Node's own
+  `require.resolve('astro/tsconfigs/strict')` succeeds; Vite's internal resolver does not). Tried 3
+  alternatives before landing on `8.0.16`: `8.0.13` (Astro's declared floor, `^8.0.13`) fixes the build but
+  keeps 2 disclosed Vite CVEs (Windows-only dev-server issues: `launch-editor` NTLMv2 hash disclosure,
+  `server.fs.deny` bypass — irrelevant to this project's Cloudflare Workers production runtime, but still
+  worth closing); `8.2.2` (latest) fixes the build and the CVEs but has a real `ERESOLVE` peer-dependency
+  conflict with wrangler's `@cloudflare/vite-plugin` on a clean install — rejected. `8.0.16` fixes the build,
+  patches both CVEs, and installs cleanly with zero peer-dependency conflicts. Verified on a from-scratch
+  `rm -rf node_modules && npm install`: `build` succeeds, `test:unit` (47/47) passes, `check` shows only the
+  same pre-existing unrelated issues as before this fix (`src/pages/api/contact.ts`'s `cloudflare:workers`
+  types needing a one-time `npm run wrangler:types` run; an unused `locale` var in `src/pages/index.astro`).
+  Only `package.json`/`package-lock.json` touched — no source files.
 - **Task 66 (branch `SEO-opt`): SEO optimization — implemented, headless-verified, not yet confirmed live.**
   Hard constraint (`CLAUDE.md` Phase 3): no visual/appearance changes — verified throughout via before/after
   overflow sweeps and a visible-JSON-LD-text leak check, not just assumed safe. Discovery pass first
