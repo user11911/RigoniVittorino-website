@@ -17,17 +17,17 @@ export default defineConfig({
   // produced for it — confirmed directly) and `/it/news/` (a 301 redirect
   // stub to the real, already-separately-listed `/news/` — a sitemap should
   // never point search engines at a redirect instead of its destination).
-  // `/en/privacy-policy/` and `/de/privacy-policy/` *are* prerendered but
-  // intentionally render no real content (Task 9's own documented decision —
-  // see TODO.md/testing.md) — excluded so a sitemap never points search
-  // engines at a page with nothing on it.
+  // `/en/privacy-policy/` and `/de/privacy-policy/` used to be excluded here:
+  // they were prerendered but intentionally rendered no real content (Task 9's
+  // own documented decision). Now populated with real translated text (see
+  // src/content/main/en/privacy-policy.html, src/content/main/de/privacy-policy.html)
+  // and no longer `noindex`, so they're included in the sitemap like every
+  // other real page.
   integrations: [
     sitemap({
       filter: (page) =>
         page !== "https://rigonivittorino.com/" &&
-        !page.endsWith("/it/news/") &&
-        !page.endsWith("/en/privacy-policy/") &&
-        !page.endsWith("/de/privacy-policy/"),
+        !page.endsWith("/it/news/"),
     }),
   ],
   // Adding an adapter switches Astro to on-demand rendering by default. Every

@@ -1,22 +1,39 @@
 ---
 export const prerender = true;
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import localeEquivalents from "../../../data/locale-equivalents.json";
+
+const contentHtml = await readFile(
+  path.join(process.cwd(), "src/content/main/de/privacy-policy.html"),
+  "utf8",
+);
 ---
 
 <!--
-  Task 9: confirmed live, /de/privacy-policy/ (like IT's before Task 6) has no
-  real static text — only a client-side Iubenda widget embed, which this
-  project doesn't re-host. Per CLAUDE.md's "do not create placeholder pages
-  with invented content", this stays genuinely blank rather than getting
-  self-authored German legal text — see src/pages/en/privacy-policy/index.astro
-  for the identical reasoning.
+  Previously genuinely blank (the live site only ever embedded a third-party
+  Iubenda widget here, never real static text — see this file's prior comment
+  in git history / IMPLEMENTATION_NOTES.md Task 9). Populated with a
+  self-hosted German translation of /it/privacy-policy/'s own text once the
+  user explicitly authorized it, choosing a real German translation over
+  reusing the English version — GDPR requires information to be given in
+  language intelligible to its audience, and the rest of this site's /de/
+  tree is fully translated. Same underlying facts, same disclosed
+  "AI-drafted, needs legal review" status as the Italian original — translation
+  included, since translating GDPR text can itself introduce errors even when
+  using standard legal terminology (Verantwortlicher, Verarbeitung,
+  Einwilligung, berechtigtes Interesse, etc.). `noindex` removed now that the
+  page has real content to index, matching /it/privacy-policy/'s own
+  indexable state.
 -->
 <BaseLayout
-  title="Privacy Policy and Cookies - Rigoni Vittorino"
-  ogTitle="Privacy Policy and Cookies"
-  noindex
+  title="Datenschutz- und Cookie-Richtlinie - Rigoni Vittorino"
+  description="Datenschutz- und Cookie-Richtlinie von Rigoni Vittorino: wie auf dieser Website erhobene Daten verarbeitet werden."
+  ogTitle="Datenschutz- und Cookie-Richtlinie"
   bodyClass="singular missing-post-thumbnail"
   lang="de"
   otherLangUrls={localeEquivalents.pages["privacy-policy"]}
-/>
+>
+  <Fragment set:html={contentHtml} />
+</BaseLayout>

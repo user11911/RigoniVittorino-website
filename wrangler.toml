@@ -2,9 +2,20 @@ name = "rigonivittorino-website"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# @astrojs/cloudflare generates its own main/assets wiring at build time
+# Custom Worker entrypoint (see src/worker.ts's own comment for why the
+# adapter's default-generated entry isn't used instead — it can't export a
+# `scheduled` handler). Must stay above any [table]/[[table]] header below —
+# TOML attaches bare `key = value` lines to whichever table header precedes
+# them, so this can't be moved after [[d1_databases]] without silently
+# becoming a (rejected) field of it instead of a top-level Worker setting.
+main = "./src/worker.ts"
+
+# @astrojs/cloudflare generates its own assets wiring at build time
 # (dist/server/wrangler.json) — this file only needs to supply the
-# app-specific bindings the adapter doesn't know about.
+# app-specific bindings the adapter doesn't know about, plus anything the
+# adapter has no way to generate on its own (the `main` entrypoint above and
+# the cron trigger below, needed for the scheduled contact-submission cleanup —
+# see src/worker.ts and src/lib/retention.ts).
 #
 # Provisioned once by the site owner with:
 #   npx wrangler d1 create rigonivittorino-contacts
@@ -14,3 +25,9 @@ binding = "DB"
 database_name = "rigonivittorino-contacts"
 database_id = "e02a1b61-dbfa-44a2-a939-f3dd6e62a6cc"
 migrations_dir = "migrations"
+
+# Runs daily; src/lib/retention.ts deletes contact_submissions rows older than
+# its own RETENTION_DAYS (30), matching /it/privacy-policy/'s "Conservazione
+# dei dati" section. Time is UTC.
+[triggers]
+crons = ["0 3 * * *"]

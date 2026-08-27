@@ -1,23 +1,34 @@
 ---
 export const prerender = true;
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import localeEquivalents from "../../../data/locale-equivalents.json";
+
+const contentHtml = await readFile(
+  path.join(process.cwd(), "src/content/main/en/privacy-policy.html"),
+  "utf8",
+);
 ---
 
 <!--
-  Task 9: confirmed live, /en/privacy-policy/ (like IT's before Task 6) has no
-  real static text — only a client-side Iubenda widget embed, which this
-  project doesn't re-host (same policy as every other third-party plugin
-  script). Per CLAUDE.md's "do not create placeholder pages with invented
-  content", this stays genuinely blank rather than getting self-authored
-  English legal text — that would need its own explicit authorization, the
-  same way /it/privacy-policy/ needed Task 6's explicit approval.
+  Previously genuinely blank (the live site only ever embedded a third-party
+  Iubenda widget here, never real static text — see this file's prior comment
+  in git history / IMPLEMENTATION_NOTES.md Task 9). Populated with a
+  self-hosted English translation of /it/privacy-policy/'s own text once the
+  user explicitly authorized it. Same underlying facts, same disclosed
+  "AI-drafted, needs legal review" status as the Italian original — translation
+  included, since translating GDPR text can itself introduce errors even when
+  using standard legal terminology. `noindex` removed now that the page has
+  real content to index, matching /it/privacy-policy/'s own indexable state.
 -->
 <BaseLayout
   title="Privacy Policy and Cookies - Rigoni Vittorino"
+  description="Privacy and cookie policy for Rigoni Vittorino: how data collected on this website is processed."
   ogTitle="Privacy Policy and Cookies"
-  noindex
   bodyClass="singular missing-post-thumbnail"
   lang="en"
   otherLangUrls={localeEquivalents.pages["privacy-policy"]}
-/>
+>
+  <Fragment set:html={contentHtml} />
+</BaseLayout>
