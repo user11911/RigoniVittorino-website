@@ -641,35 +641,47 @@ header#site-header.sticky {
  * needs explicit approval given the blast radius — #site-content is shared by
  * every page), this fills the gap from the *other* side instead: `#site-footer`
  * is a sibling of `#site-content`, not a descendant, so it isn't subject to that
- * clipping at all. `#site-footer::before` (below) extends the footer's own
- * black background upward by exactly the measured gap, via the
- * `--closing-gap-fill` custom property that `initClosingSectionFill()` in
- * Hero.astro sets — see that script for the measurement logic. Scoped to the
- * same `@media (min-width: 769px)` block as `#site-footer`'s existing
- * `position: relative` rule (Task 17/18) since that positioning is what this
- * pseudo-element's `position: absolute` needs to anchor to correctly — on
- * mobile, the hero isn't `position: fixed` either (see that rule's own
- * comment), so there's no bleed-through to cover there in the first place. ---
+ * clipping at all. The `--closing-gap-fill` custom property that
+ * `initClosingSectionFill()` in Hero.astro sets (see that script for the
+ * measurement logic) still drives this — only *how* the footer extends into
+ * that gap changed since.
+ *
+ * Found live (reported as a thin strip of the still-playing hero video visible
+ * right at this exact seam, confirmed with a headless-browser probe —
+ * `elementFromPoint` at that pixel returned the `<video>` itself, not this
+ * fill): the original approach used a `#site-footer::before` pseudo-element
+ * (`position: absolute`, no z-index of its own) to paint the gap. Its computed
+ * height/background were both confirmed correct in isolation, yet it still lost
+ * the paint order against the fixed-position hero `<video>` in practice — a
+ * stacking-context subtlety (likely the pseudo-element not actually sharing
+ * `#site-footer`'s own already-proven z-index:500 context the way a plain
+ * child element would) that held even though the reasoning for why it *should*
+ * have worked seemed sound. Rather than chase that further, switched to a
+ * structural guarantee instead, per this project's own stated preference for
+ * correctness that doesn't depend on winning a stacking fight: extend
+ * `#site-footer`'s *own real box* into the gap (negative `margin-top` pulls
+ * its top edge up by the gap amount; equal `padding-top` keeps its actual
+ * content sitting exactly where it already was). `#site-footer`'s own
+ * background is already `var(--footer-background-color)` (confirmed in
+ * twentytwenty-style.min.css) — the exact same white this is meant to show —
+ * so no color needs restating here. This is the *same* element already
+ * confirmed (via `body.home #site-footer{position:relative;z-index:500}`,
+ * Task 17/18) to correctly paint above the fixed hero everywhere else on this
+ * page; it no longer depends on a second, independently-stacked element
+ * replicating that guarantee. `!important` on both properties is required to
+ * beat `footer#site-footer{margin:0!important;padding:6rem 0!important}`
+ * (twentytwenty-style.min.css) — confirmed via computed-style, not assumed;
+ * this selector's own specificity (one more class than that rule) already
+ * wins unassisted, `!important` is only needed to out-rank that rule's own
+ * `!important`, not for specificity. Scoped to the same
+ * `@media (min-width: 769px)` block as before — on mobile the hero isn't
+ * `position: fixed` either, so there's no bleed-through to cover there in the
+ * first place. ---
  */
 @media (min-width: 769px) {
-  body.home #site-footer::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 100%;
-    height: var(--closing-gap-fill, 0px);
-    /* Task 25 follow-up: was solid #000 (matching ".home-closing-section"'s
-     * own black background, which this pseudo-element extends). Changed to
-     * the footer's own background color instead: the viewport-edge margin
-     * on the stacked homepage sections (see Task 25's own comment on
-     * .home-philosophy-section above) is being left as-is rather than
-     * chased further, which means this full-bleed, edge-to-edge filler
-     * (no side margin of its own) no longer visually matches the section
-     * it's meant to extend. Matching the footer's own color instead makes it
-     * blend into the always-full-bleed footer beneath it rather than clash
-     * with the section above. */
-    background: var(--footer-background-color);
+  body.home #site-footer {
+    margin-top: calc(-1 * var(--closing-gap-fill, 0px)) !important;
+    padding-top: calc(6rem + var(--closing-gap-fill, 0px)) !important;
   }
 }
 

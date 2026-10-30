@@ -329,8 +329,10 @@
   // but instead of growing the section, it sets a `--closing-gap-fill` custom
   // property on #site-footer itself — #site-footer is a *sibling* of
   // #site-content, not a descendant, so it isn't subject to that clipping.
-  // site.css's `#site-footer::before` rule uses that property to extend the
-  // footer's own black background upward by exactly the gap amount.
+  // site.css's `body.home #site-footer` rule uses that property (negative
+  // margin-top + matching padding-top) to pull the footer's own real box
+  // upward by exactly the gap amount — see that rule's own comment for why
+  // this isn't a `::before` pseudo-element anymore.
   //
   // Re-measures on resize and via a ResizeObserver on <body> (covers content
   // height changes after the initial run, e.g. late web-font swaps shifting
