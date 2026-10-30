@@ -56,12 +56,19 @@ function rewriteUrl(u) {
   return u;
 }
 
-// Task 11: remove any link/button pointing at the external shop
-// (rigonivittorinoshop.it) — user-requested removal, not a scrape-fidelity
-// concern. Removes the whole `<li class="menu-item">` for nav items (desktop
-// and mobile), or just the bare `<a>` for the footer's shopping-cart icon
-// (which isn't wrapped in an `<li>`) — whichever applies. Both the desktop nav
-// and the footer icon row are flex/inline-flowing (confirmed in
+// Task 11 removed every shop link sitewide (nav, mobile menu, footer icon,
+// product buy button); a later task explicitly reversed that for the header/
+// mobile-nav link only (re-added by hand in src/content/chrome/*header.html,
+// pointing at https://www.rigonivittorinoshop.it — not necessarily the same
+// path a fresh scrape of the old live site would carry, since that site no
+// longer exists to re-scrape anyway) — the footer's shopping-cart icon stays
+// removed, untouched by that decision. This function still exists and is
+// still called for the footer (see below); it's no longer called for header/
+// menuModal, so a future re-run of this script won't silently strip the
+// restored nav link. Removes the whole `<li class="menu-item">` for nav
+// items, or just the bare `<a>` for the footer's shopping-cart icon (which
+// isn't wrapped in an `<li>`) — whichever applies. Both the desktop nav and
+// the footer icon row are flex/inline-flowing (confirmed in
 // public/wp-content/themes/geppa/style-custom.min.css: `ul.primary-menu` is a
 // centered flexbox, `.footer-social-icons` is plain inline-flowing centered
 // text), so removing an item needs no further layout fix — the rest
@@ -172,8 +179,6 @@ async function main() {
     template.after(newsLi);
   }
 
-  removeShopLinks($, header);
-  removeShopLinks($, menuModal);
   rewriteLinks($, header);
   rewriteLinks($, menuModal);
   const combined = header.prop("outerHTML") + "\n" + menuModal.prop("outerHTML");
