@@ -14,3 +14,16 @@ binding = "DB"
 database_name = "rigonivittorino-contacts"
 database_id = "e02a1b61-dbfa-44a2-a939-f3dd6e62a6cc"
 migrations_dir = "migrations"
+
+# Plain (non-secret) runtime variable, added to match what's set in the
+# Cloudflare dashboard — the "From" address isn't sensitive (every recipient
+# sees it in plain text anyway), so it belongs here rather than as a secret.
+# Keeping it out of this file is exactly what triggers Cloudflare's own
+# "Update your Wrangler configuration... to keep deployments in sync" warning:
+# without it, a future `wrangler deploy` from this codebase would silently
+# unset the dashboard-configured value. The 3 real secrets (RESEND_API_KEY,
+# CONTACT_RECIPIENT_EMAIL, CONTACT_IP_HASH_SALT) are intentionally NOT listed
+# here — they stay out of version control, managed only via the dashboard or
+# `wrangler secret put`.
+[vars]
+CONTACT_FROM_EMAIL = "Rigoni Vittorino <no-reply@updates.rigonivittorino.com>"
