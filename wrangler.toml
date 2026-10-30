@@ -27,3 +27,18 @@ migrations_dir = "migrations"
 # `wrangler secret put`.
 [vars]
 CONTACT_FROM_EMAIL = "Rigoni Vittorino <no-reply@updates.rigonivittorino.com>"
+
+# Custom Domains attached to this Worker (added via the Cloudflare dashboard
+# during the DNS migration — see IMPLEMENTATION_NOTES.md). Declared here for
+# the same reason as CONTACT_FROM_EMAIL above: multiple independent reports
+# describe `wrangler deploy` detaching a live Custom Domain that isn't listed
+# in this file, which would take the real site down until manually
+# reconnected. Declaring both explicitly removes that risk regardless of
+# Wrangler version behavior.
+[[routes]]
+pattern = "rigonivittorino.com"
+custom_domain = true
+
+[[routes]]
+pattern = "www.rigonivittorino.com"
+custom_domain = true
