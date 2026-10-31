@@ -1,0 +1,53 @@
+---
+export const prerender = true;
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+
+const contentHtml = await readFile(
+  path.join(
+    process.cwd(),
+    "src/content/main/complemento-di-sviluppo-rurale-per-il-veneto-2023-2027-srd02.html",
+  ),
+  "utf8",
+);
+---
+
+<!--
+  Second EU/Veneto rural-development funding-disclosure page (Misura SRD02/B),
+  following the exact pattern already established for Task 64's SRD01 page —
+  see that page's own index.astro comment for the full reasoning (internal
+  copy instead of an external link, bodyClass convention, no EN/DE equivalent
+  invented since the live site has none for this kind of page either).
+
+  Deliberately kept as a fully separate page (not merged with the SRD01 page
+  via tabs/sections) per explicit decision: each funded "operazione" under the
+  CSR Veneto 2023-2027 has its own legally-tied disclosure requirements (own
+  logos, own operation code, own text), confirmed against the official
+  regional guidelines (Regione del Veneto, Allegato A al Decreto n. 22 del 22
+  Febbraio 2024) — combining two different operations' disclosures risked
+  exactly the kind of ambiguity those rules are meant to prevent.
+
+  Content (banner images + every field below) copied verbatim from the
+  beneficiary-supplied source document — not paraphrased, not corrected, not
+  reconciled with SRD01's own wording even where the two differ (e.g. this
+  page says "Programma di sviluppo rurale" / "Direzione AdG FEASR e Foreste"
+  where SRD01 says "Complemento di sviluppo Rurale" / "...Bonifica e
+  Irrigazione" — confirmed intentional, not an inconsistency to fix).
+
+  Known judgment call, not given explicitly in the source material: the H1
+  title text reuses SRD01's exact title ("Complemento di sviluppo Rurale per
+  il Veneto 2023-2027", the overarching programme name) for visual/structural
+  consistency between the two pages, since no distinct page title was
+  supplied — flagged for the site owner to override if a different title is
+  preferred.
+-->
+<BaseLayout
+  title="Complemento di sviluppo Rurale per il Veneto 2023-2027 - Misura SRD02/B - Rigoni Vittorino"
+  description="Intervento SRD02/B: informazioni sul finanziamento ricevuto da Rigoni Vittorino nell'ambito del Complemento di sviluppo Rurale per il Veneto 2023-2027."
+  ogTitle="Complemento di sviluppo Rurale per il Veneto 2023-2027 - Misura SRD02/B"
+  bodyClass="singular missing-post-thumbnail"
+  lang="it"
+>
+  <Fragment set:html={contentHtml} />
+</BaseLayout>
