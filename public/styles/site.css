@@ -2412,3 +2412,62 @@ html {
     display: none;
   }
 }
+
+/* --- EU/Veneto funding-disclosure page (Task 64), mobile-only polish, two
+ * separate fixes.
+ *
+ * 1. The 4-logo banner (EU flag, Italian Republic emblem, Regione del Veneto,
+ * Sviluppo Rurale Veneto — `wp-image-3367`) rendered edge-to-edge on mobile,
+ * no padding at all: confirmed via headless measurement (left:0, right:0,
+ * width = full viewport) before assuming a cause. It already scales
+ * proportionally (the vendor theme's own sitewide `img{max-width:100%;
+ * height:auto}`), so the only real problem is the complete absence of
+ * padding on its wrapper — not a sizing/distortion bug. Scoped with
+ * `:has()` to the specific wrapper containing this exact image (same
+ * `:has()` pattern already used elsewhere in this file, e.g. the cantina
+ * bottle-photo rule just above) rather than a bare `.wp-block-image`, so
+ * this can't affect any other image block anywhere else on the site. This
+ * same image/markup appears twice — once in the shared footer (every page,
+ * all 3 languages), once again inside this page's own body content — the
+ * selector catches both without needing two separate rules, since it's the
+ * same bug in both places. 16px matches this project's established mobile
+ * inset convention (Task 55).
+ *
+ * 2. The page's own title ("Complemento di sviluppo Rurale per il Veneto
+ * 2023-2027") carries an inline `font-size:90px` (the same scraped WP
+ * page-title block pattern used elsewhere, e.g. cantina/chi-siamo's own
+ * hidden title) — unlike those two, this title is actually visible (no
+ * `hide-title` class), so at a 375-414px mobile viewport a 90px heading
+ * wraps across several lines at an overwhelming size, confirmed in a
+ * screenshot before touching anything. 40px reuses this project's own
+ * existing mobile h1 convention (`h1.category-title{font-size:40px}`,
+ * wine-category pages) rather than an arbitrary new number. `!important`
+ * is required since inline styles always beat external rules regardless of
+ * specificity.
+ *
+ * Separately, the title's own wrapper carried a flat `250px` top margin
+ * (`--_ga-m-mobile`, identical at every breakpoint in the scraped markup —
+ * never tuned for mobile specifically), measured as 250px of genuinely
+ * empty space between the header and the title on a 375-414px viewport.
+ * Reduced to 40px, following the same custom-property-override mechanism
+ * (not a plain `margin` override) already established for this exact
+ * Grids-plugin pattern — see the `#post-953`/`#post-1566`/`#post-1770`
+ * rule earlier in this file for the identical technique. Scoped to
+ * `#post-3367` (this page's own real WordPress post ID, confirmed in its
+ * own markup), so desktop/tablet and every other `.titolo-pagine` page
+ * (cantina, chi-siamo, etc.) are completely unaffected. 40px is an
+ * estimate matching other "reduced from a large unscaled number" mobile
+ * fixes in this project, not a design value given by the user — flagged
+ * as such, not pixel-measured against a specific target. --- */
+@media (max-width: 768px) {
+  .wp-block-image:has(.wp-image-3367) {
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+  #post-3367 .titolo-pagine h1 {
+    font-size: 40px !important;
+  }
+  #post-3367 .titolo-pagine > .grids-s-w_i > .grids-area {
+    --_ga-m-mobile: 40px 0 0px 0 !important;
+  }
+}
