@@ -38,5 +38,9 @@ const posts = selectPublishedNews(allEntries);
   mainClass="columns-3"
   lang="it"
 >
-  {posts.map((post) => <NewsCard title={post.data.title} excerpt={post.data.excerpt} image={post.data.image} />)}
+  {
+    posts.map((post) => (
+      <NewsCard title={post.data.title} excerpt={post.data.excerpt} image={post.data.image} href={`/news/${post.id}/`} />
+    ))
+  }
 </BaseLayout>

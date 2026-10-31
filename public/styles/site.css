@@ -2543,3 +2543,77 @@ html {
 #post-3368 .srd02-banner {
   margin-bottom: 40px;
 }
+
+/* News listing cards (/news/, body.blog) — explicit request to replace the
+ * vendor's tan/gold card background with a slight grey, and shrink the
+ * excerpt text. Two competing vendor rules target this box:
+ * twentytwenty-style.min.css sets background-color:#dcc59f (tan, wins today
+ * since it loads after style-custom.min.css, same specificity, neither
+ * !important), while style-custom.min.css separately forces
+ * .entry-content{color:#fff!important} and, on the title link added
+ * alongside this change, .entry-title a{color:#fff!important} — both need an
+ * !important override here too, or white text would be unreadable against
+ * the new light background. Font-size reduced by a relative 15% (`em`, not a
+ * fixed `rem`/px value) rather than matching a specific pixel target —
+ * several competing vendor rules set the excerpt's inherited base size
+ * differently at different breakpoints (`.entry-content{font-size:2.1rem}` in
+ * parent-style.min.css, a separate `body{font-size:1.8rem}` elsewhere), so a
+ * fixed rem value would have shrunk the excerpt by a very different,
+ * disproportionate amount at each width instead of a consistent "a bit
+ * smaller everywhere" — confirmed via headless measurement before picking
+ * this approach. Scoped to body.blog only, so it can't affect the full
+ * article page's own body text (that page never carries body.blog). */
+body.blog main#site-content article header.entry-header .entry-header-inner,
+body.blog main#site-content article .entry-content {
+  background-color: #f0f0f0 !important;
+}
+body.blog main#site-content article .entry-content {
+  color: #222 !important;
+}
+body.blog main#site-content article header.entry-header .entry-header-inner .entry-title a {
+  color: #222 !important;
+}
+body.blog main#site-content article header.entry-header .entry-header-inner .entry-title a:hover {
+  color: var(--link-color-hover) !important;
+}
+body.blog main#site-content article .entry-content p {
+  font-size: 0.85em;
+}
+
+/* Whole-card "stretched link" to each post's new /news/<slug>/ page — the
+ * title's own <a> is the real link; this pseudo-element extends its click
+ * target to cover the entire card (image included) via the standard
+ * absolutely-positioned-overlay technique, without wrapping <article> itself
+ * in an <a> (which would break the vendor's `main#site-content article`
+ * grid-column rules — article must stay a direct grid child). */
+body.blog .post {
+  position: relative;
+}
+body.blog .post .entry-title a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* Full article page (/news/<slug>/) — the featured-image box reuses the
+ * listing card's own .featured-media/.featured-media-inner markup (a
+ * background-image div, not an <img>), but its sizing (min-height,
+ * background-size:cover) is a vendor rule scoped to body.blog only — this
+ * page deliberately isn't body.blog (see [slug]/index.astro's own comment),
+ * so without this the div collapses to 0 height and the image never shows
+ * at all (confirmed via computed style: height was literally 0px). Scoped to
+ * .single-news-post so it can't affect the listing cards' own sizing. */
+.single-news-post .featured-media-inner {
+  min-height: 350px;
+  background-size: cover;
+  background-position: 50%;
+  width: 100%;
+}
+
+/* Simple spacing for the "back to list" link below the article; no other
+ * styling needed, it inherits normal page text/link treatment like every
+ * other content page. */
+.news-back-link {
+  text-align: center;
+  margin: 3rem 0;
+}
