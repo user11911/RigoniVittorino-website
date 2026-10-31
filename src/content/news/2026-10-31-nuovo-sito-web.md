@@ -5,7 +5,7 @@ excerpt: "Abbiamo rinnovato il nostro sito: una nuova veste, semplice da esplora
   disponibile in italiano, inglese e tedesco, per raccontarvi al meglio la nostra cantina,
   la nostra storia e i nostri vini."
 image: "/wp-content/uploads/2026/10/nuovo-sito-rigoni-vittorino.jpg"
-draft: true
+draft: false
 ---
 
 Siamo felici di presentarvi il nuovo sito di Rigoni Vittorino.
