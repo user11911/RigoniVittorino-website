@@ -2458,16 +2458,74 @@ html {
  * (cantina, chi-siamo, etc.) are completely unaffected. 40px is an
  * estimate matching other "reduced from a large unscaled number" mobile
  * fixes in this project, not a design value given by the user — flagged
- * as such, not pixel-measured against a specific target. --- */
+ * as such, not pixel-measured against a specific target.
+ *
+ * `#post-3368` added alongside `#post-3367`: the second funding-disclosure
+ * page (SRD02/B) uses the exact same scraped `.titolo-pagine` title pattern
+ * (same 90px inline font-size, same 250px mobile margin), so it carries the
+ * identical bug and gets the identical fix — not a new page-specific issue
+ * to solve separately. --- */
 @media (max-width: 768px) {
   .wp-block-image:has(.wp-image-3367) {
     padding: 0 16px;
     box-sizing: border-box;
   }
-  #post-3367 .titolo-pagine h1 {
+  #post-3367 .titolo-pagine h1,
+  #post-3368 .titolo-pagine h1 {
     font-size: 40px !important;
   }
-  #post-3367 .titolo-pagine > .grids-s-w_i > .grids-area {
+  #post-3367 .titolo-pagine > .grids-s-w_i > .grids-area,
+  #post-3368 .titolo-pagine > .grids-s-w_i > .grids-area {
     --_ga-m-mobile: 40px 0 0px 0 !important;
+  }
+}
+
+/* --- Second EU/Veneto funding-disclosure banner (Misura SRD02/B), added
+ * alongside the existing SRD01 one — see that page's own index.astro for why
+ * this is a separate banner/page rather than merged into the first. Unlike
+ * SRD01's banner (a single pre-flattened image), this one is built from two
+ * real images + real text (the mandatory FEASR tagline, per the regional
+ * guidelines' "banner standard per sito web" template) so the caption stays
+ * readable/accessible rather than baked into a bitmap. Centered column
+ * layout — the two images and the caption between them stack vertically,
+ * matching the official template's own 2-row arrangement. Image heights
+ * (111px / 100px) are inline on the `<img>` tags themselves, matching this
+ * project's existing convention for this exact banner pattern (compare
+ * SRD01's own `style="width:auto;height:111px"`) rather than a separate CSS
+ * rule — chosen to visually match SRD01's banner scale, not an arbitrary
+ * number. */
+.srd02-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 0;
+}
+.srd02-banner img {
+  display: block;
+}
+.srd02-banner figcaption {
+  margin: 10px 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+/* Visual separation from SRD01's banner directly above it in the footer, per
+ * explicit request — otherwise two logo rows stacked with no gap read as one
+ * row accidentally repeated. Scoped to the footer wrapper only
+ * (`.srd02-banner-wrap`, added alongside the shared `.wp-block-image` class
+ * so the footer instance is addressable on its own); the in-page instance on
+ * the SRD02 page itself doesn't sit next to another banner and needs no
+ * extra separation beyond what the page's own layout already gives it. 48px
+ * is an estimate ("some space", no exact value given), not a measured or
+ * user-specified target. */
+.srd02-banner-wrap {
+  margin-top: 48px;
+}
+
+@media (max-width: 768px) {
+  .srd02-banner {
+    padding: 0 16px;
+    box-sizing: border-box;
   }
 }
