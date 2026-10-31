@@ -849,6 +849,10 @@ header#site-header.sticky {
   overflow: hidden;
   width: 100vw;
   margin: 8px calc(50% - 50vw) 0;
+  /* Vertical breathing room around the logo image itself, inside the
+   * full-bleed band — explicit request, no exact value given (an estimate).
+   * Doesn't affect the band's own full-bleed width/shimmer behavior. */
+  padding: 24px 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2608,6 +2612,24 @@ body.blog .post .entry-title a::after {
   background-size: cover;
   background-position: 50%;
   width: 100%;
+}
+
+/* Full article page, desktop: the title and the body text were landing at
+ * different horizontal insets, reading as "pushed right" relative to each
+ * other. Root cause: .post-inner (body text) gets a vendor
+ * body.single-post-scoped rule (width:90%;max-width:1240px;margin:0 auto,
+ * split across twentytwenty-style.min.css/style-custom.min.css), but
+ * .entry-header-inner (title) has no body.single-post rule at all — every
+ * vendor .entry-header-inner rule is body.blog-scoped (the *listing* page),
+ * so on this page it falls back to the generic .section-inner rule instead
+ * (width:calc(100% - 8rem) at desktop, max-width:120rem) — a different inset
+ * that diverges further from .post-inner's as the viewport gets wider.
+ * Giving .entry-header-inner the exact same rule as .post-inner makes the
+ * two columns pixel-identical instead of two independent approximations. */
+body.single-post article .entry-header-inner {
+  width: 90%;
+  max-width: 1240px;
+  margin: 0 auto;
 }
 
 /* Simple spacing for the "back to list" link below the article; no other
