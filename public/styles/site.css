@@ -2489,23 +2489,36 @@ html {
  * readable/accessible rather than baked into a bitmap. Centered column
  * layout — the two images and the caption between them stack vertically,
  * matching the official template's own 2-row arrangement. Image heights
- * (111px / 100px) are inline on the `<img>` tags themselves, matching this
- * project's existing convention for this exact banner pattern (compare
- * SRD01's own `style="width:auto;height:111px"`) rather than a separate CSS
- * rule — chosen to visually match SRD01's banner scale, not an arbitrary
- * number. */
+ * (84px / 96px, inline on the `<img>` tags themselves) are derived from
+ * SRD01's own display/native scale ratio (111px shown / 251px native source
+ * = 0.442), applied to each SRD02 source image's own native height (189px /
+ * 217px) — not picked by eye — so the individual logos render at the same
+ * visual size as SRD01's, even though they're packaged across two
+ * differently-cropped source files instead of one. */
 .srd02-banner {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   margin: 0;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
+/* margin:0 auto is required, not decorative: in the footer instance these
+ * images sit inside a single <a> wrapping the whole banner (so it's
+ * clickable), and that anchor — not each image — is the flex item there, so
+ * align-items:center alone doesn't center a display:block image inside it
+ * (text-align only centers inline content, never a block box's own
+ * position). Self-centering each image makes centering work the same way
+ * regardless of whether an <a> wraps them (footer) or not (the page
+ * instance, where this is a harmless no-op since each image is already its
+ * own flex item there). */
 .srd02-banner img {
   display: block;
+  margin: 0 auto;
 }
 .srd02-banner figcaption {
-  margin: 10px 0;
+  margin: 20px 0;
   font-size: 16px;
   line-height: 1.4;
 }
@@ -2523,9 +2536,10 @@ html {
   margin-top: 48px;
 }
 
-@media (max-width: 768px) {
-  .srd02-banner {
-    padding: 0 16px;
-    box-sizing: border-box;
-  }
+/* Page-only: gives the banner room before "Misura: SRD02/B" below it.
+ * Scoped by #post-3368 (the page's own article id) so the footer instance —
+ * which already gets its own separation from .srd02-banner-wrap above — is
+ * untouched. */
+#post-3368 .srd02-banner {
+  margin-bottom: 40px;
 }
