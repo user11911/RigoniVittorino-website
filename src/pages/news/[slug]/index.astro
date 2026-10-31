@@ -1,0 +1,64 @@
+---
+export const prerender = true;
+// Individual News article page, added alongside the existing /news/ listing
+// (Task 9) so a post's full Markdown body — written in src/content/news/*.md
+// but, until now, never rendered anywhere (the listing only ever showed
+// title/excerpt/image as a card) — actually becomes visible somewhere.
+//
+// One route for every published post, generated from the same content
+// collection and the same selectPublishedNews() filter the listing page uses,
+// so a draft post simply has no route (visiting its URL 404s) rather than
+// needing a second, separately-maintained "is this published" check.
+//
+// bodyClass reuses two already-established conventions instead of inventing
+// new CSS: "single-post" (vendor rule narrows .post-inner to 90% width,
+// matching a classic WordPress single-post template) and "singular
+// missing-post-thumbnail" (the same pair every other simple content page on
+// this site already uses to remove the theme's default ~8rem top padding gap
+// — see Task 8/37). No body.blog class here on purpose: that class is what
+// gives the *listing* cards their grey background box (site.css) and grid
+// layout — a single full article reads as plain prose, like every other page
+// on the site, not as a colored card.
+import { getCollection, render } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { selectPublishedNews } from "../../../lib/news";
+
+export async function getStaticPaths() {
+  const allEntries = await getCollection("news");
+  const posts = selectPublishedNews(allEntries);
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<BaseLayout
+  title={`${post.data.title} - Rigoni Vittorino`}
+  description={post.data.excerpt ?? post.data.title}
+  ogTitle={post.data.title}
+  ogImage={post.data.image}
+  bodyClass="single-post singular missing-post-thumbnail"
+  lang="it"
+>
+  <article class="post single-news-post">
+    {
+      post.data.image && (
+        <figure class="featured-media">
+          <div class="featured-media-inner section-inner" style={`background-image:url(${post.data.image})`} />
+        </figure>
+      )
+    }
+    <header class="entry-header">
+      <div class="entry-header-inner section-inner">
+        <h1 class="entry-title">{post.data.title}</h1>
+      </div>
+    </header>
+    <div class="post-inner">
+      <div class="entry-content">
+        <Content />
+      </div>
+    </div>
+  </article>
+  <p class="news-back-link"><a href="/news/">&larr; Tutte le notizie</a></p>
+</BaseLayout>
