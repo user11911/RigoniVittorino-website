@@ -459,49 +459,20 @@ header#site-header.sticky {
   object-fit: contain;
   border-radius: 4px;
 }
-/* Cabernet Sauvignon / Affinati, follow-up: trimming to content (below) made
- * its bounding-box aspect ratio land within the other 5 photos' own range
- * (0.240 vs. 0.222-0.317) — but it still read as visibly bigger live. The
- * bounding box isn't the whole story: this bottle's silhouette (dark glass,
- * squared Bordeaux shoulders) stays close to its own maximum width for most
- * of its height, while the others taper more — so two images with a similar
- * *bounding-box* aspect ratio can still differ a lot in actual visual bulk
- * once both are stretched to the same render height. Rather than keep
- * chasing that with bounding-box/aspect-ratio math, this shrinks the
- * rendered content on the height axis directly (the dimension that's
- * otherwise forced equal to every sibling by `object-fit:contain` above) —
- * width then just follows from its own aspect ratio at that smaller
- * content height, shrinking the whole silhouette rather than trying to
- * out-guess it via width.
- *
- * Implemented as padding, not a shorter `height`, on purpose: a first
- * attempt set `height` directly, which also shrinks the `<img>` element's
- * own layout box — fine for the bottle, but it then pulled the "AFFINATI"
- * caption text above it noticeably higher than the other 5 captions,
- * caught live via a self-screenshot before shipping it. `object-fit`
- * operates on the content box, so padding shrinks only the area the image
- * is fit into, while the element's own border-box footprint — the thing
- * flex alignment and the caption's position actually depend on — stays
- * identical to every sibling. 20px top/bottom is a visual judgment call
- * (re-checked live after changing it), not derived from a measurement —
- * nudge this value directly if it still doesn't look right, rather than
- * returning to width/crop-based fixes.
- *
- * Desktop/tablet only (`min-width:769px`, matching this section's own
- * existing mobile breakpoint below exactly): the reported "still bigger"
- * issue was specific to desktop. At the smaller 140px mobile box
- * (`.collection-showcase__category{width:140px}` below), the equivalent
- * absolute pixel gap between Cabernet's rendered width and its siblings'
- * shrinks along with everything else and reads as visually negligible —
- * confirmed live via screenshot, not assumed — so mobile is intentionally
- * left on the plain content-trim fix alone, same as every other image, with
- * no extra padding applied there. */
-@media (min-width: 769px) {
-  .collection-showcase__category img[src*="Cabernet-sauvignon-rigoni"] {
-    padding: 20px 0;
-    box-sizing: border-box;
-  }
-}
+/* Cabernet Sauvignon / Affinati: a follow-up attempt here once shrank this
+ * image's rendered content height below its siblings' (226.7px vs. 266.7px,
+ * via padding on the box) to address a live "still bigger" report. Reverted
+ * — it directly contradicted this project's own explicit requirement that
+ * every image in this row render its content at the *same* height. The
+ * content-trim fix below already satisfies that: every one of the 6 photos
+ * is narrower than this box's 3:4 ratio, so `object-fit:contain` renders
+ * all 6 at the exact same content height (266.7px) with zero stretch/shrink
+ * on any of them (rendered aspect ratio matches native aspect ratio exactly
+ * on all 6, confirmed via measurement) — Cabernet's own content width under
+ * that constraint is 64.1px, inside its siblings' 59.1-84.5px range, not an
+ * outlier. Any further "do the same but smaller" request for this one image
+ * cannot be satisfied without reopening that same contradiction — flag it
+ * back rather than re-adding a per-image height override. */
 /* Asset convention for any future photo swapped into one of these 6 slots:
  * `contain` scales the image's FULL canvas (bottle + any transparent margin
  * baked into the file) into the shared box — it has no way to tell "bottle
