@@ -2,9 +2,15 @@ name = "rigonivittorino-website"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# @astrojs/cloudflare generates its own main/assets wiring at build time
-# (dist/server/wrangler.json) — this file only needs to supply the
-# app-specific bindings the adapter doesn't know about.
+# Custom entry: wraps the adapter's default handler (@astrojs/cloudflare/entrypoints/server)
+# unchanged and adds a `scheduled` handler for the cron below. The adapter still
+# generates the assets wiring at build time (dist/server/wrangler.json).
+main = "src/worker.ts"
+
+# Daily at 03:00 UTC: deletes contact-form messages older than the retention period
+# stated in the privacy policy (src/lib/retention.ts).
+[triggers]
+crons = ["0 3 * * *"]
 #
 # Provisioned once by the site owner with:
 #   npx wrangler d1 create rigonivittorino-contacts
