@@ -459,6 +459,37 @@ header#site-header.sticky {
   object-fit: contain;
   border-radius: 4px;
 }
+/* Cabernet Sauvignon / Affinati, follow-up: trimming to content (below) made
+ * its bounding-box aspect ratio land within the other 5 photos' own range
+ * (0.240 vs. 0.222-0.317) — but it still read as visibly bigger live. The
+ * bounding box isn't the whole story: this bottle's silhouette (dark glass,
+ * squared Bordeaux shoulders) stays close to its own maximum width for most
+ * of its height, while the others taper more — so two images with a similar
+ * *bounding-box* aspect ratio can still differ a lot in actual visual bulk
+ * once both are stretched to the same render height. Rather than keep
+ * chasing that with bounding-box/aspect-ratio math, this shrinks the
+ * rendered content on the height axis directly (the dimension that's
+ * otherwise forced equal to every sibling by `object-fit:contain` above) —
+ * width then just follows from its own aspect ratio at that smaller
+ * content height, shrinking the whole silhouette rather than trying to
+ * out-guess it via width.
+ *
+ * Implemented as padding, not a shorter `height`, on purpose: a first
+ * attempt set `height` directly, which also shrinks the `<img>` element's
+ * own layout box — fine for the bottle, but it then pulled the "AFFINATI"
+ * caption text above it noticeably higher than the other 5 captions,
+ * caught live via a self-screenshot before shipping it. `object-fit`
+ * operates on the content box, so padding shrinks only the area the image
+ * is fit into, while the element's own border-box footprint — the thing
+ * flex alignment and the caption's position actually depend on — stays
+ * identical to every sibling. 20px top/bottom is a visual judgment call
+ * (re-checked live after changing it), not derived from a measurement —
+ * nudge this value directly if it still doesn't look right, rather than
+ * returning to width/crop-based fixes. */
+.collection-showcase__category img[src*="Cabernet-sauvignon-rigoni"] {
+  padding: 20px 0;
+  box-sizing: border-box;
+}
 /* Asset convention for any future photo swapped into one of these 6 slots:
  * `contain` scales the image's FULL canvas (bottle + any transparent margin
  * baked into the file) into the shared box — it has no way to tell "bottle
