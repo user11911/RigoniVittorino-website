@@ -2423,19 +2423,38 @@ html {
  * 1. The 4-logo banner (EU flag, Italian Republic emblem, Regione del Veneto,
  * Sviluppo Rurale Veneto — `wp-image-3367`) rendered edge-to-edge on mobile,
  * no padding at all: confirmed via headless measurement (left:0, right:0,
- * width = full viewport) before assuming a cause. It already scales
- * proportionally (the vendor theme's own sitewide `img{max-width:100%;
- * height:auto}`), so the only real problem is the complete absence of
- * padding on its wrapper — not a sizing/distortion bug. Scoped with
- * `:has()` to the specific wrapper containing this exact image (same
- * `:has()` pattern already used elsewhere in this file, e.g. the cantina
- * bottle-photo rule just above) rather than a bare `.wp-block-image`, so
- * this can't affect any other image block anywhere else on the site. This
- * same image/markup appears twice — once in the shared footer (every page,
- * all 3 languages), once again inside this page's own body content — the
- * selector catches both without needing two separate rules, since it's the
- * same bug in both places. 16px matches this project's established mobile
- * inset convention (Task 55).
+ * width = full viewport) before assuming a cause. Scoped with `:has()` to
+ * the specific wrapper containing this exact image (same `:has()` pattern
+ * already used elsewhere in this file, e.g. the cantina bottle-photo rule
+ * just above) rather than a bare `.wp-block-image`, so this can't affect any
+ * other image block anywhere else on the site. This same image/markup
+ * appears twice — once in the shared footer (every page, all 3 languages),
+ * once again inside this page's own body content — the selector catches
+ * both without needing two separate rules, since it's the same bug in both
+ * places. 16px matches this project's established mobile inset convention
+ * (Task 55).
+ *
+ * Follow-up, found later via real browser measurement (not assumed): this
+ * banner's own comment originally claimed the padding was the *only* real
+ * problem ("not a sizing/distortion bug") — that was wrong. The image's
+ * inline `style="width:auto;height:111px"` has a *fixed* (non-auto) height,
+ * so per CSS2.1 replaced-element sizing the vendor's sitewide
+ * `max-width:100%` can clamp the computed width down without the height
+ * ever being recomputed to match — and at 16px/side padding, the 343px
+ * mobile content width is narrower than the ~453px this image needs to stay
+ * proportional at height:111px. Measured result: rendered aspect ratio
+ * 3.090 vs. native 4.083 — a genuine ~24% horizontal squash, not just "a bit
+ * smaller". The second funding banner's images (`.srd02-banner`, below)
+ * never hit this because they were deliberately sized (84px/96px) to always
+ * stay under this same 343px ceiling. Giving this image the same `84px`
+ * height at this breakpoint — chosen specifically to match SRD02's own
+ * value, since both images' native aspect ratios are nearly identical
+ * (4.084 vs. 4.058) — keeps it under the ceiling too (84×4.084≈343, fits
+ * with no clamping) and, as a direct consequence, makes this banner's own
+ * logos render at essentially the same size as the second banner's,
+ * addressing both the distortion and the "make the flags match" request
+ * with one number. `!important` is required since the inline style always
+ * wins over an external rule of any specificity.
  *
  * 2. The page's own title ("Complemento di sviluppo Rurale per il Veneto
  * 2023-2027") carries an inline `font-size:90px` (the same scraped WP
@@ -2473,6 +2492,9 @@ html {
   .wp-block-image:has(.wp-image-3367) {
     padding: 0 16px;
     box-sizing: border-box;
+  }
+  .wp-image-3367 {
+    height: 84px !important;
   }
   #post-3367 .titolo-pagine h1,
   #post-3368 .titolo-pagine h1 {
