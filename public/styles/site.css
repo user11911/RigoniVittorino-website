@@ -2694,3 +2694,46 @@ body.single-post article .entry-header-inner {
   text-align: center;
   margin: 3rem 0;
 }
+
+/* Privacy policy (/it/privacy-policy/): its text sits directly in .entry-content (no
+ * Grids section like dati-societari's), so it ran edge-to-edge from x=0 on desktop,
+ * and the theme hides every page's own title. Show the title and use the same centered
+ * 960px text column as dati-societari (1024px max minus 32px side padding → text at
+ * x=240 on a 1440px screen). Side padding only from 769px up: below that the sitewide
+ * mobile rule already insets .entry-content children by 16px. */
+#post-privacy header.entry-header.has-text-align-center.header-footer-group {
+  display: block;
+  padding: 60px 16px 20px;
+}
+#post-privacy .entry-content {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding-bottom: 80px;
+  box-sizing: border-box;
+}
+/* Spacing via margin-top only: the theme forces `.entry-content > * {margin-bottom:0
+ * !important}` on every direct child, so bottom margins never apply here. */
+#post-privacy .entry-content h2 {
+  margin-top: 1.6em;
+  line-height: 1.25;
+}
+#post-privacy .entry-content h2:first-child {
+  margin-top: 0;
+}
+#post-privacy .entry-content h2 + p {
+  margin-top: 0.5em;
+}
+#post-privacy .entry-content p + p {
+  margin-top: 0.8em;
+}
+@media (min-width: 769px) {
+  #post-privacy .entry-content {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+@media (max-width: 768px) {
+  #post-privacy .entry-content h2 {
+    font-size: 28px;
+  }
+}

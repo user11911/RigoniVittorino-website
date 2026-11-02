@@ -7551,3 +7551,15 @@ original rebuild was renamed with a `-v2` suffix and all references updated (`gi
 98cc5c4 HEAD -- public/wp-content/uploads | grep ^M` lists them). Rule going forward: **when changing
 an image's content, always give it a new filename** (e.g. bump `-v2` → `-v3`) instead of
 overwriting the file at its existing path.
+
+## Contact-form data retention: 24 months, enforced by a daily cron
+
+The privacy policy states contact-form messages are kept in D1 for at most 24 months and then
+deleted automatically. Enforced, not just stated: `src/worker.ts` is the Worker entry
+(`main` in wrangler.toml); it reuses the adapter's own handler for every request unchanged and adds
+a `scheduled` handler, run daily at 03:00 UTC (`[triggers] crons`), that calls
+`deleteExpiredSubmissions` (`src/lib/retention.ts`). If the period ever changes, change
+`RETENTION_MONTHS` and the policy sentence together. Tested on real SQLite
+(`src/lib/retention.test.ts`) and end-to-end on the built Worker with a local D1
+(`wrangler dev --test-scheduled`, then `GET /cdn-cgi/handler/scheduled`). This covers the database
+only — copies of notification emails in the company mailbox are not affected.

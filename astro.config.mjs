@@ -17,10 +17,9 @@ export default defineConfig({
   // produced for it — confirmed directly) and `/it/news/` (a 301 redirect
   // stub to the real, already-separately-listed `/news/` — a sitemap should
   // never point search engines at a redirect instead of its destination).
-  // `/en/privacy-policy/` and `/de/privacy-policy/` *are* prerendered but
-  // intentionally render no real content (Task 9's own documented decision —
-  // see TODO.md/testing.md) — excluded so a sitemap never points search
-  // engines at a page with nothing on it.
+  // `/en/privacy-policy/` and `/de/privacy-policy/` are likewise 301 redirects
+  // (to the Italian policy, the only published one) — excluded for the same
+  // reason.
   integrations: [
     sitemap({
       filter: (page) =>

@@ -11,7 +11,7 @@ const contentHtml = await readFile(
 );
 ---
 
-<!--
+{/*
   This page has no live static markup to transplant: the live site's own
   /it/privacy-policy/ only loads a third-party Iubenda widget client-side, so the
   real legal text was never present in its HTML (see IMPLEMENTATION_NOTES.md
@@ -24,7 +24,7 @@ const contentHtml = await readFile(
   main pages' Grids page-builder template. See dati-societari/index.astro and
   IMPLEMENTATION_NOTES.md Task 5 for why these classes matter (background color
   and top-spacing CSS gated behind them).
--->
+*/}
 <BaseLayout
   title="Norme sulla privacy e cookie - Rigoni Vittorino"
   description="Informativa sulla privacy e sui cookie di Rigoni Vittorino: come trattiamo i dati raccolti sul sito."
