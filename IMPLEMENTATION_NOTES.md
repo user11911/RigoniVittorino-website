@@ -303,7 +303,7 @@ against D1, no extra service needed.
 
 | Variable | Where it lives | Purpose |
 |---|---|---|
-| `PUBLIC_TURNSTILE_SITE_KEY` | `.env` (Vite/Astro build-time) | Public Turnstile widget key |
+| `PUBLIC_TURNSTILE_SITE_KEY` | `.env` — **dev server only**; production builds always use the real key in `src/lib/turnstile-site-key.ts` | Public Turnstile widget key |
 | `TURNSTILE_SECRET_KEY` | `.dev.vars` locally / `wrangler secret put` in prod | Server-side captcha verification |
 | `RESEND_API_KEY` | same | Email sending; unset = dry-run |
 | `CONTACT_FROM_EMAIL` | same | Sender address (needs domain verified in Resend) |
@@ -330,8 +330,8 @@ dummy Turnstile test keys and are gitignored — **no secrets are committed**.
    destination for form notifications specifically**).
 7. Set `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`,
    `CONTACT_RECIPIENT_EMAIL`, `CONTACT_IP_HASH_SALT` (generate with
-   `openssl rand -hex 32`) via `wrangler secret put <NAME>` or the dashboard; set
-   `PUBLIC_TURNSTILE_SITE_KEY` as a build-time variable in whatever CI builds the site.
+   `openssl rand -hex 32`) via `wrangler secret put <NAME>` or the dashboard.
+   (The public site key no longer needs setting: it is hardcoded in `src/lib/turnstile-site-key.ts`.)
 8. `npm run build && npx wrangler deploy`.
 
 ## 6. Confirmations

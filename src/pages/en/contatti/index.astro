@@ -3,13 +3,14 @@ export const prerender = true;
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { resolveTurnstileSiteKey } from "../../../lib/turnstile-site-key";
 import localeEquivalents from "../../../data/locale-equivalents.json";
 
 const rawContentHtml = await readFile(
   path.join(process.cwd(), "src/content/main/en/contatti.html"),
   "utf8",
 );
-const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "1x00000000000000000000AA";
+const turnstileSiteKey = resolveTurnstileSiteKey(import.meta.env);
 const contentHtml = rawContentHtml.replace("__TURNSTILE_SITE_KEY__", turnstileSiteKey);
 ---
 
