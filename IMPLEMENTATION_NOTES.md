@@ -7528,3 +7528,26 @@ equivalent pages. Full 12-page × 6-breakpoint overflow sweep still clean. `chec
 pass.
 
 **Headless-verified — not yet confirmed live.**
+
+## Rule: never replace an image in place under an old WordPress URL — use a new filename
+
+Found live after the hosting cutover (rigonivittorino.com moved from the old SiteGround/WordPress
+site to this project): returning visitors kept seeing the **old WordPress versions** of images that
+this project had since replaced *at the same path*. The old site told browsers to keep images for a
+long time without re-checking, so after the cutover a browser that had visited the old site keeps
+showing its saved copy of e.g. `/wp-content/uploads/2021/01/rigoni-vittorino.png` instead of asking
+this server for the new file. No CSS or sizing change can fix that — the browser never requests the
+new file.
+
+Confirmed concretely, not assumed: the old `rigoni-vittorino.png` (200x94, in this repo's first
+commit) has a green/white/red stripe baked into the PNG — exactly the "flag under the logo" the site
+owner kept seeing on their laptop while fresh devices showed the new, stripe-free 1178x489 logo. The 5
+homepage collection bottles replaced in Task 33 (old 600x650 versions with a drop shadow and white
+margin) caused the same symptom: on a returning visitor's screen they rendered shorter than the one
+bottle (Cabernet) whose file was fetched fresh.
+
+Fix: every file under `public/wp-content/uploads/` whose content was changed in place since the
+original rebuild was renamed with a `-v2` suffix and all references updated (`git diff --name-status
+98cc5c4 HEAD -- public/wp-content/uploads | grep ^M` lists them). Rule going forward: **when changing
+an image's content, always give it a new filename** (e.g. bump `-v2` → `-v3`) instead of
+overwriting the file at its existing path.
