@@ -459,6 +459,25 @@ header#site-header.sticky {
   object-fit: contain;
   border-radius: 4px;
 }
+/* Asset convention for any future photo swapped into one of these 6 slots:
+ * `contain` scales the image's FULL canvas (bottle + any transparent margin
+ * baked into the file) into the shared box — it has no way to tell "bottle
+ * pixels" apart from "padding pixels". Found live: a photo with extra
+ * transparent margin around the bottle renders visibly smaller/larger than
+ * its siblings even though every slot shares this exact same CSS, because
+ * the margin is scaled right along with the bottle. Confirmed by measuring
+ * actual alpha-channel content bounds (not canvas size) with `sharp`'s
+ * `.trim()`: the 5 originally-correct photos already have ~0% internal
+ * margin (trimmed content ≈ full canvas); the one that rendered wrong
+ * (Cabernet Sauvignon) had a bottle occupying only ~36% of its canvas
+ * width. The fix — and the rule for next time — is to trim the source file
+ * to its real content bounding box before adding it here, not to hand-pick
+ * a per-image padding/size override in this CSS:
+ *   node -e "require('sharp')('in.png').trim({threshold:10}).png().toFile('out.png')"
+ * then eyeball the trimmed PNG once to confirm the crop didn't clip
+ * anti-aliased edges. This keeps every image honest input to the exact same
+ * shared rule above, rather than needing a growing set of per-image
+ * exceptions as more photos get swapped in over time. */
 .collection-showcase__category span {
   font-size: 0.8rem;
   font-weight: 700;
