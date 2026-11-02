@@ -459,6 +459,20 @@ header#site-header.sticky {
   object-fit: contain;
   border-radius: 4px;
 }
+/* Cabernet Sauvignon / Affinati: a follow-up attempt here once shrank this
+ * image's rendered content height below its siblings' (226.7px vs. 266.7px,
+ * via padding on the box) to address a live "still bigger" report. Reverted
+ * — it directly contradicted this project's own explicit requirement that
+ * every image in this row render its content at the *same* height. The
+ * content-trim fix below already satisfies that: every one of the 6 photos
+ * is narrower than this box's 3:4 ratio, so `object-fit:contain` renders
+ * all 6 at the exact same content height (266.7px) with zero stretch/shrink
+ * on any of them (rendered aspect ratio matches native aspect ratio exactly
+ * on all 6, confirmed via measurement) — Cabernet's own content width under
+ * that constraint is 64.1px, inside its siblings' 59.1-84.5px range, not an
+ * outlier. Any further "do the same but smaller" request for this one image
+ * cannot be satisfied without reopening that same contradiction — flag it
+ * back rather than re-adding a per-image height override. */
 /* Asset convention for any future photo swapped into one of these 6 slots:
  * `contain` scales the image's FULL canvas (bottle + any transparent margin
  * baked into the file) into the shared box — it has no way to tell "bottle
