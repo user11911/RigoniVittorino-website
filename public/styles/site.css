@@ -485,10 +485,22 @@ header#site-header.sticky {
  * identical to every sibling. 20px top/bottom is a visual judgment call
  * (re-checked live after changing it), not derived from a measurement —
  * nudge this value directly if it still doesn't look right, rather than
- * returning to width/crop-based fixes. */
-.collection-showcase__category img[src*="Cabernet-sauvignon-rigoni"] {
-  padding: 20px 0;
-  box-sizing: border-box;
+ * returning to width/crop-based fixes.
+ *
+ * Desktop/tablet only (`min-width:769px`, matching this section's own
+ * existing mobile breakpoint below exactly): the reported "still bigger"
+ * issue was specific to desktop. At the smaller 140px mobile box
+ * (`.collection-showcase__category{width:140px}` below), the equivalent
+ * absolute pixel gap between Cabernet's rendered width and its siblings'
+ * shrinks along with everything else and reads as visually negligible —
+ * confirmed live via screenshot, not assumed — so mobile is intentionally
+ * left on the plain content-trim fix alone, same as every other image, with
+ * no extra padding applied there. */
+@media (min-width: 769px) {
+  .collection-showcase__category img[src*="Cabernet-sauvignon-rigoni"] {
+    padding: 20px 0;
+    box-sizing: border-box;
+  }
 }
 /* Asset convention for any future photo swapped into one of these 6 slots:
  * `contain` scales the image's FULL canvas (bottle + any transparent margin
