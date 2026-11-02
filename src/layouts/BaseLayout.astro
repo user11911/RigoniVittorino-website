@@ -12,11 +12,6 @@ export interface Props {
   // doesn't supply anything more specific (e.g. a wine product page passing
   // its own bottle photo) — never a placeholder/invented asset.
   ogImage?: string;
-  // Task 66 (SEO): opt-in `<meta name="robots" content="noindex">` for pages
-  // that genuinely have no real content to index (e.g. /en/privacy-policy/,
-  // /de/privacy-policy/ — intentionally blank, see those pages' own comments).
-  // Defaults to false so every existing caller stays indexable, unchanged.
-  noindex?: boolean;
   // Task 66 (SEO): additional per-page JSON-LD blocks (Product, BreadcrumbList,
   // etc. — see src/lib/seo.ts's builders), rendered alongside the sitewide
   // Organization schema below. Each array entry becomes its own
@@ -58,7 +53,6 @@ const {
   description,
   ogTitle,
   ogImage = "/wp-content/uploads/2021/01/rigoni-vittorino-v2.png",
-  noindex = false,
   extraJsonLd = [],
   extraStyleFile,
   bodyClass = "",
@@ -153,7 +147,6 @@ const organizationJsonLd = {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
-    {noindex && <meta name="robots" content="noindex, follow" />}
     <link rel="canonical" href={canonical} />
     {hasRealAlternates && hreflangLangs.map((l) => (
       <link rel="alternate" hreflang={l} href={hreflangUrls[l]} />

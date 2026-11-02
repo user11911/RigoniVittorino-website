@@ -5,7 +5,7 @@
     "cantina": { "it": "/it/cantina/", "en": "/en/winery/", "de": "/de/weinkeller/" },
     "contact": { "it": "/it/contatti/", "en": "/en/contatti/", "de": "/de/contacts/" },
     "company-data": { "it": "/it/dati-societari/", "en": "/en/company-data/", "de": "/de/firmen-daten/" },
-    "privacy-policy": { "it": "/it/privacy-policy/", "en": "/en/privacy-policy/", "de": "/de/privacy-policy/" }
+    "privacy-policy": { "it": "/it/privacy-policy/" }
   },
   "categories": {
     "spumanti": { "it": "/it/spumanti/", "en": "/en/sparkling/", "de": "/de/schaumweine/" },
