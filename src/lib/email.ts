@@ -13,6 +13,7 @@ export interface EmailMessage {
 export interface SendResult {
   ok: boolean;
   dryRun: boolean;
+  id?: string; // Resend's email id — searchable in the Resend dashboard
   error?: string;
 }
 
@@ -41,14 +42,29 @@ export async function sendEmail(message: EmailMessage, apiKey: string | undefine
     if (!res.ok) {
       const text = await res.text();
       console.error("[email] Resend API error:", res.status, text);
-      return { ok: false, dryRun: false, error: `Resend API returned ${res.status}` };
+      return { ok: false, dryRun: false, error: `Resend API returned ${res.status}: ${text}`.slice(0, 500) };
     }
 
-    return { ok: true, dryRun: false };
+    let id: string | undefined;
+    try {
+      id = ((await res.json()) as { id?: string })?.id;
+    } catch {
+      // Accepted without a readable id: still a success, just nothing to reference.
+    }
+    return { ok: true, dryRun: false, id };
   } catch (err) {
     console.error("[email] send failed:", err);
     return { ok: false, dryRun: false, error: err instanceof Error ? err.message : "unknown error" };
   }
+}
+
+export type EmailOutcomeStatus = "sent" | "failed" | "dry-run";
+
+// What gets stored per email: Resend's id when sent, the error when it failed.
+export function describeSendResult(result: SendResult): { status: EmailOutcomeStatus; detail: string | null } {
+  if (result.dryRun) return { status: "dry-run", detail: null };
+  if (result.ok) return { status: "sent", detail: result.id ?? null };
+  return { status: "failed", detail: result.error ?? "unknown error" };
 }
 
 function escapeHtml(s: string): string {

@@ -248,9 +248,15 @@ Chosen stack, and why:
   required test path (including rate-limiting) directly verifiable in this sandbox.
 - **Resend**, called over plain `fetch` (no SDK, keeping the dependency footprint as
   lean as it was after Task 1) — sends both required emails. The "from" address sits
-  on `rigonivittorino.com` (needs SPF/DKIM DNS records added — additive, doesn't touch
-  the existing Google Workspace MX records or mailboxes) while the notification lands
-  in an existing Workspace inbox via an env-configurable recipient address.
+  on the subdomain `updates.rigonivittorino.com` (verified in Resend; its DKIM and
+  `send.updates` return-path records are additive and don't touch the root domain's
+  mail) while the notification lands in the existing info@ mailbox via an
+  env-configurable recipient address. **Correction (2026-11-25):** earlier notes said
+  that mailbox was on Google Workspace. It is not: `rigonivittorino.com`'s MX is
+  `antispam.speedwifi.it` (SpeedWiFi hosting, filtered by a MailWatch/MailScanner
+  gateway), and the root domain has a strict DMARC policy (`p=reject; sp=reject;
+  adkim=s; aspf=s`). Resend marks a message "delivered" once that gateway accepts it;
+  anything held afterwards sits in the gateway's quarantine, not in Resend.
 - If `RESEND_API_KEY` is unset, `src/lib/email.ts` logs the would-be email instead of
   sending it — this is the "safe local/test mode" TODO.md asks for, not an error path.
 
@@ -307,7 +313,7 @@ against D1, no extra service needed.
 | `TURNSTILE_SECRET_KEY` | `.dev.vars` locally / `wrangler secret put` in prod | Server-side captcha verification |
 | `RESEND_API_KEY` | same | Email sending; unset = dry-run |
 | `CONTACT_FROM_EMAIL` | same | Sender address (needs domain verified in Resend) |
-| `CONTACT_RECIPIENT_EMAIL` | same | Where notifications land (existing Workspace inbox) |
+| `CONTACT_RECIPIENT_EMAIL` | same | Where notifications land (the info@ mailbox at SpeedWiFi) |
 | `CONTACT_IP_HASH_SALT` | same | Salts the hashed IP used for rate-limiting |
 
 `.env` and `.dev.vars` are both real, populated locally with Cloudflare's published
@@ -321,9 +327,9 @@ dummy Turnstile test keys and are gitignored — **no secrets are committed**.
 3. `npx wrangler d1 migrations apply DB --remote` to create the table on the real DB.
 4. Cloudflare dashboard → Turnstile → add a widget for the real domain → get a real
    site key + secret key.
-5. Resend (or another transactional provider) → verify `rigonivittorino.com` as a
-   sending domain (adds the DNS records Resend gives you — additive to existing
-   Workspace MX records, does not affect existing mailboxes).
+5. Resend (or another transactional provider) → verify `updates.rigonivittorino.com`
+   as a sending domain (adds the DNS records Resend gives you — additive, does not
+   affect the root domain's SpeedWiFi MX records or mailboxes).
 6. Confirm the real `CONTACT_RECIPIENT_EMAIL` with the site owner (placeholder used
    here is `info@rigonivittorino.com`, matching the address already public on the
    live site's contact page — **not independently confirmed as the intended
@@ -7563,3 +7569,23 @@ a `scheduled` handler, run daily at 03:00 UTC (`[triggers] crons`), that calls
 (`src/lib/retention.test.ts`) and end-to-end on the built Worker with a local D1
 (`wrangler dev --test-scheduled`, then `GET /cdn-cgi/handler/scheduled`). This covers the database
 only — copies of notification emails in the company mailbox are not affected.
+
+## Contact form: every email's outcome is recorded (database + Worker logs)
+
+The form always shows success to the visitor once the message is stored; whether each of
+the two emails actually went out is now recorded instead of being invisible:
+
+- **Database** (`migrations/0002_email_outcomes.sql`): per row, `notification_status` /
+  `confirmation_status` = `sent` | `failed` | `dry-run`, and `*_detail` = Resend's email
+  id when sent (paste it into the Resend dashboard search) or Resend's error message when
+  it failed. `status` = `notified`, or `failed` if the notification to info@ didn't go out.
+  Check the latest ones with:
+  `npx wrangler d1 execute DB --remote --command "SELECT id, created_at, status, notification_status, notification_detail FROM contact_submissions ORDER BY id DESC LIMIT 10"`
+- **Worker logs** (`[observability]` in wrangler.toml, kept by Cloudflare for a few days):
+  one line per submission, `[contact] submission N: notification <status> (<id or error>);
+  confirmation …` — an error-level line when either failed. No visitor address or message
+  text is logged.
+
+"sent" means Resend accepted the email. For delivery, open the id in the Resend dashboard:
+"delivered" there means SpeedWiFi's antispam gateway accepted it; anything missing after
+that is in the gateway's quarantine (see the 2026-11-25 correction above).

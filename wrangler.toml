@@ -11,6 +11,12 @@ main = "src/worker.ts"
 # stated in the privacy policy (src/lib/retention.ts).
 [triggers]
 crons = ["0 3 * * *"]
+
+# Keep Worker logs (Cloudflare dashboard → Workers → this Worker → Logs) instead of only
+# live tailing, so the per-submission "[contact] submission N: notification …" lines
+# can be checked after the fact.
+[observability]
+enabled = true
 #
 # Provisioned once by the site owner with:
 #   npx wrangler d1 create rigonivittorino-contacts
